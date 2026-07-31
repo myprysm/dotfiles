@@ -4,15 +4,18 @@
 # Any list edit changes this rendered script → run_onchange_ re-runs it.
 set -eu
 
-# Homebrew 6 downloads in parallel (default: twice the CPU count) and its
-# download cache is not safe under that concurrency: two fetches race on the
-# same `*.bottle_manifest.json.incomplete` entry and one dies with
-# `dir_s_rmdir ... No such file or directory`. brew then reports the formula
-# as failed even though it poured and installed correctly, `brew bundle` exits
-# non-zero, and the whole apply dies with it. Seen twice on fresh machines, on
-# unrelated formulae each time. Serialising downloads costs some wall-clock on
-# a first install and buys a bootstrap that does not fail at random.
-export HOMEBREW_DOWNLOAD_CONCURRENCY=1
+# `brew bundle` installs formulae in parallel by default (HOMEBREW_BUNDLE_JOBS
+# defaults to `auto`, i.e. CPU cores capped at 4 — the --jobs help text still
+# claims a sequential default, and is wrong). Those are separate brew
+# PROCESSES sharing one download cache, and they race on it: one finishes a
+# download and renames the `.incomplete` file while another, which had been
+# waiting on it, opens the final path in the gap and dies with
+# `rb_sysopen ... No such file or directory`. brew then marks the formula
+# failed even though it poured, `brew bundle` exits non-zero, and the whole
+# apply dies. Three fresh-machine runs, three different formulae.
+# Serial installs cost wall-clock once; a bootstrap that fails at random
+# costs it every time.
+export HOMEBREW_BUNDLE_NO_JOBS=1
 
 # Homebrew 6 will not load a third-party tap's formulae until the tap is
 # trusted, and `brew bundle` cannot express that.
