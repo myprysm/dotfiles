@@ -19,6 +19,10 @@ Library/**
 .config/zsh/env.d/helm3-pin.zsh
 {{- end }}
 
+{{ if not .bundles.rust -}}
+.config/zsh/env.d/20-cargo.zsh
+{{- end }}
+
 {{ if not (index .bundles "java") -}}
 .config/zsh/rc.d/50-sdkman.zsh
 {{- end }}
