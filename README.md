@@ -49,6 +49,7 @@ and — deliberately manual — `scripts/secrets-restore.sh`).
 bootstrap.sh            → the one-liner target
 docs/secrets.md         → secrets policy (what never enters this repo, vault/restore rules)
 scripts/                → secrets-restore.sh, secrets-audit.sh, secrets-backup.sh (explicit invocation only)
+                          secrets-common.sh is sourced by all three, never run
 home/
   .chezmoi.toml.tmpl    → init prompts (email, bw server, bundle toggles) → machine-local config
   .chezmoidata/         → packages.yaml (core + bundles), zsh.yaml (plugin lists)

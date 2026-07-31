@@ -1,6 +1,6 @@
 # Secrets policy
 
-> **PROTOTYPE STUB** (wayfinder #7) — outline of the doc decided in issues #6 and #11.
+> Decided in issues #6 and #11; the scripts it describes were implemented in #19.
 > Written under the redaction rule: no hostnames, key names, or identifying counts.
 
 ## Rules
@@ -34,8 +34,12 @@
 - **Audit**: `scripts/secrets-audit.sh` — compares local state against vault item names;
   reports unbacked local items and unrestored vault items; nags when the last local
   backup is older than 30 days.
-- **Backup**: `scripts/secrets-backup.sh` — monthly; `bw export` + per-item attachment
-  downloads into one passphrase-encrypted, machine-local archive. Never in this repo.
+- **Backup**: `scripts/secrets-backup.sh` — monthly; `bw export --format zip` (which
+  now carries the attachment tree, so the per-item download loop #11 specified is no
+  longer needed) into one passphrase-encrypted, machine-local archive under
+  `~/.local/share/dotfiles-secrets`. Symmetric GPG, so the archive depends on a
+  passphrase and no key. Never in this repo. The work manager is not covered — it has
+  no export CLI and its vault is the employer's to back up.
 
 ## Repo guardrails
 
