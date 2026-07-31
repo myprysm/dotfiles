@@ -30,7 +30,9 @@
 ## Procedures
 
 - **Restore**: `scripts/secrets-restore.sh` — explicit invocation, on the post-bootstrap
-  checklist, never wired into `chezmoi apply`.
+  checklist, never wired into `chezmoi apply`. On WSL the GPG secret key is imported
+  into **both** keyrings: the native one, and the Windows store that git signs through.
+  Importing only the former leaves a machine that looks restored and then cannot commit.
 - **Audit**: `scripts/secrets-audit.sh` — compares local state against vault item names;
   reports unbacked local items and unrestored vault items; nags when the last local
   backup is older than 30 days.

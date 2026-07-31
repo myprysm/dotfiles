@@ -8,6 +8,12 @@ BW_ROOT="dotfiles"
 BW_SSH="dotfiles/ssh"
 BW_RESTORE="dotfiles/restore"
 
+# WSL's git signs through the Windows GnuPG store; bootstrap.sh creates this
+# symlink and .gitconfig hardcodes the same path (#6, #8 deviation 11).
+# Overridable so the import branch can be exercised without touching the real
+# Windows keyring; the default is the only path .gitconfig knows about.
+WSL_GPG="${WSL_GPG:-/usr/local/bin/gpg}"
+
 # Machine-local, outside the repo and outside chezmoi's source dir (#11 §4).
 BACKUP_DIR="$HOME/.local/share/dotfiles-secrets"
 BACKUP_MAX_AGE_DAYS=30
@@ -18,6 +24,19 @@ SECRETS_MAP="$REPO_ROOT/home/.chezmoidata/secrets.yaml"
 warn() { printf '  ! %s\n' "$*" >&2; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 note() { printf '%s\n' "$*"; }
+
+is_wsl() {
+  grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null
+}
+
+# On WSL the shim above SHADOWS the native binary: the default PATH puts
+# /usr/local/bin ahead of /usr/bin, so on a machine without a brew-installed
+# gnupg a bare `gpg` IS the Windows exe. Resolve the native one explicitly, or
+# the "Linux keyring" import silently lands in the Windows store instead.
+# Overridable for testing, like WSL_GPG.
+if [ -z "${LINUX_GPG:-}" ]; then
+  if is_wsl; then LINUX_GPG="/usr/bin/gpg"; else LINUX_GPG="gpg"; fi
+fi
 
 require() {
   for cmd in "$@"; do

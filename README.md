@@ -17,6 +17,7 @@ sh -c "$(curl -fsLS https://raw.githubusercontent.com/myprysm/dotfiles/main/boot
 What it assumes:
 
 - **Ubuntu (incl. WSL2)**: `sh` + `curl` present (minimal images: `apt-get install -y curl` first). One sudo moment for apt prerequisites; Homebrew installs to `/home/linuxbrew/.linuxbrew` (needs glibc ≥ 2.39 for Tier 1).
+- **WSL2 additionally**: **GnuPG must already be installed on the Windows side** (Gpg4win). Git here signs every commit through the Windows GnuPG store, so `bootstrap.sh` links `/usr/local/bin/gpg` to `gpg.exe` and **aborts loudly if it is not there** — install it before running the one-liner. `secrets-restore.sh` then imports the signing key into *both* keyrings.
 - **macOS**: `curl` + `sh` ship with the OS. The Homebrew installer pulls Xcode CLT itself.
 
 `bootstrap.sh` is idempotent and the single owner of OS prerequisites — a

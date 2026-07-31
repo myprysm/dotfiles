@@ -14,7 +14,7 @@ set -euo pipefail
 FORCE=0
 [ "${1:-}" = "--force" ] && FORCE=1
 
-require bw jq gpg
+require bw jq "$LINUX_GPG"
 bw_open
 bw sync >/dev/null
 
@@ -86,9 +86,26 @@ gpg_item="$(bw_items "$BW_ROOT" | jq -r '.[] | select(.name == "gpg-keys") | .id
 if [ -z "$gpg_item" ]; then
   warn "no gpg-keys item in the vault — skipped"
 else
-  bw get attachment secret-keys.asc --itemid "$gpg_item" --raw | gpg --batch --import
-  bw get attachment ownertrust.txt --itemid "$gpg_item" --raw | gpg --batch --import-ownertrust
-  note "  imported       secret keys + ownertrust"
+  bw get attachment secret-keys.asc --itemid "$gpg_item" --raw | "$LINUX_GPG" --batch --import
+  bw get attachment ownertrust.txt --itemid "$gpg_item" --raw | "$LINUX_GPG" --batch --import-ownertrust
+  note "  imported       secret keys + ownertrust (Linux keyring)"
+
+  # On WSL the key must ALSO reach the Windows store, because .gitconfig points
+  # gpg.program at the Windows binary (#6, #8 deviation 11). Importing only into
+  # the Linux keyring leaves git unable to sign — the rebuild would look complete
+  # and then fail on the first commit. bootstrap.sh owns the symlink itself.
+  if is_wsl; then
+    if [ ! -e "$WSL_GPG" ]; then
+      warn "WSL: $WSL_GPG is missing — run bootstrap.sh. git cannot sign until it exists."
+    elif ! "$WSL_GPG" --version >/dev/null 2>&1; then
+      warn "WSL: $WSL_GPG will not run — Windows-interop looks unregistered."
+      warn "     'wsl --shutdown' from Windows, reopen, and re-run. git cannot sign until then."
+    else
+      bw get attachment secret-keys.asc --itemid "$gpg_item" --raw | "$WSL_GPG" --batch --import
+      bw get attachment ownertrust.txt --itemid "$gpg_item" --raw | "$WSL_GPG" --batch --import-ownertrust
+      note "  imported       secret keys + ownertrust (Windows store — this is what git signs with)"
+    fi
+  fi
 fi
 
 report_work_domain || true
