@@ -1,26 +1,21 @@
 {{/* Rendered once by `chezmoi init` into the
      machine-local config (~/.config/chezmoi/chezmoi.toml). Never committed.
 
-     Bundles are one comma-separated prompt rather than one yes/no each: eight
-     sequential questions are easy to click through and miss, whereas a single
-     prompt names every option in one place. The booleans below are computed
-     from it, so every `.bundles.<name>` gate elsewhere is unaffected. */}}
+     Bundles are one multi-select, not one yes/no each: eight sequential
+     questions are easy to click through and miss, and a typed list would
+     silently disable whatever was misspelled. A multichoice shows every
+     option at once and rejects anything not on the list. The booleans below
+     are computed from the answer, so every `.bundles.<name>` gate elsewhere
+     is unaffected. */}}
 {{- $bundles := list "ops" "media" "playwright" "work" "go" "java" "rust" "ai" -}}
 {{- $email := promptStringOnce . "email" "Git email for this machine" -}}
 {{- $bwServer := promptStringOnce . "bwServer" "Bitwarden server URL (machine-local, never committed)" -}}
-{{- $raw := promptStringOnce . "bundleList" (printf "Bundles to enable, comma-separated — %s (blank for none)" (join ", " $bundles)) -}}
-{{- $chosen := without (splitList "," (replace " " "" (lower $raw))) "" -}}
-{{- /* A typo must not silently disable a bundle — that is the failure mode
-       this prompt exists to remove, so an unknown name stops init. */ -}}
-{{- $unknown := without $chosen "ops" "media" "playwright" "work" "go" "java" "rust" "ai" -}}
-{{- if $unknown -}}
-{{-   fail (printf "unknown bundle(s): %s — valid: %s" (join ", " $unknown) (join ", " $bundles)) -}}
-{{- end -}}
+{{- $chosen := promptMultichoiceOnce . "bundleList" "Bundles to enable" $bundles -}}
 
 [data]
     email = {{ $email | quote }}
     bwServer = {{ $bwServer | quote }}
-    bundleList = {{ $raw | quote }}
+    bundleList = [{{ range $i, $b := $chosen }}{{ if $i }}, {{ end }}{{ $b | quote }}{{ end }}]
 
 [data.bundles]
 {{ range $bundles }}    {{ . }} = {{ has . $chosen }}
