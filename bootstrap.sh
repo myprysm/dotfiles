@@ -8,9 +8,11 @@ REPO="myprysm/dotfiles"
 echo "==> [1/7] OS prerequisites"
 case "$(uname -s)" in
   Linux)
-    # The one documented sudo moment. Homebrew needs these before it exists.
+    # The ONE sudo moment, and the single owner of apt prerequisites
+    # (superset of Homebrew's needs + #5 §4 build deps). Hand-cloned repos
+    # run this script too — no run_once_before_ duplicate in .chezmoiscripts.
     sudo apt-get update
-    sudo apt-get install -y build-essential procps curl file git zsh
+    sudo apt-get install -y build-essential procps curl file git zsh libffi-dev python3-dev
     ;;
   Darwin)
     : # Homebrew installer handles Xcode CLT itself.
