@@ -22,7 +22,7 @@ hand-cloned repo is set up by running `./bootstrap.sh`, never by a raw
 `chezmoi apply` (brew and the secret CLIs would be missing).
 
 The script: apt/CLT prerequisites → Homebrew → chezmoi → `chezmoi init`
-(prompts once: email, Bitwarden server URL, bundle toggles) → secret CLIs
+(prompts once: email, Bitwarden server URL, the bundle list) → secret CLIs
 (`bw` always, `op` if work bundle) → auth → `chezmoi apply` → prints the
 post-bootstrap checklist (tool-native auth: `gh auth login`, `docker login`, …
 and — deliberately manual — `scripts/secrets-restore.sh`).
@@ -49,7 +49,7 @@ docs/secrets.md         → secrets policy (what never enters this repo, vault/r
 scripts/                → secrets-restore.sh, secrets-audit.sh, secrets-backup.sh (explicit invocation only)
                           secrets-common.sh is sourced by all three, never run
 home/
-  .chezmoi.toml.tmpl    → init prompts (email, bw server, bundle toggles) → machine-local config
+  .chezmoi.toml.tmpl    → init prompts (email, bw server, bundle list) → machine-local config
   .chezmoidata/         → packages.yaml (core + bundles), zsh.yaml (plugin lists)
   .chezmoitemplates/    → secret (per-domain router: personal→bw, work→op)
   .chezmoiexternal.toml → oh-my-zsh + amix/vimrc, pinned archives
