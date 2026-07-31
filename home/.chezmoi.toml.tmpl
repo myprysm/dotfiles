@@ -1,29 +1,29 @@
 {{/* Rendered once by `chezmoi init` into the
-     machine-local config (~/.config/chezmoi/chezmoi.toml). Never committed. */}}
+     machine-local config (~/.config/chezmoi/chezmoi.toml). Never committed.
+
+     Bundles are one comma-separated prompt rather than one yes/no each: eight
+     sequential questions are easy to click through and miss, whereas a single
+     prompt names every option in one place. The booleans below are computed
+     from it, so every `.bundles.<name>` gate elsewhere is unaffected. */}}
+{{- $bundles := list "ops" "media" "playwright" "work" "go" "java" "rust" "ai" -}}
 {{- $email := promptStringOnce . "email" "Git email for this machine" -}}
 {{- $bwServer := promptStringOnce . "bwServer" "Bitwarden server URL (machine-local, never committed)" -}}
-{{- $ops := promptBoolOnce . "bundles.ops" "Enable bundle: ops (k8s/infra tooling)" -}}
-{{- $media := promptBoolOnce . "bundles.media" "Enable bundle: media" -}}
-{{- $playwright := promptBoolOnce . "bundles.playwright" "Enable bundle: playwright (Linux apt libs)" -}}
-{{- $work := promptBoolOnce . "bundles.work" "Enable bundle: work (PHP/DB/cloud + 1Password)" -}}
-{{- $go := promptBoolOnce . "bundles.go" "Enable bundle: go" -}}
-{{- $java := promptBoolOnce . "bundles.java" "Enable bundle: java (JDKs via SDKMAN + maven)" -}}
-{{- $rust := promptBoolOnce . "bundles.rust" "Enable bundle: rust" -}}
-{{- $ai := promptBoolOnce . "bundles.ai" "Enable bundle: ai" -}}
+{{- $raw := promptStringOnce . "bundleList" (printf "Bundles to enable, comma-separated — %s (blank for none)" (join ", " $bundles)) -}}
+{{- $chosen := without (splitList "," (replace " " "" (lower $raw))) "" -}}
+{{- /* A typo must not silently disable a bundle — that is the failure mode
+       this prompt exists to remove, so an unknown name stops init. */ -}}
+{{- $unknown := without $chosen "ops" "media" "playwright" "work" "go" "java" "rust" "ai" -}}
+{{- if $unknown -}}
+{{-   fail (printf "unknown bundle(s): %s — valid: %s" (join ", " $unknown) (join ", " $bundles)) -}}
+{{- end -}}
 
 [data]
     email = {{ $email | quote }}
     bwServer = {{ $bwServer | quote }}
+    bundleList = {{ $raw | quote }}
 
 [data.bundles]
-    ops = {{ $ops }}
-    media = {{ $media }}
-    playwright = {{ $playwright }}
-    work = {{ $work }}
-    go = {{ $go }}
-    java = {{ $java }}
-    rust = {{ $rust }}
-    ai = {{ $ai }}
-
+{{ range $bundles }}    {{ . }} = {{ has . $chosen }}
+{{ end }}
 [bitwarden]
     unlock = "auto"
