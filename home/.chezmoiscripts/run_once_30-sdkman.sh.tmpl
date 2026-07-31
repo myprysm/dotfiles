@@ -5,9 +5,18 @@
 # this bundle has no such key and a direct lookup is a template error, not false.
 set -eu
 [ -d "$HOME/.sdkman" ] || curl -s "https://get.sdkman.io?rcupdate=false" | bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+# SDKMAN is not written to survive `set -u`: sourcing its init on a fresh
+# install dies on `SDKMAN_CANDIDATES_API: unbound variable`, and `sdk` is a
+# shell function from the same codebase, so it can trip the same way. An
+# unbound-variable error exits the shell outright — `|| true` does not catch
+# it — so the flag stays off for every line that runs SDKMAN's own code, and
+# goes back on immediately afterwards.
+set +u
+. "$HOME/.sdkman/bin/sdkman-init.sh"
 {{ range .packages.bundles.java.sdkman -}}
 sdk install java {{ . }} || true
 {{ end -}}
+set -u
 # ~/.sdkman/etc/config tracked separately with self-update off (pin-the-manager stance)
 {{ end -}}
