@@ -66,7 +66,11 @@ packages:
     work:
       brews: [composer, mysql-client, openblas, azure-cli, caddy, dnsmasq]
     java:
-      brews: [maven]                # inert without a JDK, so it ships with them
+      # maven is inert without a JDK, so it ships with them. zip and unzip are
+      # SDKMAN's own hard requirements: its installer aborts on a machine that
+      # lacks either, and Ubuntu's base image carries neither. unzip was only
+      # ever present by accident, as a transitive dependency of terraform.
+      brews: [maven, zip, unzip]
       sdkman: [25-tem, 25-graal]    # SDKMAN owns JDKs; brew casks cannot switch vendors
     go:
       tools:                        # module paths read off this machine's binaries
