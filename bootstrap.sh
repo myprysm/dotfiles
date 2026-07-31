@@ -89,6 +89,19 @@ brew install chezmoi
 echo "==> [4/7] chezmoi init (prompts: email, Bitwarden server URL, bundles)"
 chezmoi init "$REPO"   # no --apply: secret CLIs must be installed + authed first
 
+# `chezmoi init` clones ONLY when the source directory is absent; on a machine
+# that already has one it leaves the checkout exactly as it found it. Without
+# this pull, re-running the one-liner silently applies stale source — a fix
+# pushed to the repo appears to have failed when it was simply never fetched.
+# Not fatal: a development machine whose source carries local or unpushed
+# commits cannot fast-forward, and must still be able to bootstrap.
+if chezmoi git -- pull --ff-only >/dev/null 2>&1; then
+  echo "    source updated to $(chezmoi git -- rev-parse --short HEAD 2>/dev/null)"
+else
+  echo "    source NOT fast-forwarded — continuing with the checkout as-is" >&2
+  echo "    (local commits, a detached HEAD, or no network)" >&2
+fi
+
 echo "==> [5/7] Secret manager CLIs"
 brew install bitwarden-cli
 WORK_BUNDLE="$(chezmoi execute-template '{{ .bundles.work }}')"
