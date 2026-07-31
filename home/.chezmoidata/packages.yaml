@@ -28,7 +28,10 @@ packages:
               hashicorp/tap/terraform, hashicorp/tap/vault, hashicorp/tap/packer,
               rclone, hcloud, argocd, cilium-cli, crane, cyphernetes,
               fairwindsops/tap/pluto, operator-sdk, k0sproject/tap/k0sctl, kind,
-              netbirdio/tap/netbird, mkcert, nmap, cloudflared]
+              netbirdio/tap/netbird, mkcert, nmap, cloudflared, krew]
+      # `krew` appears in the plugin list too — that is krew's own self-upgrade,
+      # and it only works once krew exists. Nothing installed it on a fresh
+      # machine, so every `kubectl krew install` failed and `|| true` hid it (#9).
       krew: [cnpg, krew, linstor, oidc-login]
       # WSL's 14 repos (#8) — all public URLs, verified. The Mac's 36 are not
       # yet audited for private/dead URLs; merging them is #13's job.

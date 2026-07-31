@@ -8,17 +8,13 @@ REPO="myprysm/dotfiles"
 echo "==> [1/7] OS prerequisites"
 case "$(uname -s)" in
   Linux)
-    # The ONE sudo moment, and the single owner of apt prerequisites
-    # (superset of Homebrew's needs + #5 §4 build deps). Hand-cloned repos
-    # run this script too — no run_once_before_ duplicate in .chezmoiscripts.
-    sudo apt-get update
-    sudo apt-get install -y build-essential procps curl file git zsh libffi-dev python3-dev
-
     # WSL only: .gitconfig hardcodes gpg.program=/usr/local/bin/gpg because the
     # signing key lives in the Windows GnuPG store (#6, #8 deviation 11), and
     # nothing else in this repo creates that symlink. Without it a fresh WSL
     # machine gets commit.gpgsign=true pointing at nothing and cannot commit.
     # No key material is involved here — this only makes gpg.program resolvable.
+    # Runs BEFORE apt (#9): the check needs nothing apt provides, and a machine
+    # that cannot sign should hear so before paying for a full package run.
     if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
       echo "    WSL detected — checking the Windows GnuPG shim"
       WIN_GPG=""
@@ -36,10 +32,12 @@ case "$(uname -s)" in
         exit 1
       fi
 
-      if [ ! -e /usr/local/bin/gpg ]; then
-        echo "    linking /usr/local/bin/gpg -> Windows GnuPG"
-        sudo ln -s "$WIN_GPG" /usr/local/bin/gpg
-      fi
+      # -f, because [ -e ] is FALSE on a dangling symlink (#9): a link left over
+      # from a Gpg4win that has since moved would take the create branch and
+      # collide, failing with a bare "ln: Already exists". -sfn is idempotent
+      # and replaces a stale link with the one .gitconfig expects.
+      echo "    linking /usr/local/bin/gpg -> Windows GnuPG"
+      sudo ln -sfn "$WIN_GPG" /usr/local/bin/gpg
 
       if ! /usr/local/bin/gpg --version >/dev/null 2>&1; then
         echo "FATAL: /usr/local/bin/gpg exists but will not run." >&2
@@ -49,6 +47,12 @@ case "$(uname -s)" in
         exit 1
       fi
     fi
+
+    # The single owner of apt prerequisites (superset of Homebrew's needs +
+    # #5 §4 build deps). Hand-cloned repos run this script too — no
+    # run_once_before_ duplicate in .chezmoiscripts.
+    sudo apt-get update
+    sudo apt-get install -y build-essential procps curl file git zsh libffi-dev python3-dev
     ;;
   Darwin)
     : # Homebrew installer handles Xcode CLT itself.
@@ -56,14 +60,24 @@ case "$(uname -s)" in
 esac
 
 echo "==> [2/7] Homebrew"
-if ! command -v brew >/dev/null 2>&1; then
+# Test the install prefixes, not PATH (#9): nothing here writes `brew shellenv`
+# into the login shell, so `command -v brew` is false in every fresh shell and a
+# re-run would download and run the whole Homebrew installer again.
+if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+  BREW=/home/linuxbrew/.linuxbrew/bin/brew
+elif [ -x /opt/homebrew/bin/brew ]; then
+  BREW=/opt/homebrew/bin/brew
+elif command -v brew >/dev/null 2>&1; then
+  BREW="$(command -v brew)"
+else
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
+    BREW=/home/linuxbrew/.linuxbrew/bin/brew
+  else
+    BREW=/opt/homebrew/bin/brew
+  fi
 fi
-if [ -d /home/linuxbrew/.linuxbrew ]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-elif [ -d /opt/homebrew ]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
+eval "$("$BREW" shellenv)"
 
 echo "==> [3/7] chezmoi"
 brew install chezmoi
@@ -82,10 +96,18 @@ if [ "$WORK_BUNDLE" = "true" ]; then
 fi
 
 echo "==> [6/7] Authenticate"
-BW_SERVER="$(chezmoi execute-template '{{ .bwServer }}')"
-bw config server "$BW_SERVER"
-bw login --check >/dev/null 2>&1 || bw login
-BW_SESSION="$(bw unlock --raw)"
+# bw refuses `config server` while logged in ("Logout required before server
+# config update"), which under set -e killed every re-run (#9). Setting the
+# server is a logged-out-only act, so it belongs inside this branch — and
+# `login --raw` hands back the session directly, sparing the second master
+# password prompt that made a fresh login look like a rejection.
+if ! bw login --check >/dev/null 2>&1; then
+  BW_SERVER="$(chezmoi execute-template '{{ .bwServer }}')"
+  bw config server "$BW_SERVER"
+  BW_SESSION="$(bw login --raw)"
+else
+  BW_SESSION="$(bw unlock --raw)"
+fi
 export BW_SESSION
 if [ "$WORK_BUNDLE" = "true" ]; then
   eval "$(op signin)"

@@ -11,9 +11,16 @@ if ! command -v npx >/dev/null 2>&1; then
   exit 0
 fi
 
+# -y and -a are what keep this unattended (#9): without them the CLI prompts
+# per skill and defaults to every detected agent — a fresh machine answered
+# fifteen agent pickers and installed far beyond the ~/.claude scope #14 set.
+# A skill withdrawn upstream must not abort the whole apply either: restoring
+# optional agent skills is not a precondition for a working machine.
 install_skill() {
   [ -e "$HOME/.claude/skills/$2" ] && return 0
-  npx --yes skills add "$1" -s "$2" -g
+  if ! npx --yes skills add "$1" -s "$2" -g -y -a claude-code; then
+    echo "  ! could not restore skill '$2' from $1 — skipped" >&2
+  fi
 }
 
 {{ range $name, $skill := (include "dot_agents/dot_skill-lock.json" | fromJson).skills -}}
