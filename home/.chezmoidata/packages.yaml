@@ -6,6 +6,13 @@
 # taps list. Bare `terraform`/`vault` would pull different formulae than the
 # HashiCorp taps this estate actually uses (#8).
 packages:
+  # Homebrew 6 refuses to load formulae from untrusted third-party taps, so a
+  # tap-qualified name is not enough — each tap is tapped and trusted before
+  # bundling (#8). Trust means brew may execute that tap's formula code; keep
+  # this list to vendors' own taps and review any addition.
+  # ariga/tap only supplies atlas as a transitive dep, but an untrusted tap
+  # makes every unrelated install print a trust warning and fail (#8).
+  taps: [hashicorp/tap, ariga/tap, fairwindsops/tap, k0sproject/tap, netbirdio/tap]
   core:
     brews: [bat, btop, direnv, eza, gh, htop, jq, mcfly, nvm, ripgrep, starship, tmux, uv, wget, yq]
     linux:
