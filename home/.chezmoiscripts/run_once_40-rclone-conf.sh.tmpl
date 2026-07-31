@@ -1,0 +1,13 @@
+#!/bin/bash
+# PROTOTYPE (wayfinder #7) — issue #6, mechanism C: rclone.conf assembled whole-file
+# from per-domain secure-note fragments. Generic ref names only — no remote names
+# in this repo. INI sections are independent, so concatenation is safe.
+set -eu
+mkdir -p "$HOME/.config/rclone"
+umask 077
+{
+  bw get notes "rclone-conf-personal"
+{{- if .bundles.work }}
+  op read "op://dotfiles/rclone-conf-work/notesPlain"
+{{- end }}
+} > "$HOME/.config/rclone/rclone.conf"

@@ -1,0 +1,23 @@
+#!/bin/bash
+# PROTOTYPE (wayfinder #7) — one Brewfile rendered from .chezmoidata/packages.yaml
+# (core + per-OS + enabled bundles) piped to brew bundle (issue #5 §1).
+# Any list edit changes this rendered script → run_onchange_ re-runs it.
+set -eu
+brew bundle --file=/dev/stdin <<EOF
+{{ range .packages.core.brews }}brew {{ . | quote }}
+{{ end -}}
+{{ range (index .packages.core .chezmoi.os).brews }}brew {{ . | quote }}
+{{ end -}}
+{{ if eq .chezmoi.os "darwin" -}}
+{{ range .packages.core.darwin.casks }}cask {{ . | quote }}
+{{ end -}}
+{{ end -}}
+{{ range .packages.secret.brews }}brew {{ . | quote }}
+{{ end -}}
+{{ range $name, $bundle := .packages.bundles -}}
+{{ if and (index $.bundles $name) (hasKey $bundle "brews") -}}
+{{ range $bundle.brews }}brew {{ . | quote }}
+{{ end -}}
+{{ end -}}
+{{ end -}}
+EOF

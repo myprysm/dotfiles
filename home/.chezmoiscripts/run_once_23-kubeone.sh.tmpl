@@ -1,0 +1,7 @@
+{{ if .bundles.ops -}}
+#!/bin/bash
+# PROTOTYPE (wayfinder #7) — kubeone has no brew formula: pinned-release download (issue #5 §2).
+set -eu
+KUBEONE_VERSION="vX.Y.Z"   # pin chosen at migration
+echo "TODO: download kubeone ${KUBEONE_VERSION} release binary to ~/.local/bin"
+{{ end -}}

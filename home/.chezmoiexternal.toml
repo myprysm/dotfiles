@@ -1,0 +1,15 @@
+# PROTOTYPE (wayfinder #7) — pinned externals (issues #2/#4).
+# Pins are placeholder SHAs; real pins chosen at migration. refreshPeriod
+# deliberately absent: never re-download unless the pin changes (or -R).
+
+[".oh-my-zsh"]
+    type = "archive"
+    url = "https://github.com/ohmyzsh/ohmyzsh/archive/OMZ_PINNED_SHA.tar.gz"
+    exact = true
+    stripComponents = 1
+
+[".vim_runtime"]
+    type = "archive"
+    url = "https://github.com/amix/vimrc/archive/VIMRC_PINNED_SHA.tar.gz"
+    exact = true
+    stripComponents = 1
