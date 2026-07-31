@@ -1,2 +1,1 @@
-# PROTOTYPE stub — global gitignore, byte-identical across machines; adopted at migration.
-.DS_Store
+**/.claude/settings.local.json

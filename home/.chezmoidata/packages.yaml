@@ -1,6 +1,10 @@
-# PROTOTYPE (wayfinder #7) — single source of truth for every package list,
-# per issue #5. run_onchange_ scripts in .chezmoiscripts/ render these lists
-# inline, so any edit here re-triggers the matching installer on next apply.
+# Single source of truth for every package list, per issue #5. run_onchange_
+# scripts in .chezmoiscripts/ render these lists inline, so any edit here
+# re-triggers the matching installer on next apply.
+#
+# Tap-qualified formula names (owner/tap/formula) tap on demand — no separate
+# taps list. Bare `terraform`/`vault` would pull different formulae than the
+# HashiCorp taps this estate actually uses (#8).
 packages:
   core:
     brews: [bat, btop, direnv, eza, gh, htop, jq, mcfly, nvm, ripgrep, starship, tmux, uv, wget, yq]
@@ -13,24 +17,49 @@ packages:
     brews: [bitwarden-cli]          # bw on every machine; op is bootstrap-installed with the work bundle
   bundles:
     ops:
-      brews: [kubernetes-cli, k9s, helm, helm@3, talosctl, velero, terraform,
-              vault, packer, rclone, hcloud, argocd, cilium-cli, crane,
-              cyphernetes, pluto, operator-sdk, k0sctl, kind, netbird, mkcert,
-              nmap, cloudflared]
+      brews: [kubernetes-cli, k9s, helm, helm@3, talosctl, velero,
+              hashicorp/tap/terraform, hashicorp/tap/vault, hashicorp/tap/packer,
+              rclone, hcloud, argocd, cilium-cli, crane, cyphernetes,
+              fairwindsops/tap/pluto, operator-sdk, k0sproject/tap/k0sctl, kind,
+              netbirdio/tap/netbird, mkcert, nmap, cloudflared]
       krew: [cnpg, krew, linstor, oidc-login]
-      helmRepos: []                 # union of both machines — review for private/dead URLs before encoding (redaction rule)
+      # WSL's 14 repos (#8) — all public URLs, verified. The Mac's 36 are not
+      # yet audited for private/dead URLs; merging them is #13's job.
+      helmRepos:
+        - {name: external-dns, url: "https://kubernetes-sigs.github.io/external-dns/"}
+        - {name: cilium, url: "https://helm.cilium.io/"}
+        - {name: jetstack, url: "https://charts.jetstack.io/"}
+        - {name: dex, url: "https://charts.dexidp.io/"}
+        - {name: argocd, url: "https://argoproj.github.io/argo-helm/"}
+        - {name: velero, url: "https://vmware-tanzu.github.io/helm-charts/"}
+        - {name: traefik, url: "https://helm.traefik.io/traefik"}
+        - {name: twuni, url: "https://twuni.github.io/docker-registry.helm"}
+        - {name: verdaccio, url: "https://charts.verdaccio.org"}
+        - {name: emberstack, url: "https://emberstack.github.io/helm-charts"}
+        - {name: cnpg, url: "https://cloudnative-pg.github.io/charts"}
+        - {name: vm, url: "https://victoriametrics.github.io/helm-charts"}
+        - {name: argo, url: "https://argoproj.github.io/argo-helm"}
+        - {name: jellyfin, url: "https://jellyfin.github.io/jellyfin-helm"}
       # kubeone: no formula — pinned-release download script (run_once_23)
     media:
       brews: [ffmpeg, exiftool, ghostscript, gifsicle, mupdf-tools, qpdf, vips]
     playwright:
-      apt: [libnss3, libatk-bridge2.0-0, libgtk-3-0]   # stub — full ~30-lib set lands at migration
+      # The real set this machine carries (#8). Bootstrap prereqs
+      # (build-essential, libffi-dev, python3-dev) belong to bootstrap.sh, not here.
+      apt: [fonts-freefont-ttf, fonts-ipafont-gothic, fonts-liberation,
+            fonts-noto-color-emoji, fonts-tlwg-loma-otf, fonts-unifont,
+            fonts-wqy-zenhei, libasound2t64, libatk-bridge2.0-0t64, libatk1.0-0t64,
+            libatspi2.0-0t64, libattr1, libcairo2, libcups2t64, libdbus-1-3,
+            libdrm2, libfontconfig1, libfreetype6, libgbm1, libglib2.0-0t64,
+            libnspr4, libnss3, libpango-1.0-0, libx11-6, libxcb1, libxcomposite1,
+            libxdamage1, libxext6, libxfixes3, libxkbcommon0, libxrandr2, xvfb]
     work:
       brews: [composer, maven, mysql-client, openblas, azure-cli, caddy, dnsmasq]
       sdkman: [25-tem, 25-graal]    # SDKMAN owns JDKs; brew casks cannot switch vendors
     go:
-      tools:                        # module paths verified at migration; @latest unless pinned
+      tools:                        # module paths read off this machine's binaries (#8)
         - github.com/onsi/ginkgo/v2/ginkgo@latest
-        - github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        - github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
         - golang.org/x/tools/gopls@latest
         - sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
         - github.com/sqlc-dev/sqlc/cmd/sqlc@latest

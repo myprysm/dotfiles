@@ -1,15 +1,37 @@
-# PROTOTYPE (wayfinder #7) — pinned externals (issues #2/#4).
-# Pins are placeholder SHAs; real pins chosen at migration. refreshPeriod
-# deliberately absent: never re-download unless the pin changes (or -R).
+# Pinned externals (issues #2/#4). refreshPeriod deliberately absent: never
+# re-download unless the pin changes (or `chezmoi apply -R`). Updating = bump
+# the SHA here. omz self-update is off (DISABLE_AUTO_UPDATE in dot_zshrc.tmpl)
+# so the two updaters never fight over the exact tree.
+# Pins chosen 2026-07-31 during the WSL migration (#8).
 
 [".oh-my-zsh"]
     type = "archive"
-    url = "https://github.com/ohmyzsh/ohmyzsh/archive/OMZ_PINNED_SHA.tar.gz"
+    url = "https://github.com/ohmyzsh/ohmyzsh/archive/c5ba74cf02cce4c342153f79089100194f30940f.tar.gz"
+    exact = true
+    stripComponents = 1
+
+# Custom plugins live inside the exact omz tree as their own externals — the
+# pattern the chezmoi user guide documents for exactly this case.
+[".oh-my-zsh/custom/plugins/zsh-autosuggestions"]
+    type = "archive"
+    url = "https://github.com/zsh-users/zsh-autosuggestions/archive/85919cd1ffa7d2d5412f6d3fe437ebdbeeec4fc5.tar.gz"
+    exact = true
+    stripComponents = 1
+
+[".oh-my-zsh/custom/plugins/zsh-syntax-highlighting"]
+    type = "archive"
+    url = "https://github.com/zsh-users/zsh-syntax-highlighting/archive/1d85c692615a25fe2293bdd44b34c217d5d2bf04.tar.gz"
+    exact = true
+    stripComponents = 1
+
+[".oh-my-zsh/custom/plugins/zsh-claudecode-completion"]
+    type = "archive"
+    url = "https://github.com/wbingli/zsh-claudecode-completion/archive/a745cfb6910ebe861a6e695b7d4c30f5a838bf30.tar.gz"
     exact = true
     stripComponents = 1
 
 [".vim_runtime"]
     type = "archive"
-    url = "https://github.com/amix/vimrc/archive/VIMRC_PINNED_SHA.tar.gz"
+    url = "https://github.com/amix/vimrc/archive/46294d589d15d2e7308cf76c58f2df49bbec31e8.tar.gz"
     exact = true
     stripComponents = 1

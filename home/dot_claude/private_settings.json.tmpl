@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "0",
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Skill(playwright-cli)",
+      "Skill(playwright-cli:*)",
+      "Bash(npx playwright:*)",
+      "Bash(playwright-cli open:*)",
+      "Bash(playwright-cli close:*)",
+      "Bash(playwright-cli goto:*)",
+      "Bash(playwright-cli snapshot:*)",
+      "Bash(playwright-cli click:*)",
+      "Bash(playwright-cli fill:*)",
+      "Bash(playwright-cli press:*)",
+      "Bash(playwright-cli eval:*)",
+      "Read(/{{ .chezmoi.homeDir }}/.claude/**)",
+      "Bash(playwright-cli check:*)",
+      "Bash(playwright-cli run-code \"async page => {:*)",
+      "Bash(pip install:*)",
+      "Bash(python3 build_spreadsheet.py)",
+      "WebFetch(domain:forums.servethehome.com)",
+      "WebFetch(domain:www.tariffnumber.com)",
+      "WebFetch(domain:www.clearcust.com)",
+      "WebFetch(domain:www.webhostingtalk.com)",
+      "WebFetch(domain:www.ictrecht.nl)",
+      "WebFetch(domain:www.omniaretail.com)",
+      "Bash(python3 -c \":*)",
+      "WebFetch(domain:answers.serverpartdeals.com)",
+      "WebFetch(domain:hindsight.vectorize.io)",
+      "mcp__plugin_hindsight-memory_hindsight__agent_knowledge_ingest"
+    ],
+    "deny": [
+      "Read(/{{ .chezmoi.homeDir }}/**/.env)",
+      "Read(/{{ .chezmoi.homeDir }}/**/.env.*)",
+      "Read(/{{ .chezmoi.homeDir }}/**/.envrc)",
+      "Read(/{{ .chezmoi.homeDir }}/**/*.tfstate)",
+      "Read(/{{ .chezmoi.homeDir }}/**/*.tfstate.*)",
+      "Read(/{{ .chezmoi.homeDir }}/**/kubeconfig)",
+      "Read(/{{ .chezmoi.homeDir }}/**/talosconfig)",
+      "Read(/{{ .chezmoi.homeDir }}/.secrets/**)",
+      "Read(/{{ .chezmoi.homeDir }}/.hindsight/claude-code.json)",
+      "Read(/{{ .chezmoi.homeDir }}/**/vault.yml)",
+      "Read(/{{ .chezmoi.homeDir }}/**/vault.yaml)",
+      "Read(/{{ .chezmoi.homeDir }}/**/*.vault)"
+    ],
+    "defaultMode": "auto"
+  },
+  "model": "opus",
+  "skillOverrides": {
+    "compress": "off",
+    "caveman-compress": "off"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash {{ .chezmoi.homeDir }}/.claude/hooks/block-secret-reads.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"{{ .chezmoi.homeDir }}/.claude/hooks/caveman-activate.js\"",
+            "timeout": 5,
+            "statusMessage": "Loading caveman mode..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"{{ .chezmoi.homeDir }}/.claude/hooks/caveman-mode-tracker.js\"",
+            "timeout": 5,
+            "statusMessage": "Tracking caveman mode..."
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"{{ .chezmoi.homeDir }}/.claude/statusline.sh\""
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": false,
+    "superpowers@claude-plugins-official": true,
+    "code-review@claude-plugins-official": false,
+    "code-simplifier@claude-plugins-official": false,
+    "github@claude-plugins-official": false,
+    "feature-dev@claude-plugins-official": false,
+    "skill-creator@claude-plugins-official": false,
+    "ralph-loop@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": false,
+    "figma@claude-plugins-official": false,
+    "claude-code-setup@claude-plugins-official": false,
+    "pr-review-toolkit@claude-plugins-official": false,
+    "pyright-lsp@claude-plugins-official": false,
+    "gopls-lsp@claude-plugins-official": true,
+    "csharp-lsp@claude-plugins-official": false,
+    "stripe@claude-plugins-official": false,
+    "php-lsp@claude-plugins-official": false,
+    "hindsight-memory@hindsight": true,
+    "caveman@caveman": true
+  },
+  "extraKnownMarketplaces": {
+    "hindsight": {
+      "source": {
+        "source": "github",
+        "repo": "vectorize-io/hindsight"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "tui": "fullscreen"
+}

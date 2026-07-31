@@ -1,0 +1,21 @@
+#!/bin/bash
+# Reinstall the CLI-managed Claude skills from the tracked lockfile (#14).
+# The skills CLI owns ~/.agents/skills and the ~/.claude/skills symlinks; it has
+# no restore-from-lock command, so the lockfile is expanded here. Entries are
+# rendered inline from the source state, so this script changes — and re-runs —
+# whenever the lockfile does, with no ordering dependency on the applied file.
+set -eu
+
+if ! command -v npx >/dev/null 2>&1; then
+  echo "npx not found — skipping Claude skill restore" >&2
+  exit 0
+fi
+
+install_skill() {
+  [ -e "$HOME/.claude/skills/$2" ] && return 0
+  npx --yes skills add "$1" -s "$2" -g
+}
+
+{{ range $name, $skill := (include "dot_agents/dot_skill-lock.json" | fromJson).skills -}}
+install_skill {{ $skill.source | quote }} {{ $name | quote }}
+{{ end -}}
