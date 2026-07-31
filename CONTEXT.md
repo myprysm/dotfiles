@@ -32,3 +32,12 @@ _Avoid_: install, provision
 
 **Drop-in dir**:
 A typed fragment directory (`env.d/`, `aliases.d/`, `rc.d/`, `completions.d/`) under `~/.config/zsh`; adding behavior means dropping a file.
+
+**Repo-visible ref**:
+A vault item name that appears in the public repo (templates, `secrets.yaml`, scripts). Must stay generic under the redaction rule: kebab-case `<consumer>-<artifact>`, no domain suffix.
+
+**Vault-only name**:
+An item name that exists only inside a secret manager (SSH keys, restore items). Never appears in the repo; may be specific and descriptive.
+
+**Self-describing restore item**:
+A vault item that carries its own destination as private fields (`path`, optional `mode`); the restore script discovers it by folder/tag enumeration, so no names or paths live in the repo.
