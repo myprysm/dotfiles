@@ -19,6 +19,10 @@ What it assumes:
 - **Ubuntu (incl. WSL2)**: `sh` + `curl` present (minimal images: `apt-get install -y curl` first). One sudo moment for apt prerequisites; Homebrew installs to `/home/linuxbrew/.linuxbrew` (needs glibc ≥ 2.39 for Tier 1).
 - **macOS**: `curl` + `sh` ship with the OS. The Homebrew installer pulls Xcode CLT itself.
 
+`bootstrap.sh` is idempotent and the single owner of OS prerequisites — a
+hand-cloned repo is set up by running `./bootstrap.sh`, never by a raw
+`chezmoi apply` (brew and the secret CLIs would be missing).
+
 The script: apt/CLT prerequisites → Homebrew → chezmoi → `chezmoi init`
 (prompts once: email, Bitwarden server URL, bundle toggles) → secret CLIs
 (`bw` always, `op` if work bundle) → auth → `chezmoi apply` → prints the
