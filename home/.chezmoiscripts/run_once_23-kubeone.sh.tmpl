@@ -1,7 +1,27 @@
 {{ if .bundles.ops -}}
 #!/bin/bash
-# PROTOTYPE (wayfinder #7) — kubeone has no brew formula: pinned-release download (issue #5 §2).
+# kubeone has no brew formula: pinned-release download (issue #5 §2).
+# Version pinned at the WSL migration (#8) to what the machine already ran.
+# Bump = edit this line; run_once re-runs because the script content changed.
 set -eu
-KUBEONE_VERSION="vX.Y.Z"   # pin chosen at migration
-echo "TODO: download kubeone ${KUBEONE_VERSION} release binary to ~/.local/bin"
+KUBEONE_VERSION="1.12.3"
+ARCH="{{ if eq .chezmoi.arch "amd64" }}amd64{{ else }}arm64{{ end }}"
+OS="{{ .chezmoi.os }}"
+ASSET="kubeone_${KUBEONE_VERSION}_${OS}_${ARCH}"
+
+# Check the copy this script owns, not whatever is first on PATH — an
+# unmanaged binary elsewhere must not stop the managed one from landing.
+BIN="$HOME/.local/bin/kubeone"
+if [ -x "$BIN" ] && "$BIN" version 2>/dev/null | grep -q "\"gitVersion\": *\"$KUBEONE_VERSION\""; then
+  exit 0
+fi
+
+mkdir -p "$HOME/.local/bin"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+curl -fsSL -o "$TMP/kubeone.zip" \
+  "https://github.com/kubermatic/kubeone/releases/download/v${KUBEONE_VERSION}/${ASSET}.zip"
+# The archive is flat — the binary sits at the root beside LICENSE and addons/
+unzip -q -o "$TMP/kubeone.zip" kubeone -d "$TMP"
+install -m 0755 "$TMP/kubeone" "$HOME/.local/bin/kubeone"
 {{ end -}}

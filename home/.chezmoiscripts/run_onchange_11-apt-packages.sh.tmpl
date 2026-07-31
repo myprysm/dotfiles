@@ -1,6 +1,14 @@
 {{ if and (eq .chezmoi.os "linux") .bundles.playwright -}}
 #!/bin/sh
-# PROTOTYPE (wayfinder #7) — playwright bundle: Linux browser libs via apt (issue #5 §4).
+# playwright bundle: Linux browser libs via apt (issue #5 §4).
+# Nothing missing means no sudo: this is the only script in the family that
+# needs root, and a machine that already has the set should apply unattended.
 set -eu
-sudo apt-get install -y {{ .packages.bundles.playwright.apt | join " " }}
+MISSING=""
+for pkg in {{ .packages.bundles.playwright.apt | join " " }}; do
+  dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "^install ok installed$" || MISSING="$MISSING $pkg"
+done
+[ -z "$MISSING" ] && exit 0
+echo "apt: installing$MISSING"
+sudo apt-get install -y $MISSING
 {{ end -}}
