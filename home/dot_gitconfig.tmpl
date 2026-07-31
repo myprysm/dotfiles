@@ -1,15 +1,30 @@
-# Managed by chezmoi (PROTOTYPE, wayfinder #7) — issue #6, mechanism A:
-# the signing key id is an identifier and stays out of the public repo.
+# Managed by chezmoi — issue #6, mechanism A: the signing key id is an
+# identifier and stays out of the public repo.
 [user]
-    name = Damien Benon
+    name = Damien benon
     email = {{ .email }}
-    signingkey = {{ template "secret" (dict "domain" "personal" "ref" "git-signing-key" "field" "keyid") }}
+    signingkey = {{ template "secret" (dict "ctx" . "key" "git-signing-key") }}
 [commit]
+    gpgsign = true
+[tag]
     gpgsign = true
 {{- if eq .chezmoi.os "linux" }}
 [gpg]
-    # WSL → Windows gpg interop; plain gpg on native Linux (per-OS logic, not a secret)
+{{- if contains "microsoft" (lower .chezmoi.kernel.osrelease) }}
+    # WSL: the secret key lives in the Windows GnuPG store, reached through
+    # this symlink to gpg.exe. Per-OS logic, not a secret (#6).
+    program = /usr/local/bin/gpg
+{{- else }}
     program = gpg
+{{- end }}
 {{- end }}
 [core]
     excludesfile = ~/.config/git/ignore
+[pull]
+    rebase = true
+[push]
+    autoSetupRemote = true
+[rebase]
+    autoStash = true
+[alias]
+    fo = "!f() { git fetch origin \"$1\":\"$1\"; }; f"

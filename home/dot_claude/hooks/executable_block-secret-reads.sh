@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# PreToolUse hook: deny reading secret file CONTENTS via Read, Grep, or Bash.
+# Carries the decision in JSON (hookSpecificOutput.permissionDecision); always exits 0.
+# Depends on jq. Fails open if jq/input missing (does not break other tools).
+set -u
+input=$(cat)
+
+jqr() { printf '%s' "$input" | jq -r "$1" 2>/dev/null; }
+tool=$(jqr '.tool_name // empty')
+
+case "$tool" in
+  Read) target=$(jqr '.tool_input.file_path // empty') ;;
+  Grep) target=$(jqr '[.tool_input.path, .tool_input.glob] | map(select(.!=null)) | join(" ")') ;;
+  Bash) target=$(jqr '.tool_input.command // empty') ;;
+  *)    exit 0 ;;
+esac
+[ -z "$target" ] && exit 0
+
+deny() {
+  printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Reading secret files is blocked by policy (.env/.envrc, *.tfstate, kubeconfig, talosconfig, ~/.secrets, ~/.hindsight/claude-code.json, vault files). Ask the user before accessing secrets."}}'
+  exit 0
+}
+
+# Bash: ansible-vault that decrypts/exposes vault content is always blocked.
+if [ "$tool" = "Bash" ]; then
+  if printf '%s' "$target" | grep -Eq 'ansible-vault[[:space:]]+(view|decrypt|edit|cat|rekey)'; then
+    deny
+  fi
+fi
+
+# Neutralize harmless env templates so they do not trigger the .env rule,
+# and Terraform templates so they do not trigger the vault.yaml rule.
+scan=$(printf '%s' "$target" \
+  | sed -E 's/\.env\.(example|sample|template|dist|tmpl)([^A-Za-z0-9_-]|$)/__ENVTPL__\2/g' \
+  | sed -E 's/vault\.ya?ml\.(tftpl|tpl)([^A-Za-z0-9_-]|$)/__VAULTTPL__\2/g')
+
+# Secret path / filename patterns (POSIX ERE).
+secret_re='(^|[^A-Za-z0-9_])\.env(\.[A-Za-z0-9_-]+)?([^A-Za-z0-9_.-]|$)'
+secret_re="$secret_re"'|(^|[^A-Za-z0-9_])\.envrc([^A-Za-z0-9_-]|$)'
+secret_re="$secret_re"'|(^|[^A-Za-z0-9_-])(kubeconfig|talosconfig)([^A-Za-z0-9_-]|$)'
+secret_re="$secret_re"'|\.tfstate([^A-Za-z0-9]|$)'
+secret_re="$secret_re"'|(^|[^A-Za-z0-9_])vault\.ya?ml([^A-Za-z0-9]|$)'
+secret_re="$secret_re"'|\.vault([^A-Za-z0-9]|$)'
+secret_re="$secret_re"'|(^|[^A-Za-z0-9_])\.secrets/'
+secret_re="$secret_re"'|/\.hindsight/claude-code\.json'
+
+printf '%s' "$scan" | grep -Eq "$secret_re" || exit 0   # no secret referenced -> allow
+
+# Read and Grep inherently surface file contents -> block on any secret hit.
+if [ "$tool" != "Bash" ]; then
+  deny
+fi
+
+# Bash: only block when the command would read the secret's contents into context
+# (a reader utility, POSIX source, or input redirection). Flag/path-only refs
+# (e.g. `kubectl --kubeconfig`, `talosctl kubeconfig ./out`) are left alone.
+reader_re='(^|[|;&`(]|&&|\|\|)[[:space:]]*(cat|tac|less|more|head|tail|bat|nl|od|xxd|hexdump|strings|base64|cut|paste|sort|uniq|rev|fold|grep|egrep|fgrep|rg|ag|ack|sed|awk|gawk|mawk|jq|yq|tee|dd|view|vi|vim|nano|emacs|source)([[:space:]]|$)'
+source_re='(^|[|;&`(]|&&|\|\|)[[:space:]]*\.[[:space:]]'
+if printf '%s' "$scan" | grep -Eq "$reader_re" \
+   || printf '%s' "$scan" | grep -Eq "$source_re" \
+   || printf '%s' "$scan" | grep -q '<'; then
+  deny
+fi
+exit 0

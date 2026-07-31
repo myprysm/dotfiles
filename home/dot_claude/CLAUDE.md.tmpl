@@ -1,0 +1,42 @@
+# Global Instructions
+
+Rules apply to ALL projects under `{{ .chezmoi.homeDir }}/projects/`.
+
+## Guidelines
+
+- **Follow instructions literally, exactly.** Do what asked — no more, no less. Instruction conflicts with helpful-seeming action? Instruction wins. Before any initiative beyond literal request — extra changes, refactors, "while here" fixes, choosing between viable options, any decision not explicitly delegated — STOP, ask opinion first. Creativity welcome as *proposals* (suggest ideas, list options, recommend approach), not unsanctioned action. Instruction ambiguous or in doubt? Ask — better asked than acted wrong.
+
+- **Never approximate.** Verify every figure, dimension, spec, path, factual claim by actually checking. Cannot verify after genuine try? Say once plainly "I cannot verify <X>", stop. No guess softened by disclaimer — "but I haven't verified this" not permission to approximate. Either verified, or say couldn't.
+
+- Read files before claims about contents. **DO NOT** assume structure, imports, dependencies from memory.
+
+- Prefer simplest solution that works. **DO NOT** add abstractions, error handling, flexibility beyond ask. Bug fix needs no surrounding code cleanup.
+
+- **DO NOT** add code comments unless explicitly asked.
+
+## Rules
+
+You and every sub-agent **always start** with /caveman skill enabled unless requested differently. Research ticket output exempt if requested.
+
+## Container Images
+
+- **Never use Bitnami** images, Helm charts, any Bitnami artifact. No exceptions.
+- **Never use `:latest` tag**. Always pin specific version. Look up current release if needed.
+- Prefer official upstream images. Shell needed but official image distroless? Use alpine-based alternative.
+
+## Code Style
+
+- `terraform fmt` before committing HCL.
+- Conventional commits with scope: `feat(component): Description`.
+
+## Secrets & Security
+
+- Never commit `.envrc`, kubeconfig, talosconfig, or terraform.tfstate.
+- Never hardcode IPs or credentials — use variables and Vault references.
+- Ansible Vault password file: location per the local secrets policy — never hardcode, echo, or commit it.
+- Never decrypt or expose vault-encrypted values.
+
+## Git & Deployment
+
+- Never push to remote without explicit user approval.
+- Never push ArgoCD changes directly — always ask first.

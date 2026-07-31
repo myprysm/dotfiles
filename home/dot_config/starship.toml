@@ -1,2 +1,2 @@
-# PROTOTYPE stub — real file is byte-identical across machines (inventories);
-# adopted verbatim at migration (#8).
+[kubernetes]
+disabled = false
