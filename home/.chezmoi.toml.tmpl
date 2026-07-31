@@ -10,7 +10,10 @@
 {{- $bundles := list "ops" "media" "playwright" "work" "go" "java" "rust" "ai" -}}
 {{- $email := promptStringOnce . "email" "Git email for this machine" -}}
 {{- $bwServer := promptStringOnce . "bwServer" "Bitwarden server URL (machine-local, never committed)" -}}
-{{- $chosen := promptMultichoiceOnce . "bundleList" "Bundles to enable" $bundles -}}
+{{- /* The empty defaults list is deliberate: nothing starts ticked, so every
+       enabled bundle is one you chose. A pre-ticked list is as easy to accept
+       wholesale as eight yes/no prompts were to click through. */ -}}
+{{- $chosen := promptMultichoiceOnce . "bundleList" "Bundles to enable" $bundles (list) -}}
 
 [data]
     email = {{ $email | quote }}
