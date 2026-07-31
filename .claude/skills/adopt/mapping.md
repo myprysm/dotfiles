@@ -49,7 +49,7 @@ All package intent lives in `home/.chezmoidata/packages.yaml`; the `run_onchange
 | Finding | Destination |
 |---|---|
 | secret value inline in a config | file becomes a `.tmpl`; value rendered via `{{ template "secret" (dict "domain" "<personal\|work>" "ref" "<consumer>-<artifact>" "field" "value") }}`; ref registered in `home/.chezmoidata/secrets.yaml` |
-| whole secret-bearing file | not adopted — vault + `secrets-restore` path (secrets policy, #11) |
+| whole secret-bearing file | not adopted — vault + `secrets-restore` path (secrets policy) |
 
 Repo-visible refs follow the naming convention: kebab-case `<consumer>-<artifact>`, no domain
 suffix, no infrastructure identifiers.

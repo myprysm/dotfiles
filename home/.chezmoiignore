@@ -1,5 +1,5 @@
-# PROTOTYPE (wayfinder #7) — always a template. Patterns match TARGET paths.
-# Per-machine escape hatch + zsh runtime artifacts (issue #4)
+# Always a template. Patterns match TARGET paths.
+# Per-machine escape hatch + zsh runtime artifacts
 .zshrc.local
 .zcompdump*
 
@@ -19,6 +19,6 @@ Library/**
 .config/zsh/env.d/helm3-pin.zsh
 {{- end }}
 
-{{ if not .bundles.work -}}
+{{ if not (index .bundles "java") -}}
 .config/zsh/rc.d/50-sdkman.zsh
 {{- end }}

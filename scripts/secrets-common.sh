@@ -1,20 +1,20 @@
 #!/bin/bash
-# Shared helpers for the secrets-* scripts (issues #11, #15, #19).
+# Shared helpers for the secrets-* scripts.
 # Sourced, never executed. Contains no item names and no destination paths:
 # every identifying string lives in the vault, per the redaction rule.
 
-# Generic containers only. bw uses nested folders, op mirrors them as tags (#15 §1).
+# Generic containers only. bw uses nested folders, op mirrors them as tags.
 BW_ROOT="dotfiles"
 BW_SSH="dotfiles/ssh"
 BW_RESTORE="dotfiles/restore"
 
 # WSL's git signs through the Windows GnuPG store; bootstrap.sh creates this
-# symlink and .gitconfig hardcodes the same path (#6, #8 deviation 11).
+# symlink and .gitconfig hardcodes the same path.
 # Overridable so the import branch can be exercised without touching the real
 # Windows keyring; the default is the only path .gitconfig knows about.
 WSL_GPG="${WSL_GPG:-/usr/local/bin/gpg}"
 
-# Machine-local, outside the repo and outside chezmoi's source dir (#11 §4).
+# Machine-local, outside the repo and outside chezmoi's source dir.
 BACKUP_DIR="$HOME/.local/share/dotfiles-secrets"
 BACKUP_MAX_AGE_DAYS=30
 
@@ -45,7 +45,7 @@ require() {
 }
 
 # Exports BW_SESSION, unlocking interactively if needed. The scripts are
-# explicitly invoked (#11 §5), so an interactive prompt is the right gate.
+# explicitly invoked, so an interactive prompt is the right gate.
 bw_open() {
   if [ -n "${BW_SESSION:-}" ] && [ "$(bw status | jq -r .status)" = "unlocked" ]; then
     return
@@ -66,7 +66,7 @@ bw_items() {
   bw list items --folderid "$id"
 }
 
-# Work domain is on only when the bundle is enabled AND op is installed (#5, #19).
+# Work domain is on only when the bundle is enabled AND op is installed.
 # op enumeration itself is deferred to #13, which seeds and verifies the work vault.
 work_bundle_enabled() {
   command -v chezmoi >/dev/null 2>&1 || return 1

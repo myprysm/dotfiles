@@ -1,11 +1,11 @@
 #!/bin/bash
 # One Brewfile rendered from .chezmoidata/packages.yaml (core + per-OS +
-# enabled bundles) piped to brew bundle (issue #5 §1).
+# enabled bundles) piped to brew bundle.
 # Any list edit changes this rendered script → run_onchange_ re-runs it.
 set -eu
 
 # Homebrew 6 will not load a third-party tap's formulae until the tap is
-# trusted, and `brew bundle` cannot express that (#8).
+# trusted, and `brew bundle` cannot express that.
 {{ range .packages.taps -}}
 brew tap {{ . | quote }}
 brew trust --tap {{ . | quote }}

@@ -1,8 +1,8 @@
 #!/bin/bash
-# Issue #6, mechanism C: rclone.conf assembled whole-file from per-domain
+# rclone.conf assembled whole-file from per-domain
 # secure-note fragments. Generic ref names only — no remote names in this repo.
 # INI sections are independent, so concatenation is safe.
-# Item names come from .chezmoidata/secrets.yaml (#15 §4), same map the
+# Item names come from .chezmoidata/secrets.yaml, same map the
 # template router uses; the personal/work pair deliberately shares one ref name.
 set -eu
 mkdir -p "$HOME/.config/rclone"

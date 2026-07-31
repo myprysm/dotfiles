@@ -1,5 +1,5 @@
 #!/bin/bash
-# Reinstall the CLI-managed Claude skills from the tracked lockfile (#14).
+# Reinstall the CLI-managed Claude skills from the tracked lockfile.
 # The skills CLI owns ~/.agents/skills and the ~/.claude/skills symlinks; it has
 # no restore-from-lock command, so the lockfile is expanded here. Entries are
 # rendered inline from the source state, so this script changes — and re-runs —
@@ -11,9 +11,9 @@ if ! command -v npx >/dev/null 2>&1; then
   exit 0
 fi
 
-# -y and -a are what keep this unattended (#9): without them the CLI prompts
+# -y and -a are what keep this unattended: without them the CLI prompts
 # per skill and defaults to every detected agent — a fresh machine answered
-# fifteen agent pickers and installed far beyond the ~/.claude scope #14 set.
+# fifteen agent pickers and installed far beyond the intended ~/.claude scope.
 # A skill withdrawn upstream must not abort the whole apply either: restoring
 # optional agent skills is not a precondition for a working machine.
 install_skill() {

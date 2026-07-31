@@ -1,12 +1,12 @@
 #!/bin/bash
-# Monthly local vault backup (issues #11 §4, #19).
+# Monthly local vault backup.
 #
 # Vaultwarden is backed up infra-side; this is the second copy that survives
 # losing the server. One passphrase-encrypted archive in a machine-local
 # directory, never in this repo.
 #
 # `bw export --format zip` bundles data.json AND the attachment tree, so the
-# per-item download loop #11 specified is no longer needed — that limitation
+# per-item download loop the vault policy originally specified is no longer
 # was lifted upstream (verified against bw 2026.6.0). Caveat inherited from the
 # implementation: organisation-owned and trashed ciphers get no attachments.
 #

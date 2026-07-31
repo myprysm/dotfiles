@@ -1,4 +1,4 @@
-# Managed by chezmoi — issue #6, mechanism A: the signing key id is an
+# Managed by chezmoi. The signing key id is an
 # identifier and stays out of the public repo.
 [user]
     name = Damien benon
@@ -12,7 +12,7 @@
 [gpg]
 {{- if contains "microsoft" (lower .chezmoi.kernel.osrelease) }}
     # WSL: the secret key lives in the Windows GnuPG store, reached through
-    # this symlink to gpg.exe. Per-OS logic, not a secret (#6).
+    # this symlink to gpg.exe. Per-OS logic, not a secret.
     program = /usr/local/bin/gpg
 {{- else }}
     program = gpg

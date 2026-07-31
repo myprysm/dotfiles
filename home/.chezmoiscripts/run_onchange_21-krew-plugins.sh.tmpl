@@ -1,6 +1,6 @@
 {{ if .bundles.ops -}}
 #!/bin/bash
-# PROTOTYPE (wayfinder #7) — ops bundle: krew plugin union list (issue #5 §2).
+# ops bundle: krew plugin union list.
 set -eu
 {{ range .packages.bundles.ops.krew -}}
 kubectl krew install {{ . }} || true

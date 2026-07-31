@@ -1,12 +1,13 @@
-{{/* PROTOTYPE (wayfinder #7) — rendered once by `chezmoi init` into the
+{{/* Rendered once by `chezmoi init` into the
      machine-local config (~/.config/chezmoi/chezmoi.toml). Never committed. */}}
 {{- $email := promptStringOnce . "email" "Git email for this machine" -}}
 {{- $bwServer := promptStringOnce . "bwServer" "Bitwarden server URL (machine-local, never committed)" -}}
 {{- $ops := promptBoolOnce . "bundles.ops" "Enable bundle: ops (k8s/infra tooling)" -}}
 {{- $media := promptBoolOnce . "bundles.media" "Enable bundle: media" -}}
 {{- $playwright := promptBoolOnce . "bundles.playwright" "Enable bundle: playwright (Linux apt libs)" -}}
-{{- $work := promptBoolOnce . "bundles.work" "Enable bundle: work (JVM/PHP/1Password)" -}}
+{{- $work := promptBoolOnce . "bundles.work" "Enable bundle: work (PHP/DB/cloud + 1Password)" -}}
 {{- $go := promptBoolOnce . "bundles.go" "Enable bundle: go" -}}
+{{- $java := promptBoolOnce . "bundles.java" "Enable bundle: java (JDKs via SDKMAN + maven)" -}}
 {{- $rust := promptBoolOnce . "bundles.rust" "Enable bundle: rust" -}}
 {{- $ai := promptBoolOnce . "bundles.ai" "Enable bundle: ai" -}}
 
@@ -20,6 +21,7 @@
     playwright = {{ $playwright }}
     work = {{ $work }}
     go = {{ $go }}
+    java = {{ $java }}
     rust = {{ $rust }}
     ai = {{ $ai }}
 

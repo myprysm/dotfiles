@@ -1,10 +1,10 @@
-# Per-OS omz plugin lists (issue #4: plugin lists are template data; six
-# WSL-dead plugins are live on the Mac and vice versa).
+# Per-OS omz plugin lists — template data rather than one shared list, because
+# six WSL-dead plugins are live on the Mac and vice versa.
 # Per-machine extras: add a `zshPluginsExtra` list to the machine-local
 # chezmoi config [data] — appended by dot_zshrc.tmpl.
 zsh:
   plugins:
-    # Finalised on the WSL machine (#8). Dropped as dead or superseded:
+    # Finalised on the WSL machine. Dropped as dead or superseded:
     # autoupdate (the pinned external owns updates), colorize, direnv
     # (explicit hook in rc.d), dotnet, doctl, gradle, mvn, composer, laravel,
     # rust. `bw` was never a plugin here — a bare completion file, now

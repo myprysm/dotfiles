@@ -1,6 +1,6 @@
 {{ if and (eq .chezmoi.os "linux") .bundles.playwright -}}
 #!/bin/sh
-# playwright bundle: Linux browser libs via apt (issue #5 §4).
+# playwright bundle: Linux browser libs via apt.
 # Nothing missing means no sudo: this is the only script in the family that
 # needs root, and a machine that already has the set should apply unattended.
 set -eu

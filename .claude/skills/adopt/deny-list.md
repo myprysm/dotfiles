@@ -1,6 +1,6 @@
 # Deny-list — paths the adopt skill refuses to stage
 
-Seeded from both machine inventories (§3.3) and the agent-tooling decision (#14). Patterns are
+Seeded from both machine inventories (§3.3) and the agent-tooling decision. Patterns are
 tool-generic on purpose (redaction rule: this file is public). `~` = the inventoried user's home.
 
 ## Hard deny — never staged, in any form (plaintext, `encrypted_`, templated whole-file)
@@ -24,10 +24,10 @@ tool-generic on purpose (redaction rule: this file is public). `~` = the invento
 | `~/.composer/auth.json` | registry auth |
 | `~/.config/Bitwarden CLI/**`, `~/.config/op/**`, `~/.config/1Password/**` | secret-manager state |
 | `~/.claude.json` | agent state incl. MCP config (can carry tokens) |
-| `~/.claude/projects/**`, `~/.claude/sessions/**`, `~/.claude/plugins/**`, `~/.claude/history.jsonl`, `~/.claude/shell-snapshots/**`, `~/.claude/settings.local.json`, `~/.claude/*.bak`, `~/.claude/{daemon,cache,debug}*/**` | per-machine agent state (#14: only `CLAUDE.md`, `settings.json`, `statusline.sh`, hand-written skills migrate) |
-| `~/.agents/**` except `~/.agents/.skill-lock.json` | skills-CLI-managed tree; only the lockfile migrates (#14) |
+| `~/.claude/projects/**`, `~/.claude/sessions/**`, `~/.claude/plugins/**`, `~/.claude/history.jsonl`, `~/.claude/shell-snapshots/**`, `~/.claude/settings.local.json`, `~/.claude/*.bak`, `~/.claude/{daemon,cache,debug}*/**` | per-machine agent state (only `CLAUDE.md`, `settings.json`, `statusline.sh`, hand-written skills migrate) |
+| `~/.agents/**` except `~/.agents/.skill-lock.json` | skills-CLI-managed tree; only the lockfile migrates |
 | `~/.copilot/`, `~/.codex/`, `~/.gemini/`, `~/.cline/`, `~/.ai/`, `~/.cagent/`, `~/.codemod/`, `~/.openclaw/`, `~/.hindsight/` | agent-tool state, self-managed |
-| `$HOME/*.env*`, `backup-*.env.*`, filenames containing `credential`/`token`/`secret` | loose secret artifacts — route to the vault (#11), never the repo |
+| `$HOME/*.env*`, `backup-*.env.*`, filenames containing `credential`/`token`/`secret` | loose secret artifacts — route to the vault, never the repo |
 | `~/.config/pulse/cookie` | machine-local auth cookie |
 | `~/.hermes/**`, `~/.qbit/**`, `~/.config/spacetime/cli.toml` | tool state, possibly token-bearing |
 | project-specific config dirs holding API keys or env values | identified during inventory, deny by content class |

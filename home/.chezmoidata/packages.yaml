@@ -1,17 +1,17 @@
-# Single source of truth for every package list, per issue #5. run_onchange_
+# Single source of truth for every package list. run_onchange_
 # scripts in .chezmoiscripts/ render these lists inline, so any edit here
 # re-triggers the matching installer on next apply.
 #
 # Tap-qualified formula names (owner/tap/formula) tap on demand — no separate
 # taps list. Bare `terraform`/`vault` would pull different formulae than the
-# HashiCorp taps this estate actually uses (#8).
+# HashiCorp taps this estate actually uses.
 packages:
   # Homebrew 6 refuses to load formulae from untrusted third-party taps, so a
   # tap-qualified name is not enough — each tap is tapped and trusted before
-  # bundling (#8). Trust means brew may execute that tap's formula code; keep
+  # bundling. Trust means brew may execute that tap's formula code; keep
   # this list to vendors' own taps and review any addition.
   # ariga/tap only supplies atlas as a transitive dep, but an untrusted tap
-  # makes every unrelated install print a trust warning and fail (#8).
+  # makes every unrelated install print a trust warning and fail.
   taps: [hashicorp/tap, ariga/tap, fairwindsops/tap, k0sproject/tap, netbirdio/tap]
   core:
     brews: [bat, btop, direnv, eza, gh, htop, jq, mcfly, nvm, ripgrep, starship, tmux, uv, wget, yq]
@@ -31,9 +31,9 @@ packages:
               netbirdio/tap/netbird, mkcert, nmap, cloudflared, krew]
       # `krew` appears in the plugin list too — that is krew's own self-upgrade,
       # and it only works once krew exists. Nothing installed it on a fresh
-      # machine, so every `kubectl krew install` failed and `|| true` hid it (#9).
+      # machine, so every `kubectl krew install` failed and `|| true` hid it.
       krew: [cnpg, krew, linstor, oidc-login]
-      # WSL's 14 repos (#8) — all public URLs, verified. The Mac's 36 are not
+      # WSL's 14 repos — all public URLs, verified. The Mac's 36 are not
       # yet audited for private/dead URLs; merging them is #13's job.
       helmRepos:
         - {name: external-dns, url: "https://kubernetes-sigs.github.io/external-dns/"}
@@ -54,7 +54,7 @@ packages:
     media:
       brews: [ffmpeg, exiftool, ghostscript, gifsicle, mupdf-tools, qpdf, vips]
     playwright:
-      # The real set this machine carries (#8). Bootstrap prereqs
+      # The real set this machine carries. Bootstrap prereqs
       # (build-essential, libffi-dev, python3-dev) belong to bootstrap.sh, not here.
       apt: [fonts-freefont-ttf, fonts-ipafont-gothic, fonts-liberation,
             fonts-noto-color-emoji, fonts-tlwg-loma-otf, fonts-unifont,
@@ -64,10 +64,12 @@ packages:
             libnspr4, libnss3, libpango-1.0-0, libx11-6, libxcb1, libxcomposite1,
             libxdamage1, libxext6, libxfixes3, libxkbcommon0, libxrandr2, xvfb]
     work:
-      brews: [composer, maven, mysql-client, openblas, azure-cli, caddy, dnsmasq]
+      brews: [composer, mysql-client, openblas, azure-cli, caddy, dnsmasq]
+    java:
+      brews: [maven]                # inert without a JDK, so it ships with them
       sdkman: [25-tem, 25-graal]    # SDKMAN owns JDKs; brew casks cannot switch vendors
     go:
-      tools:                        # module paths read off this machine's binaries (#8)
+      tools:                        # module paths read off this machine's binaries
         - github.com/onsi/ginkgo/v2/ginkgo@latest
         - github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
         - golang.org/x/tools/gopls@latest

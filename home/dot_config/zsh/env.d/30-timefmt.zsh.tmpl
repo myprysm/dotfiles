@@ -1,5 +1,5 @@
 # `time` output format. The memory unit is the only value that varies by OS
-# (#4 §3: .tmpl is reserved for single-value variance).
+# (.tmpl is reserved for single-value variance).
 MAX_MEMORY_UNITS={{ if eq .chezmoi.os "darwin" }}KB{{ else }}MB{{ end }}
 
 TIMEFMT='%J   %U  user %S system %P cpu %*E total'$'\n'\

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Restore vaulted secrets onto THIS machine (issues #11 §5, #15 §5, #19).
+# Restore vaulted secrets onto THIS machine.
 # Explicit invocation only; never wired into chezmoi apply — a throwaway VM
 # running the bootstrap one-liner must not implicitly receive the key estate.
 #
@@ -51,7 +51,7 @@ place() {
 note "SSH keys -> ~/.ssh"
 mkdir -p "$HOME/.ssh"
 chmod 700 "$HOME/.ssh"
-# Two of the seeded keypairs have no public half (#8), so iterate attachments
+# Two of the seeded keypairs have no public half, so iterate attachments
 # rather than assuming a .pub exists alongside every private key.
 while read -r item att name; do
   case "$name" in
@@ -81,7 +81,7 @@ while read -r item; do
 done < <(bw_items "$BW_RESTORE" | jq -c '.[]')
 
 note "GPG"
-# The one special case: import into the keyring rather than placing files (#11 §2).
+# The one special case: import into the keyring rather than placing files.
 gpg_item="$(bw_items "$BW_ROOT" | jq -r '.[] | select(.name == "gpg-keys") | .id')"
 if [ -z "$gpg_item" ]; then
   warn "no gpg-keys item in the vault — skipped"
@@ -91,7 +91,7 @@ else
   note "  imported       secret keys + ownertrust (Linux keyring)"
 
   # On WSL the key must ALSO reach the Windows store, because .gitconfig points
-  # gpg.program at the Windows binary (#6, #8 deviation 11). Importing only into
+  # gpg.program at the Windows binary. Importing only into
   # the Linux keyring leaves git unable to sign — the rebuild would look complete
   # and then fail on the first commit. bootstrap.sh owns the symlink itself.
   if is_wsl; then
@@ -115,4 +115,4 @@ note "Done. $restored restored, $skipped left alone."
 if [ "$skipped" -gt 0 ]; then
   note "Re-run with --force to overwrite what already exists."
 fi
-note "Ephemeral credentials are re-authed separately: gh, docker, npm, cloud CLIs (#11 §3)."
+note "Ephemeral credentials are re-authed separately: gh, docker, npm, cloud CLIs."

@@ -1,8 +1,5 @@
 # dotfiles
 
-> **PROTOTYPE** — throwaway skeleton built for [wayfinder ticket #7](https://github.com/myprysm/dotfiles/issues/7).
-> Nothing here is applied anywhere yet. React to the shape; the real tree lands after review.
-
 chezmoi-managed dotfiles for all my machines (WSL2 Ubuntu, macOS). Public repo:
 **no secrets, in any form** — see [docs/secrets.md](docs/secrets.md).
 

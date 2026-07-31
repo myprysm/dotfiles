@@ -1,6 +1,6 @@
 {{ if .bundles.go -}}
 #!/bin/bash
-# PROTOTYPE (wayfinder #7) — go bundle: tools via go install (issue #5 §2).
+# go bundle: tools via go install.
 set -eu
 {{ range .packages.bundles.go.tools -}}
 go install {{ . }}

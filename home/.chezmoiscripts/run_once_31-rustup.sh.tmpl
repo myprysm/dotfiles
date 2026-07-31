@@ -1,6 +1,6 @@
 {{ if .bundles.rust -}}
 #!/bin/sh
-# PROTOTYPE (wayfinder #7) — rust bundle: official rustup installer (issue #5 §2).
+# rust bundle: official rustup installer.
 set -eu
 command -v rustup >/dev/null 2>&1 || \
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path

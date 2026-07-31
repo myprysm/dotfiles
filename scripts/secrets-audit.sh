@@ -1,5 +1,5 @@
 #!/bin/bash
-# Vault-first drift audit (issues #11 §4, #19).
+# Vault-first drift audit.
 #
 # The vault is canonical and the machine is a checkout, so drift is worth
 # knowing about in both directions:
@@ -41,7 +41,7 @@ while read -r name; do
 done < <(comm -13 "$tmp/local-names" "$tmp/vault-names")
 
 # Same name on both sides is not the same key. Compare the public halves.
-# The two keypairs with no .pub (#8) simply skip this check.
+# The two keypairs with no .pub simply skip this check.
 compared=0
 while read -r item att name; do
   case "$name" in *.pub) ;; *) continue ;; esac
@@ -70,7 +70,7 @@ while read -r path; do
 done < <(bw_items "$BW_RESTORE" | jq -r '.[] | [(.fields // [])[] | select(.name == "path") | .value][0] // ""')
 
 note "== Template refs (.chezmoidata/secrets.yaml) =="
-# The map is the expected-set (#15 §4): every ref a template resolves must exist.
+# The map is the expected-set: every ref a template resolves must exist.
 bw list items | jq -r '.[].name' | sort -u > "$tmp/bw-names"
 while read -r key domain ref; do
   case "$domain" in

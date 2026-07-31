@@ -1,6 +1,6 @@
 {{ if .bundles.ops -}}
 #!/bin/bash
-# PROTOTYPE (wayfinder #7) — ops bundle: helm chart repos (issue #5 §2).
+# ops bundle: helm chart repos.
 # List empty until the union of both machines is reviewed for private/dead URLs.
 set -eu
 {{ range .packages.bundles.ops.helmRepos -}}

@@ -1,10 +1,12 @@
-{{ if .bundles.work -}}
+{{ if index .bundles "java" -}}
 #!/bin/bash
-# PROTOTYPE (wayfinder #7) — work bundle: SDKMAN owns JDKs (issue #5 §5).
+# SDKMAN owns the JDKs: brew casks cannot switch vendors.
+# `index` rather than .bundles.java, because a machine whose config predates
+# this bundle has no such key and a direct lookup is a template error, not false.
 set -eu
 [ -d "$HOME/.sdkman" ] || curl -s "https://get.sdkman.io?rcupdate=false" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
-{{ range .packages.bundles.work.sdkman -}}
+{{ range .packages.bundles.java.sdkman -}}
 sdk install java {{ . }} || true
 {{ end -}}
 # ~/.sdkman/etc/config tracked separately with self-update off (pin-the-manager stance)

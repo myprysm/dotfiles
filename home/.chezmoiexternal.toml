@@ -1,8 +1,8 @@
-# Pinned externals (issues #2/#4). refreshPeriod deliberately absent: never
+# Pinned externals. refreshPeriod deliberately absent: never
 # re-download unless the pin changes (or `chezmoi apply -R`). Updating = bump
 # the SHA here. omz self-update is off (DISABLE_AUTO_UPDATE in dot_zshrc.tmpl)
 # so the two updaters never fight over the exact tree.
-# Pins chosen 2026-07-31 during the WSL migration (#8).
+# Pins chosen 2026-07-31 during the WSL migration.
 
 [".oh-my-zsh"]
     type = "archive"

@@ -1,6 +1,6 @@
 #!/bin/sh
-# PROTOTYPE (wayfinder #7) — bootstrap a fresh machine onto myprysm/dotfiles.
-# Sequence decided in issue #6. Draft: not yet exercised on a naked machine (#9 does that).
+# Bootstrap a fresh machine onto myprysm/dotfiles: OS prerequisites, Homebrew,
+# chezmoi, the secret-manager CLIs, authentication, apply.
 set -eu
 
 REPO="myprysm/dotfiles"
@@ -9,11 +9,11 @@ echo "==> [1/7] OS prerequisites"
 case "$(uname -s)" in
   Linux)
     # WSL only: .gitconfig hardcodes gpg.program=/usr/local/bin/gpg because the
-    # signing key lives in the Windows GnuPG store (#6, #8 deviation 11), and
+    # signing key lives in the Windows GnuPG store, and
     # nothing else in this repo creates that symlink. Without it a fresh WSL
     # machine gets commit.gpgsign=true pointing at nothing and cannot commit.
     # No key material is involved here — this only makes gpg.program resolvable.
-    # Runs BEFORE apt (#9): the check needs nothing apt provides, and a machine
+    # Runs BEFORE apt: the check needs nothing apt provides, and a machine
     # that cannot sign should hear so before paying for a full package run.
     if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
       echo "    WSL detected — checking the Windows GnuPG shim"
@@ -32,7 +32,7 @@ case "$(uname -s)" in
         exit 1
       fi
 
-      # -f, because [ -e ] is FALSE on a dangling symlink (#9): a link left over
+      # -f, because [ -e ] is FALSE on a dangling symlink: a link left over
       # from a Gpg4win that has since moved would take the create branch and
       # collide, failing with a bare "ln: Already exists". -sfn is idempotent
       # and replaces a stale link with the one .gitconfig expects.
@@ -48,11 +48,11 @@ case "$(uname -s)" in
       fi
     fi
 
-    # The single owner of apt prerequisites (superset of Homebrew's needs +
-    # #5 §4 build deps). Hand-cloned repos run this script too — no
+    # The single owner of apt prerequisites: a superset of Homebrew's needs plus
+    # the manifest's build deps. Hand-cloned repos run this script too — no
     # run_once_before_ duplicate in .chezmoiscripts.
     sudo apt-get update
-    # gnupg and openssh-client are declared rather than inherited (#9): Ubuntu
+    # gnupg and openssh-client are declared rather than inherited: Ubuntu
     # 24.04 and 26.04 both ship them, but secrets-restore.sh hard-depends on
     # both, and a minimal or container-derived image need not carry either.
     sudo apt-get install -y build-essential procps curl file git zsh libffi-dev python3-dev \
@@ -64,7 +64,7 @@ case "$(uname -s)" in
 esac
 
 echo "==> [2/7] Homebrew"
-# Test the install prefixes, not PATH (#9): nothing here writes `brew shellenv`
+# Test the install prefixes, not PATH: nothing here writes `brew shellenv`
 # into the login shell, so `command -v brew` is false in every fresh shell and a
 # re-run would download and run the whole Homebrew installer again.
 if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
@@ -101,7 +101,7 @@ fi
 
 echo "==> [6/7] Authenticate"
 # bw refuses `config server` while logged in ("Logout required before server
-# config update"), which under set -e killed every re-run (#9). Setting the
+# config update"), which under set -e killed every re-run. Setting the
 # server is a logged-out-only act, so it belongs inside this branch — and
 # `login --raw` hands back the session directly, sparing the second master
 # password prompt that made a fresh login look like a rejection.
