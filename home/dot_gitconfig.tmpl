@@ -1,0 +1,15 @@
+# Managed by chezmoi (PROTOTYPE, wayfinder #7) — issue #6, mechanism A:
+# the signing key id is an identifier and stays out of the public repo.
+[user]
+    name = Damien Benon
+    email = {{ .email }}
+    signingkey = {{ template "secret" (dict "domain" "personal" "ref" "git-signing-key" "field" "keyid") }}
+[commit]
+    gpgsign = true
+{{- if eq .chezmoi.os "linux" }}
+[gpg]
+    # WSL → Windows gpg interop; plain gpg on native Linux (per-OS logic, not a secret)
+    program = gpg
+{{- end }}
+[core]
+    excludesfile = ~/.config/git/ignore

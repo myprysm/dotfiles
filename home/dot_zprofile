@@ -1,0 +1,8 @@
+# Managed by chezmoi (PROTOTYPE, wayfinder #7).
+# brew shellenv runs here, before .zshrc, on BOTH OSes — the Mac already did
+# this correctly; tracking it fixes the WSL HOMEBREW_PREFIX ordering bug (#4).
+if [[ -d /opt/homebrew ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -d /home/linuxbrew/.linuxbrew ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi

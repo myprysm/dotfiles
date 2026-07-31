@@ -1,0 +1,6 @@
+{{ if and (eq .chezmoi.os "linux") .bundles.playwright -}}
+#!/bin/sh
+# PROTOTYPE (wayfinder #7) — playwright bundle: Linux browser libs via apt (issue #5 §4).
+set -eu
+sudo apt-get install -y {{ .packages.bundles.playwright.apt | join " " }}
+{{ end -}}

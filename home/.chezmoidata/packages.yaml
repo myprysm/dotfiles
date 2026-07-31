@@ -1,0 +1,42 @@
+# PROTOTYPE (wayfinder #7) — single source of truth for every package list,
+# per issue #5. run_onchange_ scripts in .chezmoiscripts/ render these lists
+# inline, so any edit here re-triggers the matching installer on next apply.
+packages:
+  core:
+    brews: [bat, btop, direnv, eza, gh, htop, jq, mcfly, nvm, ripgrep, starship, tmux, uv, wget, yq]
+    linux:
+      brews: [gcc, bind]
+    darwin:
+      brews: [coreutils, gnu-sed, gnu-time, watch, pinentry-mac]
+      casks: [devtoys, keycastr, macfuse, qbit, warp, webpquicklook, xca]
+  secret:
+    brews: [bitwarden-cli]          # bw on every machine; op is bootstrap-installed with the work bundle
+  bundles:
+    ops:
+      brews: [kubernetes-cli, k9s, helm, helm@3, talosctl, velero, terraform,
+              vault, packer, rclone, hcloud, argocd, cilium-cli, crane,
+              cyphernetes, pluto, operator-sdk, k0sctl, kind, netbird, mkcert,
+              nmap, cloudflared]
+      krew: [cnpg, krew, linstor, oidc-login]
+      helmRepos: []                 # union of both machines — review for private/dead URLs before encoding (redaction rule)
+      # kubeone: no formula — pinned-release download script (run_once_23)
+    media:
+      brews: [ffmpeg, exiftool, ghostscript, gifsicle, mupdf-tools, qpdf, vips]
+    playwright:
+      apt: [libnss3, libatk-bridge2.0-0, libgtk-3-0]   # stub — full ~30-lib set lands at migration
+    work:
+      brews: [composer, maven, mysql-client, openblas, azure-cli, caddy, dnsmasq]
+      sdkman: [25-tem, 25-graal]    # SDKMAN owns JDKs; brew casks cannot switch vendors
+    go:
+      tools:                        # module paths verified at migration; @latest unless pinned
+        - github.com/onsi/ginkgo/v2/ginkgo@latest
+        - github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        - golang.org/x/tools/gopls@latest
+        - sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+        - github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+        - honnef.co/go/tools/cmd/staticcheck@latest
+        - github.com/gzuidhof/tygo@latest
+      brews: [go]
+    rust: {}                        # rustup official installer (run_once_31); no cargo-install list
+    ai:
+      brews: [llama.cpp]

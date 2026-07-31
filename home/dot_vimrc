@@ -1,0 +1,3 @@
+" Managed by chezmoi (PROTOTYPE, wayfinder #7) — amix/vimrc as pinned external (#4)
+set runtimepath+=~/.vim_runtime
+source ~/.vim_runtime/vimrcs/basic.vim
