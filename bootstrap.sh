@@ -52,7 +52,11 @@ case "$(uname -s)" in
     # #5 §4 build deps). Hand-cloned repos run this script too — no
     # run_once_before_ duplicate in .chezmoiscripts.
     sudo apt-get update
-    sudo apt-get install -y build-essential procps curl file git zsh libffi-dev python3-dev
+    # gnupg and openssh-client are declared rather than inherited (#9): Ubuntu
+    # 24.04 and 26.04 both ship them, but secrets-restore.sh hard-depends on
+    # both, and a minimal or container-derived image need not carry either.
+    sudo apt-get install -y build-essential procps curl file git zsh libffi-dev python3-dev \
+      gnupg openssh-client
     ;;
   Darwin)
     : # Homebrew installer handles Xcode CLT itself.
