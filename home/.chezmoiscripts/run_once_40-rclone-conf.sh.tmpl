@@ -10,6 +10,16 @@ umask 077
 {
   bw get notes {{ (index .secrets "rclone-conf-personal").ref | quote }}
 {{- if .bundles.work }}
-  op read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }}
+  # Skipped rather than fatal when op is missing: bootstrap does not install it
+  # on Linux yet (#13), and a machine that cannot reach the work vault should
+  # still end up with its personal remotes instead of no rclone.conf at all.
+  # This mirrors report_work_domain in secrets-common.sh. Note the file is
+  # written once — #13 changes this script, which re-runs it and picks the
+  # work fragment up then.
+  if command -v op >/dev/null 2>&1; then
+    op read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }}
+  else
+    echo "  ! op not installed — work remotes omitted from rclone.conf (#13)" >&2
+  fi
 {{- end }}
 } > "$HOME/.config/rclone/rclone.conf"

@@ -127,7 +127,16 @@ else
 fi
 export BW_SESSION
 if [ "$WORK_BUNDLE" = "true" ]; then
-  eval "$(op signin)"
+  # op is not installed on Linux yet (step 5 above, issue #13), so this must
+  # not be attempted blindly: on WSL the Windows directories are on PATH and
+  # something named `op` over there was found and refused to execute
+  # ("Permission denied"). Requiring it to actually run, rather than merely
+  # resolve, covers both the missing and the unrunnable case.
+  if op --version >/dev/null 2>&1; then
+    eval "$(op signin)"
+  else
+    echo "    op unavailable — work vault not authenticated (see issue #13)" >&2
+  fi
 fi
 
 echo "==> [7/7] chezmoi apply"
