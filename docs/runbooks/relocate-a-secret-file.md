@@ -31,6 +31,13 @@ Requirements:
 
 `~` is expanded at assignment, so `$NEWDIR` is absolute from here on. Keep this shell open.
 
+**If the file is a vault restore item, every machine must use the same directory.** The
+item carries one `path` field and `secrets-restore.sh` consumes it as `$HOME/$path`, so
+there is exactly one `$HOME`-relative destination for all machines. A second machine that
+picks its own name will have the file restored to the *first* machine's path — beside, not
+at, where its own config points. Reuse the existing directory name; only a file with no
+restore item is free to choose.
+
 Three consumers want three different forms. Every command below produces the right one —
 never type `$NEWDIR` into a prompt or a vault field, always its expanded value:
 
@@ -181,7 +188,11 @@ bw sync
 bw get item "$ITEM" | jq -r '[(.fields//[])[]|select(.name=="path").value][0]'
 ```
 
-On a work-domain item the same shape applies through `op` instead of `bw`.
+If the file has no restore item, skip this step — there is nothing to repoint. That is the
+case for anything in the work domain today: `report_work_domain` in `secrets-common.sh`
+warns `work domain not implemented yet` and returns, so no work vault is enumerated, seeded
+or restored until #13. Move such a file freely; it gets vaulted from wherever it then lives.
+The same shape will apply through `op` instead of `bw` once that lands.
 
 Never paste raw `bw get item` output anywhere — it carries the secret itself, in `notes` or
 as an attachment. The `jq` filters above print one field each.
