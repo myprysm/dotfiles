@@ -46,5 +46,5 @@
 ## Repo guardrails
 
 - GitHub push protection + secret scanning (enabled on the repo).
-- gitleaks pre-commit hook, installed automatically on fresh clones.
+- gitleaks pre-commit hook — **not built yet**, tracked in #18. Nothing in this repo installs a hook today, so a fresh clone has no automatic scan. What exists is manual: the `/adopt` skill runs `gitleaks git --pre-commit --staged` on the staged diff before every commit it makes, and the written line-by-line review rule stands regardless. Do not rely on this line as a guarantee until #18 closes.
 - No custom scanner rules encoding internal patterns — that would publish the patterns.
