@@ -22,3 +22,10 @@ Any adoption of a machine's config, package, or shell setup into this repo — f
 migration or a single item — follows the `/adopt` skill at `.claude/skills/adopt/SKILL.md`
 (deny-list and mapping rules beside it). The repo is public: the skill's secret-safety
 layers are mandatory for every write under `home/`.
+
+### Runbooks
+
+Procedures with a fixed order and steps that must be verified live in `docs/runbooks/`.
+Read the relevant one before starting rather than reconstructing the steps:
+
+- `relocate-a-secret-file.md` — moving a secret whose location was published.

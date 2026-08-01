@@ -6,6 +6,8 @@ When making factual claims about tools, APIs, libraries, or configurations, veri
 
 Read files before making claims about their contents. Do not assume structure, imports, or dependencies from memory.
 
+Do what was asked, and no more. Anything beyond it — extra changes, refactors, cleanups, a choice between viable options — is a proposal, not an action.
+
 Prefer the simplest solution that works. Do not add abstractions, error handling, or flexibility beyond what was asked. A bug fix doesn't need surrounding code cleaned up.
 
 Do not add comments to code unless explicitly asked.
