@@ -12,6 +12,20 @@
 # not touch an ignored path.
 .agents/.skill-lock.json
 
+# Runtime state written by the tool inside a managed external. Externals are
+# expanded into the target and every one of ours is `exact = true`, so chezmoi
+# deletes whatever it did not write: a file the tool creates at runtime is
+# either wiped silently or, once chezmoi has recorded it, stops `chezmoi apply`
+# with a "has changed since chezmoi last wrote it" prompt. Ignoring the target
+# path is the only fix — an `exclude =` on the external filters the archive but
+# does NOT stop exact-removal (verified: it deletes them without asking).
+# Pattern is `<dir>/*`, not `<dir>/**`: the trailing `*` keeps the directory
+# itself in the target state (tools that never mkdir it still find it) while
+# ignoring everything, at any depth, underneath.
+.oh-my-zsh/cache/*
+.oh-my-zsh/log/*
+.vim_runtime/temp_dirs/undodir/*
+
 {{ if ne .chezmoi.os "darwin" -}}
 # darwin-only targets
 Library/**
