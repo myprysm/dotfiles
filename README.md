@@ -40,6 +40,18 @@ and — deliberately manual — `scripts/secrets-restore.sh`).
 | Sync this machine with the repo | `chezmoi update` (pull + apply) |
 | Push my changes | `chezmoi cd && git add -p && git commit && git push` — **line-by-line review before every add** |
 
+### `chezmoi: warning: config file template has changed`
+
+Every invocation nags until the machine-local config is regenerated. Run
+`chezmoi init`: the `*Once` prompts read the answers already in the config and
+do not re-ask, so only genuinely new questions appear.
+
+Never `chezmoi init --promptDefaults`. It is the one flag that reaches
+`promptMultichoiceOnce`, it returns the deliberately-empty bundle defaults, and
+it writes every bundle `false` without asking. `--promptMultichoice` does *not*
+reach it, so there is no safe non-interactive answer — pre-seed `bundleList` in
+`~/.config/chezmoi/chezmoi.toml` instead, then `chezmoi init` runs silently.
+
 ## Layout
 
 ```text
