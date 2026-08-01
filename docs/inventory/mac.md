@@ -223,7 +223,7 @@ Repo is public. Flagged from metadata; contents not opened unless noted.
 | `~/.ssh/` | 34 files, **14 public keys → ≈14 keypairs**; filenames withheld; `config` presence not confirmed (dir not listed beyond counts) |
 | `~/.gnupg/` | private keyring (signing key lives here — `commit.gpgsign=true` depends on it) |
 | `~/.vault-token` | Vault token (dated 2025) |
-| `~/.secrets/` | **two** Ansible Vault password files (personal + work) — vs one on WSL; input for the secrets-vault ticket (#11) |
+| *(path withheld)* | **two** Ansible Vault password files (personal + work) — vs one on WSL; input for the secrets-vault ticket (#11). Location withheld — the rule governing it forbids publishing where it lives |
 | `~/.config/argocd/config` | ArgoCD CLI contexts + auth tokens — names the clusters, not opened |
 | `~/.cloudflared/` | tunnel credentials |
 | `~/.aws/`, `~/.azure/` | cloud credentials/state |
@@ -290,7 +290,7 @@ Repo is public. Flagged from metadata; contents not opened unless noted.
 - Keychain noted as macOS-native store.
 
 **Secrets vault (#11)**
-- Two Ansible Vault password files in `~/.secrets` (personal + work); `~/.vault-token` from 2025.
+- Two Ansible Vault password files (personal + work), location withheld; `~/.vault-token` from 2025.
 
 **Fresh-machine auth fog (map)**
 - Both 1Password (app + CLI) and Bitwarden (app only) are live on this machine — the unlock-sequence design has a concrete dual-manager host to test against.

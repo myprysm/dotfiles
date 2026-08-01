@@ -18,7 +18,8 @@ tool-generic on purpose (redaction rule: this file is public). `~` = the invento
 | `~/.config/argocd/config` | cluster names + auth tokens |
 | `~/.cloudflared/**` | tunnel credentials |
 | `~/.vault-token` | live token |
-| `~/.secrets/**` | vault password files |
+| `~/.secrets/**` | vault password files (legacy location — kept denied while any machine still has it) |
+| the machine-local secrets directory — resolve it at runtime with `chezmoi data \| jq -r .secretsDir`, deny everything under it | vault password files; the path itself is an infrastructure identifier and is never published here |
 | `~/.ansible/galaxy_token` | API token |
 | `~/.devvit/token`, `~/.devvit/session-id` | session credentials |
 | `~/.composer/auth.json` | registry auth |

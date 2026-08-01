@@ -10,6 +10,7 @@
 {{- $bundles := list "ops" "media" "playwright" "work" "go" "java" "rust" "ai" -}}
 {{- $email := promptStringOnce . "email" "Git email for this machine" -}}
 {{- $bwServer := promptStringOnce . "bwServer" "Bitwarden server URL (machine-local, never committed)" -}}
+{{- $secretsDir := promptStringOnce . "secretsDir" "Absolute path of the machine-local secrets directory, no trailing slash, no regex metacharacters (machine-local, never committed)" -}}
 {{- /* The empty defaults list is deliberate: nothing starts ticked, so every
        enabled bundle is one you chose. A pre-ticked list is as easy to accept
        wholesale as eight yes/no prompts were to click through. */ -}}
@@ -18,6 +19,7 @@
 [data]
     email = {{ $email | quote }}
     bwServer = {{ $bwServer | quote }}
+    secretsDir = {{ $secretsDir | quote }}
     bundleList = [{{ range $i, $b := $chosen }}{{ if $i }}, {{ end }}{{ $b | quote }}{{ end }}]
 
 [data.bundles]
