@@ -1,9 +1,10 @@
 #!/bin/bash
 # Reinstall the CLI-managed Claude skills from the tracked lockfile.
 # The skills CLI owns ~/.agents/skills and the ~/.claude/skills symlinks; it has
-# no restore-from-lock command, so the lockfile is expanded here. Entries are
-# rendered inline from the source state, so this script changes — and re-runs —
-# whenever the lockfile does, with no ordering dependency on the applied file.
+# no restore-from-lock command, so the lockfile is expanded here. (Its
+# experimental_install reads a project-level skills-lock.json, not this global
+# one.) Entries are rendered inline from the source state, which is the only
+# state the lockfile has: it is ignored as a target, see .chezmoiignore.
 set -eu
 
 if ! command -v npx >/dev/null 2>&1; then
@@ -11,18 +12,66 @@ if ! command -v npx >/dev/null 2>&1; then
   exit 0
 fi
 
-# -y and -a are what keep this unattended: without them the CLI prompts
-# per skill and defaults to every detected agent — a fresh machine answered
-# fifteen agent pickers and installed far beyond the intended ~/.claude scope.
-# A skill withdrawn upstream must not abort the whole apply either: restoring
-# optional agent skills is not a precondition for a working machine.
-install_skill() {
-  [ -e "$HOME/.claude/skills/$2" ] && return 0
-  if ! npx --yes skills add "$1" -s "$2" -g -y -a claude-code; then
-    echo "  ! could not restore skill '$2' from $1 — skipped" >&2
-  fi
+# One invocation per SOURCE REPO, not per skill. The CLI clones the repo and
+# calls the GitHub tree API once per invocation, so a per-skill loop made 27
+# calls where 3 will do — enough, unauthenticated, to hit the API rate limit
+# partway through. bootstrap.sh now authenticates gh before apply; batching is
+# the other half, and it holds for anyone re-running apply outside bootstrap.
+#
+# -y and -a are what keep this unattended: without them the CLI prompts per
+# skill and defaults to every detected agent — a fresh machine answered fifteen
+# agent pickers and installed far beyond the intended ~/.claude scope.
+#
+# 'universal' has to be named alongside claude-code, and the two space-separated
+# rather than comma-joined (a comma list is rejected: "Invalid agents:
+# universal,claude-code"). The CLI forces copy mode whenever every target agent
+# resolves to a single skills directory, and -y does not pick symlink — it only
+# skips the prompt that would have. Naming the universal agent makes it two
+# directories, so the skill lands in ~/.agents/skills with ~/.claude/skills
+# symlinked at it: the shape issue #14 specified.
+#
+# The guard tests for a symlink, not for existence: a machine bootstrapped
+# before this change holds copies, and an existence test would leave them
+# copies forever.
+#
+# Success is judged by re-checking the symlinks, never by exit status: a name
+# the repo no longer carries is dropped silently and the batch still exits 0.
+# That is also why one withdrawn skill can no longer take the apply down.
+failed_skills=""
+restore_from() {
+  repo="$1"
+  shift
+  wanted=""
+  for skill in "$@"; do
+    [ -L "$HOME/.claude/skills/$skill" ] && continue
+    wanted="$wanted $skill"
+  done
+  [ -n "$wanted" ] || return 0
+
+  # shellcheck disable=SC2086  # $wanted is a deliberate argument list
+  npx --yes skills add "$repo" -g -y -a universal claude-code -s $wanted \
+    || echo "  ! 'skills add $repo' failed" >&2
+
+  for skill in $wanted; do
+    [ -L "$HOME/.claude/skills/$skill" ] || failed_skills="$failed_skills $skill"
+  done
 }
 
+{{ $bySource := dict -}}
 {{ range $name, $skill := (include "dot_agents/dot_skill-lock.json" | fromJson).skills -}}
-install_skill {{ $skill.source | quote }} {{ $name | quote }}
+{{ $names := (get $bySource $skill.source) | default (list) -}}
+{{ $_ := set $bySource $skill.source (append $names $name) -}}
 {{ end -}}
+{{ range $source, $names := $bySource }}
+restore_from {{ $source | quote }}{{ range $names }} {{ . | quote }}{{ end }}
+{{- end }}
+
+# Without this the only record of a partial restore is a warning that scrolled
+# past mid-apply, and the machine comes up looking complete with an arbitrary
+# subset of skills missing.
+if [ -n "$failed_skills" ]; then
+  echo "" >&2
+  echo "!! Claude skills NOT restored:$failed_skills" >&2
+  echo "   Check 'gh auth status', then re-run 'chezmoi apply' to retry only" >&2
+  echo "   the missing ones. A skill withdrawn upstream will never restore." >&2
+fi

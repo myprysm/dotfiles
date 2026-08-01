@@ -3,6 +3,15 @@
 .zshrc.local
 .zcompdump*
 
+# Source data, never a managed target. The skills CLI owns this file and stamps
+# updatedAt on every install, so a managed copy can never converge: it reports
+# drift forever and stops `chezmoi apply` with an overwrite prompt, which breaks
+# unattended apply. 50-claude-skills reads it out of the SOURCE state via
+# `include`, so ignoring the target costs nothing. Refresh the tracked copy by
+# writing to home/dot_agents/dot_skill-lock.json directly — `chezmoi add` will
+# not touch an ignored path.
+.agents/.skill-lock.json
+
 {{ if ne .chezmoi.os "darwin" -}}
 # darwin-only targets
 Library/**
