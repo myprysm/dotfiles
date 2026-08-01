@@ -58,6 +58,7 @@ reach it, so there is no safe non-interactive answer — pre-seed `bundleList` i
 .chezmoiroot            → source state lives under home/
 bootstrap.sh            → the one-liner target
 docs/secrets.md         → secrets policy (what never enters this repo, vault/restore rules)
+docs/runbooks/          → relocate-a-secret-file.md (moving a secret whose path leaked)
 scripts/                → secrets-restore.sh, secrets-audit.sh, secrets-backup.sh (explicit invocation only)
                           secrets-common.sh is sourced by all three, never run
 home/
