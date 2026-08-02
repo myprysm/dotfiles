@@ -62,15 +62,34 @@ bw_open() {
   # Tested by opening it, not with `-r`: in a session with no controlling
   # terminal /dev/tty passes a readability test and then fails to open, which
   # printed the prompt and a raw "Device not configured" before the real error.
-  # Redirection order matters: bash applies them left to right, so with
-  # `: < /dev/tty 2>/dev/null` the open fails and its "Device not configured"
-  # reaches the real stderr before 2>/dev/null is in effect. stderr first.
-  : 2>/dev/null < /dev/tty \
-    || die "no terminal available to prompt for the master password — run this from a shell"
+  # Where to read the password from, in order of what actually works. stdin comes
+  # first: a process can have an interactive stdin and still have no controlling
+  # terminal, which is exactly the case when these scripts are launched from an
+  # agent session — /dev/tty then fails to open even though the operator can type.
+  # /dev/tty is the fallback for the opposite case, a script whose stdin has been
+  # redirected. Redirection order in the probe matters: bash applies them left to
+  # right, so `: < /dev/tty 2>/dev/null` lets the failed open report to the real
+  # stderr before 2>/dev/null is in effect. stderr first.
+  local pw src=""
+  if [ -t 0 ] || [ -p /dev/stdin ]; then
+    # A pipe counts: bw_open runs before any of the callers' `while read` loops,
+    # so nothing else is competing for stdin, and rejecting a piped password made
+    # the scripts unusable from anything but a terminal.
+    src="stdin"
+  elif : 2>/dev/null < /dev/tty; then
+    src="tty"
+  else
+    die "no way to prompt for the master password here. Either run this from a
+       terminal, or unlock the vault yourself and pass the session in:
+         BW_SESSION=\"\$(bw unlock --raw)\" $(basename "$0")"
+  fi
 
-  local pw
   printf 'Master password (personal vault): ' >&2
-  IFS= read -rs pw < /dev/tty || die "could not read the master password"
+  if [ "$src" = "stdin" ]; then
+    IFS= read -rs pw || die "could not read the master password"
+  else
+    IFS= read -rs pw < /dev/tty || die "could not read the master password"
+  fi
   printf '\n' >&2
 
   export BW_PASSWORD="$pw"
