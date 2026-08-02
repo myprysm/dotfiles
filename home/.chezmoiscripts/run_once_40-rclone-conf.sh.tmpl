@@ -7,19 +7,54 @@
 set -eu
 mkdir -p "$HOME/.config/rclone"
 umask 077
+
+dest="$HOME/.config/rclone/rclone.conf"
+
+# Assembled into a temp file, never straight into place. `{ … } > "$dest"` reads
+# as "write the config", but bash truncates the target when it sets the redirect
+# up — before a single vault command has run — so any failure (locked vault, an
+# unseeded work item, no network) left a truncated or empty rclone.conf behind.
+# That is unrecoverable: these remotes carry keys that may exist nowhere else.
+tmp="$(mktemp)"
+trap 'rm -f "$tmp"' EXIT
+
 {
   bw get notes {{ (index .secrets "rclone-conf-personal").ref | quote }}
 {{- if .bundles.work }}
   # Skipped rather than fatal when op is missing: bootstrap does not install it
-  # on Linux yet (#13), and a machine that cannot reach the work vault should
+  # on Linux yet (#47), and a machine that cannot reach the work vault should
   # still end up with its personal remotes instead of no rclone.conf at all.
   # This mirrors report_work_domain in secrets-common.sh. Note the file is
-  # written once — #13 changes this script, which re-runs it and picks the
+  # written once — #47 changes this script, which re-runs it and picks the
   # work fragment up then.
   if command -v op >/dev/null 2>&1; then
     op read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }}
   else
-    echo "  ! op not installed — work remotes omitted from rclone.conf (#13)" >&2
+    echo "  ! op not installed — work remotes omitted from rclone.conf (#47)" >&2
   fi
 {{- end }}
-} > "$HOME/.config/rclone/rclone.conf"
+} > "$tmp"
+
+[ -s "$tmp" ] || {
+  echo "FATAL: the vault produced an empty rclone.conf. $dest left untouched." >&2
+  exit 1
+}
+
+if [ ! -e "$dest" ]; then
+  cp "$tmp" "$dest"
+  chmod 600 "$dest"
+  echo "  rclone.conf restored from the vault ($(grep -c '^\[' "$dest") remotes)"
+elif cmp -s "$tmp" "$dest"; then
+  echo "  rclone.conf already matches the vault"
+else
+  # An existing config is never replaced. The fragments are seeded from whichever
+  # machine wrote them, so on a second machine the two can legitimately differ,
+  # and picking a winner automatically means silently dropping remotes from one
+  # side. Write beside it and let a human reconcile.
+  cp "$tmp" "$dest.from-vault"
+  chmod 600 "$dest.from-vault"
+  echo "  ! $dest exists and differs from the vault." >&2
+  echo "  !   on disk: $(grep -c '^\[' "$dest") remotes    vault: $(grep -c '^\[' "$tmp") remotes" >&2
+  echo "  ! wrote $dest.from-vault instead; nothing was overwritten." >&2
+  echo "  ! reconcile by hand, re-seed the vault, then delete the .from-vault copy." >&2
+fi
