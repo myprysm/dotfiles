@@ -62,7 +62,10 @@ bw_open() {
   # Tested by opening it, not with `-r`: in a session with no controlling
   # terminal /dev/tty passes a readability test and then fails to open, which
   # printed the prompt and a raw "Device not configured" before the real error.
-  : < /dev/tty 2>/dev/null \
+  # Redirection order matters: bash applies them left to right, so with
+  # `: < /dev/tty 2>/dev/null` the open fails and its "Device not configured"
+  # reaches the real stderr before 2>/dev/null is in effect. stderr first.
+  : 2>/dev/null < /dev/tty \
     || die "no terminal available to prompt for the master password — run this from a shell"
 
   local pw
