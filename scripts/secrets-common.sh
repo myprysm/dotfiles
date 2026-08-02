@@ -119,7 +119,7 @@ bw_items() {
 }
 
 # Work domain is on only when the bundle is enabled AND op is installed.
-# op enumeration itself is deferred to #13, which seeds and verifies the work vault.
+# op enumeration itself is deferred to #47, which seeds and verifies the work vault.
 work_bundle_enabled() {
   command -v chezmoi >/dev/null 2>&1 || return 1
   [ "$(chezmoi data --format json 2>/dev/null | jq -r '.bundles.work // false')" = "true" ]
@@ -134,6 +134,6 @@ report_work_domain() {
     warn "work bundle is on but op is not installed — skipping the work domain"
     return 1
   fi
-  warn "work domain not implemented yet (see issue #13) — skipping"
+  warn "work domain not implemented yet (see issue #47) — skipping"
   return 1
 }

@@ -107,7 +107,7 @@ while read -r key domain ref; do
       fi
       ;;
     work)
-      note "  deferred  $key (work domain — issue #13)"
+      note "  deferred  $key (work domain — issue #47)"
       ;;
   esac
 done < <(yq -r '.secrets | to_entries[] | .key + " " + .value.domain + " " + .value.ref' "$SECRETS_MAP")
