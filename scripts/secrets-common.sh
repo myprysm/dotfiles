@@ -46,11 +46,37 @@ require() {
 
 # Exports BW_SESSION, unlocking interactively if needed. The scripts are
 # explicitly invoked, so an interactive prompt is the right gate.
+#
+# The password is read here and handed to bw through the environment rather than
+# letting bw prompt. `BW_SESSION="$(bw unlock --raw)"` cannot work: command
+# substitution gives bw a pipe for stdout, its prompt library requires a TTY
+# there, and it dies with ERR_USE_AFTER_CLOSE. Worse, it still exits 0 having
+# printed nothing, so the empty session went undetected and every later bw call
+# re-prompted — and those run inside `while read` loops whose stdin is a file, so
+# they could not have read a password either. Unlocking once, here, is what makes
+# the rest of the script's loops safe.
 bw_open() {
   if [ -n "${BW_SESSION:-}" ] && [ "$(bw status | jq -r .status)" = "unlocked" ]; then
     return
   fi
-  BW_SESSION="$(bw unlock --raw)" || die "could not unlock the personal vault"
+  # Tested by opening it, not with `-r`: in a session with no controlling
+  # terminal /dev/tty passes a readability test and then fails to open, which
+  # printed the prompt and a raw "Device not configured" before the real error.
+  : < /dev/tty 2>/dev/null \
+    || die "no terminal available to prompt for the master password — run this from a shell"
+
+  local pw
+  printf 'Master password (personal vault): ' >&2
+  IFS= read -rs pw < /dev/tty || die "could not read the master password"
+  printf '\n' >&2
+
+  export BW_PASSWORD="$pw"
+  pw=""
+  BW_SESSION="$(bw unlock --passwordenv BW_PASSWORD --raw 2>/dev/null)" || true
+  unset BW_PASSWORD
+
+  # Checked for emptiness, not by exit status: see above.
+  [ -n "${BW_SESSION:-}" ] || die "could not unlock the personal vault — wrong password, or bw is not logged in"
   export BW_SESSION
 }
 
@@ -61,6 +87,10 @@ bw_folder_id() {
 
 bw_items() {
   local id
+  # A locked vault lists nothing, which used to surface as "has this machine been
+  # seeded?" — blaming the vault's contents for a failed unlock. Distinguish them.
+  [ "$(bw status | jq -r .status)" = "unlocked" ] \
+    || die "the personal vault is locked — the unlock did not take effect"
   id="$(bw_folder_id "$1")"
   [ -n "$id" ] || die "vault folder '$1' not found — has this machine been seeded?"
   bw list items --folderid "$id"
