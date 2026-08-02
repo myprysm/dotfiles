@@ -11,6 +11,9 @@
    formats, not an internal URL inside an alias.
 3. **Vault-first**: any new or rotated durable secret enters the manager at creation
    time. The machine is a checkout of the vault, never the canonical copy.
+4. **The vault's filename is canonical.** One key, one name: where a machine holds the
+   same key under a different filename, the machine is renamed to match the vault and
+   its `~/.ssh/config` repointed — never the reverse.
 
 ## Per-domain routing
 
