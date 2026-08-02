@@ -51,6 +51,7 @@ Library/**
 # at an uninstalled keg. mysql-client is keg-only, hence the explicit PATH.
 .config/zsh/env.d/openblas.zsh
 .config/zsh/env.d/45-mysql-client.zsh
+.config/zsh/env.d/46-libpq.zsh
 {{- end }}
 
 {{ if not .bundles.rust -}}

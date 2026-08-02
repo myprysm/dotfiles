@@ -105,7 +105,11 @@ packages:
             libnspr4, libnss3, libpango-1.0-0, libx11-6, libxcb1, libxcomposite1,
             libxdamage1, libxext6, libxfixes3, libxkbcommon0, libxrandr2, xvfb]
     work:
-      brews: [composer, mysql-client, openblas, azure-cli, caddy, dnsmasq]
+      # libpq is declared rather than inherited. It arrives anyway as a
+      # dependency of composer/php, but 46-libpq.zsh puts its keg on PATH for
+      # psql and friends, and depending on another formula's dependency for that
+      # is how a `brew autoremove` quietly breaks the Postgres client set.
+      brews: [composer, mysql-client, libpq, openblas, azure-cli, caddy, dnsmasq]
     java:
       # maven is inert without a JDK, so it ships with them. zip and unzip are
       # SDKMAN's own hard requirements: its installer aborts on a machine that

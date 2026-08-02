@@ -46,7 +46,14 @@
       "Read(/{{ .chezmoi.homeDir }}/.hindsight/claude-code.json)",
       "Read(/{{ .chezmoi.homeDir }}/**/vault.yml)",
       "Read(/{{ .chezmoi.homeDir }}/**/vault.yaml)",
-      "Read(/{{ .chezmoi.homeDir }}/**/*.vault)"
+      "Read(/{{ .chezmoi.homeDir }}/**/*.vault)",
+      "Read(**/.env*)",
+      "Read(**/*.key)",
+      "Read(**/*.pem)",
+      "Read(**/.ssh/**)",
+      "Read(**/.aws/**)",
+      "Read(**/credentials/**)",
+      "Read(**/secrets/**)"
     ],
     "defaultMode": "auto"
   },
