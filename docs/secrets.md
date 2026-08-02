@@ -89,7 +89,25 @@ domain silently absent from its freshness section.
 ## Repo guardrails
 
 - GitHub push protection + secret scanning (enabled on the repo).
-- gitleaks pre-commit hook — **not built yet**, tracked in #18. Nothing in this repo installs a hook today, so a fresh clone has no automatic scan. What exists is manual: the `/adopt` skill runs `gitleaks git --pre-commit --staged` on the staged diff before every commit it makes, and the written line-by-line review rule stands regardless. Do not rely on this line as a guarantee until #18 closes.
+- gitleaks pre-commit hook — **estate-wide, not repo-scoped** (#18). `~/.gitconfig` sets
+  `core.hooksPath = ~/.config/git/hooks`, so `chezmoi apply` arms every repo on the machine
+  with no per-clone step; a secret leaks the same from any repo, and a hook that needs a
+  manual step is a hook a fresh clone does not have. `pre-commit` scans the staged diff
+  (`gitleaks git --pre-commit --staged`, default rules only) and **fails closed** if gitleaks
+  is missing — the binary is a core brew, and the script phase installs it before the file
+  phase writes the `.gitconfig` that arms the hook, so a bootstrapped machine cannot hit it.
+  - A global `hooksPath` **shadows every repo's own `.git/hooks`**, so these hooks chain:
+    `pre-commit` execs the repo's local `pre-commit` after a clean scan, and `commit-msg`,
+    `prepare-commit-msg` and `pre-push` are symlinks to `_chain`, which only dispatches. A
+    repo that sets its own **local** `core.hooksPath` (husky) overrides this and is untouched.
+  - `git commit --no-verify` is the deliberate escape hatch and stays available to you —
+    upstream clones do throw false positives. It is denied to **agents** (see below).
+  - Verifying it by hand: the AWS documentation example key (`AKIAIOSFODNN7EXAMPLE`) is in
+    gitleaks' default **allowlist** and passes. That is the scanner working as configured, not
+    the hook failing. Use a correctly-shaped `ghp_` token or a `BEGIN OPENSSH PRIVATE KEY`
+    block as a canary.
+  - The scan is the last layer, never the only one: the `/adopt` skill still runs its own
+    gitleaks gate, and the written line-by-line review rule stands regardless.
 - No custom scanner rules encoding internal patterns — that would publish the patterns.
 
 ## Agent guardrails
@@ -110,6 +128,12 @@ is stated here so it is not read as wider than it is.
 - A **named** secret path handed to a transport that leaves the machine: `scp`, `sftp`,
   `rsync`, and `curl`/`wget` with an upload flag. Secrets move through the manager, never
   over a direct transfer, so there is no legitimate case to let through.
+- `git commit --no-verify` (and the bundled short form, `-nm`), which would skip the
+  estate-wide gitleaks scan above. Checked **before** the secret-path gate, since the
+  command names no secret. An agent meeting a finding must surface it, not step around it.
+  `git push -n` is left alone — there `-n` is `--dry-run`. Known false positive, accepted:
+  a commit *message* containing a bare ` -n ` token is refused; use `-F` or rephrase, the
+  same cost #42 and #45 already pay.
 
 **Not covered.** Each is a deliberate limit, not an oversight:
 

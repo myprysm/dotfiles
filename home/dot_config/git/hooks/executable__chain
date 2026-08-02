@@ -1,0 +1,13 @@
+#!/bin/sh
+# Pass-through shim (#18). commit-msg, prepare-commit-msg and pre-push are
+# symlinks to this file: they scan nothing and exist only because a global
+# core.hooksPath shadows EVERY hook name, so a repo's own hook of that name
+# would otherwise stop running silently.
+set -eu
+
+NAME="$(basename "$0")"
+LOCAL="$(git rev-parse --git-common-dir)/hooks/$NAME"
+if [ -x "$LOCAL" ]; then
+  exec "$LOCAL" "$@"
+fi
+exit 0

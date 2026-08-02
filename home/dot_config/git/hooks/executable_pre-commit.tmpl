@@ -1,0 +1,38 @@
+#!/bin/sh
+# Estate-wide pre-commit secret scan (#18). core.hooksPath points every repo on
+# this machine here, which SHADOWS each repo's own .git/hooks — so this chains
+# to the local pre-commit hook once the scan passes.
+#
+# gitleaks is resolved absolutely first: git launched from a GUI client
+# inherits no `brew shellenv`, the same wall that forces gpg.program absolute
+# in .gitconfig. `command -v` is the fallback for a non-brew install.
+set -eu
+
+GITLEAKS="{{ template "brew-prefix" . }}/bin/gitleaks"
+if [ ! -x "$GITLEAKS" ]; then
+  GITLEAKS="$(command -v gitleaks 2>/dev/null || true)"
+fi
+
+if [ -z "$GITLEAKS" ] || [ ! -x "$GITLEAKS" ]; then
+  echo "FATAL: gitleaks is not installed — refusing to commit." >&2
+  echo "       This machine's pre-commit secret scan cannot run." >&2
+  echo "       brew install gitleaks" >&2
+  echo "       (bypass, deliberately: git commit --no-verify)" >&2
+  exit 1
+fi
+
+# --redact: a finding is printed to a terminal, into scrollback and into any
+# agent transcript reading it. File, line and rule are enough to act on.
+if ! "$GITLEAKS" git --pre-commit --staged --no-banner --redact; then
+  echo "gitleaks found a secret in the staged diff — commit refused." >&2
+  exit 1
+fi
+
+# NOT `git rev-parse --git-path hooks/pre-commit`: that honours core.hooksPath
+# and resolves back to THIS file, which would exec itself forever.
+# --git-common-dir, not --git-dir: a linked worktree's git dir has no hooks/.
+LOCAL="$(git rev-parse --git-common-dir)/hooks/pre-commit"
+if [ -x "$LOCAL" ]; then
+  exec "$LOCAL" "$@"
+fi
+exit 0

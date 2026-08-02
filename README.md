@@ -42,6 +42,7 @@ and — deliberately manual — `scripts/secrets-restore.sh`).
 | Add a completion | **usually nothing to add** — completion files are not checked in, because they go stale. Three routes, in order of preference: brew formulae need nothing (`share/zsh/site-functions` is on `fpath` via `brew shellenv`); a tool shipping one inside a versioned tree gets that tree on `fpath` from `env.d/` (cargo); a tool that only emits one from a subcommand gets a guarded `source <(…)` in `rc.d/60-completions.zsh` (kubeone, rustup). `completions.d/` is the last resort, for a tool that can do none of the three — it is currently empty |
 | Sync this machine with the repo | `chezmoi update` (pull + apply) |
 | Push my changes | `chezmoi cd && git add -p && git commit && git push` — **line-by-line review before every add** |
+| Commit blocked by gitleaks | Read the finding. A real secret: unstage it, vault it. A false positive (common in upstream clones): `git commit --no-verify` — yours to use, denied to agents |
 
 ### `chezmoi: warning: config file template has changed`
 
@@ -75,4 +76,7 @@ home/
   .chezmoiscripts/      → run_once_/run_onchange_ package + restore scripts
   dot_zshrc.tmpl        → ~20-line skeleton; all content lives in drop-in dirs
   dot_config/zsh/       → env.d/ completions.d/ aliases.d/ rc.d/
+  dot_config/git/hooks/ → estate-wide pre-commit gitleaks scan (core.hooksPath); the
+                          other hook names are symlinks to _chain, which only dispatches
+                          to a repo's own hook, since a global hooksPath shadows them
 ```

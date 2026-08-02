@@ -29,6 +29,12 @@
 {{- end }}
 [core]
     excludesfile = ~/.config/git/ignore
+    # Estate-wide gitleaks pre-commit scan (#18). Every repo on the machine,
+    # because a secret leaks the same from any of them and this costs no
+    # per-clone step. It SHADOWS each repo's own .git/hooks, so the hooks here
+    # chain to the local hook of the same name; a repo setting its own LOCAL
+    # core.hooksPath (husky) overrides this and is untouched.
+    hooksPath = ~/.config/git/hooks
 [pull]
     rebase = true
 [push]
