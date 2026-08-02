@@ -67,18 +67,27 @@ echo "==> [2/7] Homebrew"
 # Test the install prefixes, not PATH: nothing here writes `brew shellenv`
 # into the login shell, so `command -v brew` is false in every fresh shell and a
 # re-run would download and run the whole Homebrew installer again.
-if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
-  BREW=/home/linuxbrew/.linuxbrew/bin/brew
-elif [ -x /opt/homebrew/bin/brew ]; then
-  BREW=/opt/homebrew/bin/brew
-elif command -v brew >/dev/null 2>&1; then
-  BREW="$(command -v brew)"
-else
+# All three prefixes, before and after the install. /usr/local is the Intel Mac
+# one and was missing from the post-install branch, which fell through to
+# /opt/homebrew — a path that does not exist there, so `brew shellenv` failed and
+# took the whole bootstrap with it on the very machine the installer had just
+# succeeded on.
+find_brew() {
+  for candidate in \
+    /home/linuxbrew/.linuxbrew/bin/brew \
+    /opt/homebrew/bin/brew \
+    /usr/local/bin/brew
+  do
+    if [ -x "$candidate" ]; then echo "$candidate"; return 0; fi
+  done
+  command -v brew 2>/dev/null || return 1
+}
+
+if ! BREW="$(find_brew)"; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
-    BREW=/home/linuxbrew/.linuxbrew/bin/brew
-  else
-    BREW=/opt/homebrew/bin/brew
+  if ! BREW="$(find_brew)"; then
+    echo "FATAL: Homebrew installed but no brew binary found in any known prefix." >&2
+    exit 1
   fi
 fi
 eval "$("$BREW" shellenv)"
@@ -127,7 +136,7 @@ else
 fi
 export BW_SESSION
 if [ "$WORK_BUNDLE" = "true" ]; then
-  # op is not installed on Linux yet (step 5 above, issue #13), so this must
+  # op is not installed on Linux yet (step 5 above, issue #47), so this must
   # not be attempted blindly: on WSL the Windows directories are on PATH and
   # something named `op` over there was found and refused to execute
   # ("Permission denied"). Requiring it to actually run, rather than merely
@@ -135,7 +144,7 @@ if [ "$WORK_BUNDLE" = "true" ]; then
   if op --version >/dev/null 2>&1; then
     eval "$(op signin)"
   else
-    echo "    op unavailable — work vault not authenticated (see issue #13)" >&2
+    echo "    op unavailable — work vault not authenticated (see issue #47)" >&2
   fi
 fi
 

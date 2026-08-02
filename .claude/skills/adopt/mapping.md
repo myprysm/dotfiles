@@ -11,7 +11,7 @@ top-level location; a finding with no row here is `report`, not improvisation.
 |---|---|
 | env export, PATH entry | `home/dot_config/zsh/env.d/NN-<topic>.zsh` |
 | alias | `home/dot_config/zsh/aliases.d/NN-<topic>.zsh` |
-| completion file / fpath entry | `home/dot_config/zsh/completions.d/` |
+| completion file | **do not adopt it.** Completion files go stale, and brew's `share/zsh/site-functions` is already on `fpath` via `brew shellenv`, so a brew formula's completion needs nothing. A tool that only emits one from a subcommand gets a guarded `source <(…)` in `rc.d/60-completions.zsh`; one that ships it inside a versioned tree (cargo) gets that tree on `fpath` from `env.d/`. `completions.d/` remains the last resort, for a tool that can produce neither |
 | tool hook (`eval "$(starship init zsh)"`, direnv, mcfly, …) | `home/dot_config/zsh/rc.d/NN-<tool>.zsh` |
 | shell function | `home/dot_config/zsh/rc.d/` (or completions.d if a completer) |
 | omz plugin change | per-OS list in `home/.chezmoidata/zsh.yaml`; machine-one-off → `zshPluginsExtra` in the machine-local chezmoi config |

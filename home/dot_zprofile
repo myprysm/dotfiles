@@ -1,11 +1,23 @@
 # Managed by chezmoi.
 # brew shellenv runs here, before .zshrc, on BOTH OSes — the Mac already did
 # this correctly; tracking it fixes the WSL HOMEBREW_PREFIX ordering bug.
-if [[ -d /opt/homebrew ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ -d /home/linuxbrew/.linuxbrew ]]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
+# All three prefixes, and probing the BINARY rather than the directory. Two
+# reasons it must be the binary: /usr/local exists on every Linux box whether or
+# not brew is there, so a directory test would match and then run nothing; and
+# an Intel Mac installs to /usr/local, so testing only /opt/homebrew left
+# HOMEBREW_PREFIX unset there — which silently breaks every drop-in that
+# expands it (nvm, helm@3, mysql-client, openblas, nvm's bash completion).
+for brew_candidate in \
+  /opt/homebrew/bin/brew \
+  /home/linuxbrew/.linuxbrew/bin/brew \
+  /usr/local/bin/brew
+do
+  if [[ -x "$brew_candidate" ]]; then
+    eval "$("$brew_candidate" shellenv)"
+    break
+  fi
+done
+unset brew_candidate
 
 # Per-machine escape hatch for the LOGIN-shell layer — untracked, never synced.
 # .zshrc.local cannot serve this: env.d and .zshrc run for interactive shells

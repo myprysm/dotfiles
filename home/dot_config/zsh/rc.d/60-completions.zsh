@@ -23,13 +23,18 @@ autoload -U +X bashcompinit && bashcompinit
 # formula). The uv/uvx `generate-shell-completion` evals that used to live here
 # were removed: the formula ships _uv and _uvx, so they bought nothing and cost
 # two subprocesses per shell start.
-command -v kubeone >/dev/null && source <(kubeone completion zsh)
+# cobra-generated completions self-register: their second line is already
+# `compdef _<tool> <tool>`, so sourcing is the whole job and no compdef belongs
+# here. Verified against chezmoi's output as the shape all cobra CLIs emit.
+for c in kubeone sqlc; do
+  command -v "$c" >/dev/null && source <("$c" completion zsh)
+done
+unset c
 
-# compinit has already run inside oh-my-zsh, so a sourced completion needs an
-# explicit compdef to bind the function it defines.
-if command -v rustup >/dev/null; then
-  source <(rustup completions zsh)
-  compdef _rustup rustup
-  source <(rustup completions zsh cargo)
-  compdef _cargo cargo
-fi
+# rustup is clap, not cobra, but it also self-registers (its tail runs
+# `compdef _rustup rustup`), so sourcing is all it needs.
+# cargo is deliberately NOT here: its completion ships inside the toolchain and
+# goes on fpath in env.d/20-cargo.zsh instead — `rustup completions zsh cargo`
+# sources a completion function file, which prints an _arguments error at every
+# shell start.
+command -v rustup >/dev/null && source <(rustup completions zsh)
