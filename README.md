@@ -79,4 +79,7 @@ home/
   dot_config/git/hooks/ → estate-wide pre-commit gitleaks scan (core.hooksPath); the
                           other hook names are symlinks to _chain, which only dispatches
                           to a repo's own hook, since a global hooksPath shadows them
+tests/                  → test-git-hooks.sh, test-block-secret-reads.sh — run them by
+                          hand after touching the hooks or the agent deny rules; both
+                          render the source into a scratch dir and touch nothing real
 ```

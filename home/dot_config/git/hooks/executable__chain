@@ -1,11 +1,20 @@
 #!/bin/sh
-# Pass-through shim (#18). commit-msg, prepare-commit-msg and pre-push are
-# symlinks to this file: they scan nothing and exist only because a global
+# Pass-through shim (#18). Every hook name here except pre-commit is a symlink
+# to this file: they scan nothing and exist only because a global
 # core.hooksPath shadows EVERY hook name, so a repo's own hook of that name
-# would otherwise stop running silently.
+# would otherwise stop running silently. The set covers what tools on this
+# estate actually install - husky/lint-staged (pre-commit, commit-msg,
+# prepare-commit-msg) and git lfs (pre-push, post-checkout, post-commit,
+# post-merge). A name absent here is a name that silently stops working.
+#
+# HOOK_NAME is how pre-commit delegates here after its scan: exec'ing this file
+# directly would make $0 read `_chain` and look for a hook by that name.
 set -eu
 
-NAME="$(basename "$0")"
+NAME="${HOOK_NAME:-$(basename "$0")}"
+# NOT `git rev-parse --git-path hooks/$NAME`: that honours core.hooksPath and
+# resolves back to this directory, so the shim would exec itself forever.
+# --git-common-dir, not --git-dir: a linked worktree's git dir has no hooks/.
 LOCAL="$(git rev-parse --git-common-dir)/hooks/$NAME"
 if [ -x "$LOCAL" ]; then
   exec "$LOCAL" "$@"

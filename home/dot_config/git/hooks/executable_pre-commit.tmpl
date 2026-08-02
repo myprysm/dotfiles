@@ -28,11 +28,6 @@ if ! "$GITLEAKS" git --pre-commit --staged --no-banner --redact; then
   exit 1
 fi
 
-# NOT `git rev-parse --git-path hooks/pre-commit`: that honours core.hooksPath
-# and resolves back to THIS file, which would exec itself forever.
-# --git-common-dir, not --git-dir: a linked worktree's git dir has no hooks/.
-LOCAL="$(git rev-parse --git-common-dir)/hooks/pre-commit"
-if [ -x "$LOCAL" ]; then
-  exec "$LOCAL" "$@"
-fi
-exit 0
+# Dispatch to the repo's own pre-commit is _chain's job, not a second copy of
+# it here. HOOK_NAME because $0 would otherwise read `_chain`.
+HOOK_NAME=pre-commit exec "$(dirname "$0")/_chain" "$@"

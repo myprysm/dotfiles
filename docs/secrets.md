@@ -96,10 +96,16 @@ domain silently absent from its freshness section.
   (`gitleaks git --pre-commit --staged`, default rules only) and **fails closed** if gitleaks
   is missing — the binary is a core brew, and the script phase installs it before the file
   phase writes the `.gitconfig` that arms the hook, so a bootstrapped machine cannot hit it.
+  (That ordering is not an assumption: #13 established it live, where `.chezmoiscripts` sorting
+  ahead of `.claude`/`.config`/`.zshrc` meant an aborting script stopped the run before any
+  file was written at all.)
   - A global `hooksPath` **shadows every repo's own `.git/hooks`**, so these hooks chain:
-    `pre-commit` execs the repo's local `pre-commit` after a clean scan, and `commit-msg`,
-    `prepare-commit-msg` and `pre-push` are symlinks to `_chain`, which only dispatches. A
-    repo that sets its own **local** `core.hooksPath` (husky) overrides this and is untouched.
+    `pre-commit` scans and then delegates to `_chain`, and `commit-msg`, `prepare-commit-msg`,
+    `pre-push`, `post-checkout`, `post-commit` and `post-merge` are symlinks to `_chain`, which
+    only dispatches. That set is what the tools on this estate install — husky/lint-staged and
+    `git lfs install`. **A hook name absent from it silently stops working**, so a tool that
+    installs some other name needs a symlink adding here. A repo that sets its own **local**
+    `core.hooksPath` (husky) overrides all of this and is untouched.
   - `git commit --no-verify` is the deliberate escape hatch and stays available to you —
     upstream clones do throw false positives. It is denied to **agents** (see below).
   - Verifying it by hand: the AWS documentation example key (`AKIAIOSFODNN7EXAMPLE`) is in
@@ -129,11 +135,16 @@ is stated here so it is not read as wider than it is.
   `rsync`, and `curl`/`wget` with an upload flag. Secrets move through the manager, never
   over a direct transfer, so there is no legitimate case to let through.
 - `git commit --no-verify` (and the bundled short form, `-nm`), which would skip the
-  estate-wide gitleaks scan above. Checked **before** the secret-path gate, since the
-  command names no secret. An agent meeting a finding must surface it, not step around it.
-  `git push -n` is left alone — there `-n` is `--dry-run`. Known false positive, accepted:
-  a commit *message* containing a bare ` -n ` token is refused; use `-F` or rephrase, the
-  same cost #42 and #45 already pay.
+  estate-wide gitleaks scan above, **and `git -c core.hooksPath=… commit`**, which skips it
+  without naming a flag at all. Checked **before** the secret-path gate, since the command
+  names no secret. An agent meeting a finding must surface it, not step around it.
+  `git push -n` is left alone — there `-n` is `--dry-run`.
+  Three properties this arm needs, each of which it lacked when first shipped and a code
+  review caught (all three now pinned by `tests/test-block-secret-reads.sh`): a separator
+  glued to the flag (`--no-verify;echo x`) ends the command exactly as a space does; `commit`
+  must be the **subcommand**, so only git's own global options may precede it, or read-only
+  work like `git log --grep commit -n 5` is refused; and the match runs against a
+  **quote-stripped** copy, so a commit *message* mentioning a flag is not itself a bypass.
 
 **Not covered.** Each is a deliberate limit, not an oversight:
 
@@ -147,6 +158,10 @@ is stated here so it is not read as wider than it is.
   a safe replacement to steer to, and no such replacement exists for `rsync`.
 - **Interpreters.** `sh -c`, a script file, or `python3 -c` walks a tree without naming
   anything. `python3 -c` is allow-listed in settings.
+- **Other routes to an unscanned commit.** `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_n` can set
+  `core.hooksPath` from the environment, and any interpreter can call git directly. The
+  `-c core.hooksPath=` form is denied because it is the one an agent reaches for; the rest
+  are the same speed-bump-not-boundary limit as everything else in this section.
 
 The threat model is a **careless** agent, not an adversarial one — an agent doing ordinary
 work that would otherwise sweep a secret into context by accident. The guardrail is a speed
