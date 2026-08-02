@@ -73,7 +73,8 @@ packages:
       brews: [maven, zip, unzip]
       sdkman: [25-tem, 25-graal]    # SDKMAN owns JDKs; brew casks cannot switch vendors
     go:
-      tools:                        # module paths read off this machine's binaries
+      tools:                        # module paths read off both machines' binaries
+                                    # (bcrypt-tool is the Mac's; absent here before #30)
         - github.com/onsi/ginkgo/v2/ginkgo@latest
         - github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
         - golang.org/x/tools/gopls@latest
@@ -81,6 +82,7 @@ packages:
         - github.com/sqlc-dev/sqlc/cmd/sqlc@latest
         - honnef.co/go/tools/cmd/staticcheck@latest
         - github.com/gzuidhof/tygo@latest
+        - github.com/shoenig/bcrypt-tool@latest
       brews: [go]
     rust: {}                        # rustup official installer (run_once_31); no cargo-install list
     ai:

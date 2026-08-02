@@ -6,6 +6,22 @@
 set -eu
 [ -d "$HOME/.sdkman" ] || curl -s "https://get.sdkman.io?rcupdate=false" | bash
 
+# Pin the manager, same stance as omz: the installer writes
+# sdkman_selfupdate_feature=true (NOT sdkman_auto_selfupdate, which no longer
+# exists), so flip that one key and leave SDKMAN owning the other eleven — a
+# tracked copy of the whole file would silently drop any key a later SDKMAN
+# adds. Rewrite in place rather than `sed -i`, which is not portable to the
+# Mac's BSD sed. Append when the key is absent, so a rename upstream cannot
+# turn this into a silent no-op.
+config="$HOME/.sdkman/etc/config"
+if grep -q '^sdkman_selfupdate_feature=' "$config"; then
+    awk '/^sdkman_selfupdate_feature=/ {print "sdkman_selfupdate_feature=false"; next} {print}' \
+        "$config" > "$config.tmp"
+    mv "$config.tmp" "$config"
+else
+    echo 'sdkman_selfupdate_feature=false' >> "$config"
+fi
+
 # SDKMAN is not written to survive `set -u`: sourcing its init on a fresh
 # install dies on `SDKMAN_CANDIDATES_API: unbound variable`, and `sdk` is a
 # shell function from the same codebase, so it can trip the same way. An
@@ -18,5 +34,4 @@ set +u
 sdk install java {{ . }} || true
 {{ end -}}
 set -u
-# ~/.sdkman/etc/config tracked separately with self-update off (pin-the-manager stance)
 {{ end -}}
