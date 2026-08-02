@@ -18,6 +18,15 @@
     program = gpg
 {{- end }}
 {{- end }}
+{{- if eq .chezmoi.os "darwin" }}
+[gpg]
+    # Absolute rather than PATH-resolved. macOS ships no gpg, so this is brew's,
+    # and git launched from a GUI client (JetBrains, VS Code) inherits no
+    # `brew shellenv` — a bare `gpg` signs fine in a terminal and fails there.
+    # Keyed on arch because that is where the prefix diverges: Apple Silicon
+    # installs to /opt/homebrew, Intel to /usr/local.
+    program = {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/bin/gpg
+{{- end }}
 [core]
     excludesfile = ~/.config/git/ignore
 [pull]
