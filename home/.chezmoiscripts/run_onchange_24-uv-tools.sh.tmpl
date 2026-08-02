@@ -1,0 +1,25 @@
+{{ if .bundles.ops -}}
+#!/bin/bash
+# ops bundle: Python CLIs as uv tools.
+#
+# run_onchange_, never run_once_: the whole run_once_* family sorts AHEAD of
+# run_onchange_10-brew-packages (the ordering trap #13 hit with the rclone
+# script), so a run_once_ script here would run before brew installed `uv`.
+#
+# No `|| true`. #9's krew defect was four installs failing silently behind
+# exactly that; uv exits non-zero and set -e must let it stop the apply.
+#
+# Nothing prunes. `uv tool install` converges a tool env to exactly the args
+# given — editing a record adds or removes its extras, changing a pin moves
+# the version (all measured) — but deleting a record only stops installing it
+# on new machines; the tool stays on machines that have it. That matches every
+# sibling installer (brew bundle without --cleanup, the go and krew loops),
+# and it keeps an apply from deleting a tool a human installed on purpose.
+#
+# hasKey guards the optional fields: chezmoi runs templates with
+# missingkey=error, so a bare .with on a record that has none is a hard error.
+set -eu
+{{ range $t := .packages.bundles.ops.uvTools -}}
+uv tool install --python {{ $t.python | quote }} {{ if hasKey $t "with" }}{{ range $t.with }}--with {{ . | quote }} {{ end }}{{ end }}{{ if hasKey $t "executablesFrom" }}--with-executables-from {{ $t.executablesFrom | quote }} {{ end }}{{ $t.package | quote }}
+{{ end -}}
+{{ end -}}

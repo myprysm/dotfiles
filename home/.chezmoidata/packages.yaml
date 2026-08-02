@@ -43,6 +43,31 @@ packages:
       # and it only works once krew exists. Nothing installed it on a fresh
       # machine, so every `kubectl krew install` failed and `|| true` hid it.
       krew: [cnpg, krew, linstor, oidc-login]
+      # Python CLIs installed as uv tools (uv is a core brew, and ~/.local/bin
+      # is on PATH unconditionally via env.d/10-path.zsh, so the shims land
+      # reachable on every machine). Records, not strings: #17 proved a bare
+      # name is not enough for ansible alone — without `--python` uv silently
+      # resolved an interpreter too old for ansible-core 2.20+ and DOWNGRADED
+      # it, and `uv tool install ansible` installs exactly one executable,
+      # `ansible-community`, so `--with-executables-from` is mandatory or the
+      # tool is inert.
+      # `python` is set on every entry, not only where a tool constrains it:
+      # uv's default interpreter comes from machine state, not the repo. It
+      # was 3.11 here when #17 ran and is 3.13 on the same machine today, and
+      # a fresh machine has none of the candidates yet.
+      # Versions are pinned for the same reason. An unpinned uv tool is not
+      # kept fresh — nothing here runs `uv tool upgrade`, so it installs once
+      # at whatever resolves that day and then sits frozen until an unrelated
+      # field change rebuilds the env and silently jumps it (measured).
+      # ansible lands on the Mac too, which has never had it but does hold two
+      # Ansible Vault password files (mac.md §3.3) — secrets with no binary.
+      uvTools:
+        - package: "ansible==13.5.0"     # #17's pin: a cleanup must not double as a major upgrade
+          python: "3.13"
+          with: [kubernetes, openshift, jmespath]   # libraries the modules import, not deps of ansible itself
+          executablesFrom: ansible-core
+        - package: "mkdocs==1.6.1"       # #5 §8 sent this to `uvx mkdocs`; declared instead, so a fresh machine has it
+          python: "3.13"
       # Union of both machines, audited and deduped by URL in #13. The Mac's 36
       # entries were checked for credentials before merging: zero non-empty
       # username/password/certFile/keyFile/caFile fields, every URL public
