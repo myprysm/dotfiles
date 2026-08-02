@@ -39,9 +39,15 @@ zsh:
              zsh-claudecode-completion]
     bundles:
       ops: [kubectl, helm, terraform, vault, doctl]
-      # 1password rides the work bundle because that is what installs `op`
-      # (bootstrap.sh step 5). laravel is composer-dependent, so it follows
-      # composer rather than standing on its own.
+      # 1password rides the work bundle because that is what installs `op`.
+      # Known gap, deliberately not worked around: bootstrap.sh step 5 installs
+      # `op` on Darwin only — the Linux branch is still a TODO owned by #47 — so
+      # on a Linux work machine this plugin loads with no tool behind it. Its
+      # `opswd` function simply fails when called; gating it per-OS as well as
+      # per-bundle would cost more structure than the inert plugin costs, and
+      # #47 closes the gap at the source.
+      # laravel is composer-dependent, so it follows composer rather than
+      # standing on its own.
       work: [1password, composer, laravel]
       java: [mvn]                 # the maven formula ships with the JDKs
       go: [golang]
