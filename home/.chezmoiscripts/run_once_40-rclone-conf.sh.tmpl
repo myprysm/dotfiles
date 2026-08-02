@@ -18,22 +18,38 @@ dest="$HOME/.config/rclone/rclone.conf"
 tmp="$(mktemp)"
 trap 'rm -f "$tmp"' EXIT
 
-{
-  bw get notes {{ (index .secrets "rclone-conf-personal").ref | quote }}
+: > "$tmp"
+
+# The personal fragment is the base: failing to read it IS fatal, because the
+# result would be a config missing the remotes this machine depends on.
+if ! bw get notes {{ (index .secrets "rclone-conf-personal").ref | quote }} >> "$tmp"; then
+  echo "FATAL: could not read the personal rclone fragment from bw." >&2
+  echo "       Is the vault unlocked? $dest left untouched." >&2
+  exit 1
+fi
+
 {{- if .bundles.work }}
-  # Skipped rather than fatal when op is missing: bootstrap does not install it
-  # on Linux yet (#47), and a machine that cannot reach the work vault should
-  # still end up with its personal remotes instead of no rclone.conf at all.
-  # This mirrors report_work_domain in secrets-common.sh. Note the file is
-  # written once — #47 changes this script, which re-runs it and picks the
-  # work fragment up then.
-  if command -v op >/dev/null 2>&1; then
-    op read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }}
-  else
-    echo "  ! op not installed — work remotes omitted from rclone.conf (#47)" >&2
-  fi
+# The work fragment is best-effort, and the test is whether the READ succeeds —
+# not whether op is installed. Testing the binary was not enough: on a machine
+# that has op but whose work vault has not been seeded yet (#47 owns that), the
+# read fails, and under `set -e` that aborted the whole script. Because
+# .chezmoiscripts sorts ahead of .claude/.config/.zshrc, aborting here meant
+# chezmoi never reached the file phase at all — a missing work fragment stopped
+# the entire migration, which is the opposite of the intent recorded below.
+#
+# Intent, unchanged: a machine that cannot reach the work vault should still end
+# up with its personal remotes rather than no rclone.conf at all. This mirrors
+# report_work_domain in secrets-common.sh. The file is written once, so when #47
+# seeds the work vault it also changes this script, which re-runs and picks the
+# work fragment up then.
+if ! command -v op >/dev/null 2>&1; then
+  echo "  ! op not installed — work remotes omitted from rclone.conf (#47)" >&2
+elif ! op read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }} >> "$tmp" 2>/dev/null; then
+  echo "  ! work rclone fragment not readable — omitted from rclone.conf (#47)" >&2
+  echo "  !   expected a note at op://Employee/<ref>/notesPlain; the work vault" >&2
+  echo "  !   is not seeded yet, so this is expected until #47 lands." >&2
+fi
 {{- end }}
-} > "$tmp"
 
 [ -s "$tmp" ] || {
   echo "FATAL: the vault produced an empty rclone.conf. $dest left untouched." >&2
