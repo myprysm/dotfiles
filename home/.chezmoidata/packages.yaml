@@ -50,18 +50,21 @@ packages:
       # twice there under two names (argocd/argo, cnpg/cloudnative-pg,
       # prometheus/prometheus-community, velero/vmware-tanzu), and WSL carried
       # the argocd/argo pair too. One name per URL now; the more descriptive
-      # name wins. `helm repo add` only ever adds, so the redundant names
-      # already registered on a machine survive until removed by hand.
-      # WSL's 14 were a strict subset of the Mac's set.
+      # name wins. The installer repoints an existing name but never deletes
+      # one, so the redundant names already registered on a machine survive
+      # until removed by hand (Mac cleanup: #49).
+      # WSL's 14 were a strict subset of the Mac's set. URLs carry no trailing
+      # slash, purely for consistency — see the installer for why that is now
+      # cosmetic rather than load-bearing.
       # incubator is Helm's deprecated incubator repo — frozen upstream but
       # still serving index.yaml (HTTP 200, checked), so it is kept, not dropped.
       helmRepos:
-        - {name: external-dns, url: "https://kubernetes-sigs.github.io/external-dns/"}
-        - {name: cilium, url: "https://helm.cilium.io/"}
-        - {name: jetstack, url: "https://charts.jetstack.io/"}
-        - {name: dex, url: "https://charts.dexidp.io/"}
-        - {name: argocd, url: "https://argoproj.github.io/argo-helm/"}
-        - {name: velero, url: "https://vmware-tanzu.github.io/helm-charts/"}
+        - {name: external-dns, url: "https://kubernetes-sigs.github.io/external-dns"}
+        - {name: cilium, url: "https://helm.cilium.io"}
+        - {name: jetstack, url: "https://charts.jetstack.io"}
+        - {name: dex, url: "https://charts.dexidp.io"}
+        - {name: argocd, url: "https://argoproj.github.io/argo-helm"}
+        - {name: velero, url: "https://vmware-tanzu.github.io/helm-charts"}
         - {name: traefik, url: "https://helm.traefik.io/traefik"}
         - {name: twuni, url: "https://twuni.github.io/docker-registry.helm"}
         - {name: verdaccio, url: "https://charts.verdaccio.org"}

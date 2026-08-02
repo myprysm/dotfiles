@@ -1,9 +1,17 @@
 {{ if .bundles.ops -}}
 #!/bin/bash
-# ops bundle: helm chart repos.
-# List empty until the union of both machines is reviewed for private/dead URLs.
+# ops bundle: helm chart repos. Union of both machines, audited in #13.
 set -eu
+# --force-update, or this script aborts the whole apply. `helm repo add` exits 1
+# with "repository name (X) already exists" whenever the name is taken and the
+# URL differs by so much as a trailing slash (measured: exit 1 bare, exit 0 with
+# the flag, and it does repoint the entry). Under `set -eu` that kills
+# chezmoi apply. It never bit the WSL machine only because #8 seeded that
+# machine's repos from this very list, so every URL matched byte-for-byte;
+# the Mac stores nine of the same repos with a trailing slash and would have
+# failed on the first one. packages.yaml is the source of truth, so overwriting
+# a drifted URL is the wanted behaviour, not merely the safe one.
 {{ range .packages.bundles.ops.helmRepos -}}
-helm repo add {{ .name | quote }} {{ .url | quote }}
+helm repo add --force-update {{ .name | quote }} {{ .url | quote }}
 {{ end -}}
 {{ end -}}
