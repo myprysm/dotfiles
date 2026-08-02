@@ -16,8 +16,12 @@
 # sibling installer (brew bundle without --cleanup, the go and krew loops),
 # and it keeps an apply from deleting a tool a human installed on purpose.
 #
-# hasKey guards the optional fields: chezmoi runs templates with
-# missingkey=error, so a bare .with on a record that has none is a hard error.
+# `package` and `python` are mandatory on every record and are dereferenced
+# bare. `with` and `executablesFrom` are the optional pair, hasKey-guarded
+# because chezmoi runs templates with missingkey=error, so a bare .with on a
+# record that has none is a hard error. A record omitting `python` is meant to
+# fail the apply the same way: the interpreter is never inherited from machine
+# state, which is the whole reason the field exists.
 set -eu
 {{ range $t := .packages.bundles.ops.uvTools -}}
 uv tool install --python {{ $t.python | quote }} {{ if hasKey $t "with" }}{{ range $t.with }}--with {{ . | quote }} {{ end }}{{ end }}{{ if hasKey $t "executablesFrom" }}--with-executables-from {{ $t.executablesFrom | quote }} {{ end }}{{ $t.package | quote }}
