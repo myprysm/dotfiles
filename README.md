@@ -39,7 +39,7 @@ and — deliberately manual — `scripts/secrets-restore.sh`).
 | Machine-only tweak (never synced) | `~/.zshrc.local` — untracked, sourced last |
 | Machine-only login-shell PATH | `~/.zprofile.local` — untracked; `.zshrc` and `env.d` are interactive-only |
 | Machine-only / identity-bearing git config | `~/.gitconfig.local` — untracked; `core.sshCommand`, `includeIf` work trees, `safe.directory` |
-| Add a completion | **nothing to add.** brew's `share/zsh/site-functions` is on `fpath` via `brew shellenv`; a tool that only emits one from a subcommand gets a guarded `source <(…)` in `rc.d/60-completions.zsh`. Completion files are not checked in — they go stale |
+| Add a completion | **usually nothing to add** — completion files are not checked in, because they go stale. Three routes, in order of preference: brew formulae need nothing (`share/zsh/site-functions` is on `fpath` via `brew shellenv`); a tool shipping one inside a versioned tree gets that tree on `fpath` from `env.d/` (cargo); a tool that only emits one from a subcommand gets a guarded `source <(…)` in `rc.d/60-completions.zsh` (kubeone, rustup). `completions.d/` is the last resort, for a tool that can do none of the three — it is currently empty |
 | Sync this machine with the repo | `chezmoi update` (pull + apply) |
 | Push my changes | `chezmoi cd && git add -p && git commit && git push` — **line-by-line review before every add** |
 
@@ -66,8 +66,10 @@ scripts/                → secrets-restore.sh, secrets-audit.sh, secrets-backup
                           secrets-common.sh is sourced by all three, never run
 home/
   .chezmoi.toml.tmpl    → init prompts (email, bw server, bundle list) → machine-local config
-  .chezmoidata/         → packages.yaml (core + bundles), zsh.yaml (plugin lists)
+  .chezmoidata/         → packages.yaml (core + bundles), zsh.yaml (plugins: per-OS + per-bundle)
   .chezmoitemplates/    → secret (per-domain router: personal→bw, work→op)
+                          brew-prefix (the Homebrew prefix, template-time; runtime
+                          equivalent is the probe in dot_zprofile)
   .chezmoiexternal.toml → oh-my-zsh + amix/vimrc, pinned archives
   .chezmoiignore        → per-OS / per-bundle exclusions (templated)
   .chezmoiscripts/      → run_once_/run_onchange_ package + restore scripts

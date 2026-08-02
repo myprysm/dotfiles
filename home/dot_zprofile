@@ -7,6 +7,12 @@
 # an Intel Mac installs to /usr/local, so testing only /opt/homebrew left
 # HOMEBREW_PREFIX unset there — which silently breaks every drop-in that
 # expands it (nvm, helm@3, mysql-client, openblas, nvm's bash completion).
+#
+# This loop is the RUNTIME authority and stays a probe rather than a rendered
+# path, so a machine whose brew sits somewhere unexpected still works. Its
+# template-time counterpart is .chezmoitemplates/brew-prefix, used where a
+# tracked file must name the prefix literally; the two must list the same
+# prefixes.
 for brew_candidate in \
   /opt/homebrew/bin/brew \
   /home/linuxbrew/.linuxbrew/bin/brew \

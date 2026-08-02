@@ -23,9 +23,9 @@
     # Absolute rather than PATH-resolved. macOS ships no gpg, so this is brew's,
     # and git launched from a GUI client (JetBrains, VS Code) inherits no
     # `brew shellenv` — a bare `gpg` signs fine in a terminal and fails there.
-    # Keyed on arch because that is where the prefix diverges: Apple Silicon
-    # installs to /opt/homebrew, Intel to /usr/local.
-    program = {{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/bin/gpg
+    # The prefix comes from .chezmoitemplates/brew-prefix, which is the one
+    # place the Apple Silicon / Intel split is written down.
+    program = {{ template "brew-prefix" . }}/bin/gpg
 {{- end }}
 [core]
     excludesfile = ~/.config/git/ignore

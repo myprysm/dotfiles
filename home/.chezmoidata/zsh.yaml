@@ -1,26 +1,48 @@
-# Per-OS omz plugin lists — template data rather than one shared list, because
-# six WSL-dead plugins are live on the Mac and vice versa.
+# omz plugin lists. Two dimensions, because a plugin is only worth loading when
+# its tool is present, and presence is decided by OS *and* by enabled bundle.
+#
+# - `linux` / `darwin`: bundle-independent — omz built-ins with no tool behind
+#   them, or tools that live in core/secret, which every machine gets.
+# - `bundles.<name>`: loaded only when that bundle is on. Shared across OSes on
+#   purpose: bundle enabled means the manifest installed the tool, so the plugin
+#   is live wherever that holds.
+# - `last`: appended after everything, in this order.
+#   zsh-syntax-highlighting must precede zsh-autosuggestions, so it is kept out
+#   of the lists above rather than trusted to sort last by hand — bundle and
+#   per-machine plugins are appended, and would otherwise land after it.
+#
 # Per-machine extras: add a `zshPluginsExtra` list to the machine-local
-# chezmoi config [data] — appended by dot_zshrc.tmpl.
+# chezmoi config [data] — appended by dot_zshrc.tmpl. That is the home for a
+# plugin whose tool no manifest list owns.
 zsh:
   plugins:
     # Finalised on the WSL machine. Dropped as dead or superseded:
     # autoupdate (the pinned external owns updates), colorize, direnv
     # (explicit hook in rc.d), dotnet, doctl, gradle, mvn, composer, laravel,
-    # rust. `bw` was never a plugin here — a bare completion file, now
-    # completions.d/_bw. zsh-syntax-highlighting stays second-to-last.
+    # rust. `bw` was never a plugin here — a bare completion file, and now not
+    # even that: the bitwarden-cli formula ships _bw on brew's fpath.
     linux: [git, brew, command-not-found, docker, docker-compose, encode64,
-            golang, kubectl, helm, npm, nvm, terraform, vault,
-            zsh-claudecode-completion, zsh-syntax-highlighting, zsh-autosuggestions]
+            npm, nvm, zsh-claudecode-completion]
     # Finalised on the Mac (#13) from its 24 declared plugins. Dropped:
     # autoupdate (the pinned external owns updates), colorize (no pygmentize),
     # command-not-found (the macOS handler needs the homebrew/command-not-found
     # tap, which is not installed — inert), direnv (explicit hook in rc.d).
-    # Added: terraform and vault, whose binaries are installed here but which
-    # only WSL declared. `macos` was in the placeholder and is deliberately
-    # absent — the machine never declared it, so shipping it would be a new
-    # choice, not adoption. The seven plugins WSL dropped as dead are live here.
-    darwin: [git, brew, 1password, docker, docker-compose, encode64, golang,
-             kubectl, helm, npm, nvm, terraform, vault, composer, doctl, dotnet,
-             gradle, mvn, laravel, zsh-claudecode-completion,
-             zsh-syntax-highlighting, zsh-autosuggestions]
+    # `gradle` dropped too, and it is worth recording why: `command -v gradle`
+    # answered, so the inventory read the plugin as live — but the answer was
+    # `gradle-or-gradlew`, an alias the plugin itself defines. There is no
+    # gradle binary on this machine and none in any manifest list.
+    # `dotnet` dropped from the repo rather than gated: dotnet is installed
+    # outside brew and owned by no bundle, so it belongs in zshPluginsExtra.
+    # `macos` was in the placeholder and is deliberately absent — the machine
+    # never declared it, so shipping it would be a new choice, not adoption.
+    darwin: [git, brew, docker, docker-compose, encode64, npm, nvm,
+             zsh-claudecode-completion]
+    bundles:
+      ops: [kubectl, helm, terraform, vault, doctl]
+      # 1password rides the work bundle because that is what installs `op`
+      # (bootstrap.sh step 5). laravel is composer-dependent, so it follows
+      # composer rather than standing on its own.
+      work: [1password, composer, laravel]
+      java: [mvn]                 # the maven formula ships with the JDKs
+      go: [golang]
+    last: [zsh-syntax-highlighting, zsh-autosuggestions]

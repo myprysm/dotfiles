@@ -1,0 +1,16 @@
+{{- /* The Homebrew prefix for this machine, as an absolute path, at TEMPLATE
+       time. The single source of truth for any tracked file that must name it
+       literally — currently dot_gitconfig.tmpl, which needs an absolute
+       gpg.program because git launched from a GUI client inherits no shellenv.
+
+       Runtime is a separate question with a separate answer: dot_zprofile
+       probes for the brew BINARY across the same three prefixes and exports
+       HOMEBREW_PREFIX, which is what every shell drop-in uses. Keep the two in
+       step — this list and that loop must name the same prefixes.
+
+       Emits no trailing newline, so it can be used inline. */ -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{- if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end -}}
+{{- else -}}
+/home/linuxbrew/.linuxbrew
+{{- end -}}
