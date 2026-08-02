@@ -51,3 +51,42 @@
 - GitHub push protection + secret scanning (enabled on the repo).
 - gitleaks pre-commit hook — **not built yet**, tracked in #18. Nothing in this repo installs a hook today, so a fresh clone has no automatic scan. What exists is manual: the `/adopt` skill runs `gitleaks git --pre-commit --staged` on the staged diff before every commit it makes, and the written line-by-line review rule stands regardless. Do not rely on this line as a guarantee until #18 closes.
 - No custom scanner rules encoding internal patterns — that would publish the patterns.
+
+## Agent guardrails
+
+A `PreToolUse` hook (`~/.claude/hooks/block-secret-reads.sh`, templated from this repo)
+denies agent tool calls that would surface a secret. Its scope is deliberately narrow, and
+is stated here so it is not read as wider than it is.
+
+**Covered.** Decided in #42, #44 and #45:
+
+- Secret contents into context — `Read` or `Grep` on a secret path, and a Bash command
+  that hands one to a reader utility, POSIX `source`, or input redirection.
+- Recursive Bash content search as a class (`grep -r`, `rg`/`ag`/`ack`,
+  `find … -exec <reader>`, `xargs` into a reader). These read files they never name, so no
+  path rule can see them. Use the `Grep` tool, whose results the permission deny rules
+  filter per matched file.
+- `ansible-vault view`/`decrypt`/`edit`/`cat`/`rekey`.
+- A **named** secret path handed to a transport that leaves the machine: `scp`, `sftp`,
+  `rsync`, and `curl`/`wget` with an upload flag. Secrets move through the manager, never
+  over a direct transfer, so there is no legitimate case to let through.
+
+**Not covered.** Each is a deliberate limit, not an oversight:
+
+- **Local copies.** `cp`, `mv`, `tar`, `zip` of a secret are allowed, including the two
+  probes that opened #45. A local copy crosses no boundary — the bytes stay on a machine
+  that already held them — and becomes harmful only when something reads the copy, which
+  is a second, deliberate act.
+- **Transfers that never name the secret.** The hook matches path patterns in the command
+  string, so a whole-directory `rsync` to a remote is invisible to it. Same blindness #44
+  found in recursive readers; there a class-deny was justified because the `Grep` tool was
+  a safe replacement to steer to, and no such replacement exists for `rsync`.
+- **Interpreters.** `sh -c`, a script file, or `python3 -c` walks a tree without naming
+  anything. `python3 -c` is allow-listed in settings.
+
+The threat model is a **careless** agent, not an adversarial one — an agent doing ordinary
+work that would otherwise sweep a secret into context by accident. The guardrail is a speed
+bump on that path. It is not a containment boundary and must not be relied on as one.
+
+Known cost, accepted: a **local** `rsync` of a named secret is denied, since the rule tests
+the command and not the destination. Use `cp` or `tar`.
