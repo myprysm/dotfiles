@@ -3,6 +3,14 @@
 .zshrc.local
 .zcompdump*
 
+# Never a managed target, and the ignore is the point: a history file records
+# every credential ever typed at a prompt, and this repo is public. 30-mcfly.zsh
+# seeds it at 600 so McFly's readability check passes on a fresh machine
+# (chezmoi's own `create_` would work, but leaves the path add-able: a single
+# `chezmoi add ~/.zsh_history` replaces the empty stub with the live file,
+# verbatim, and reports nothing). Ignored, `chezmoi add` refuses it outright.
+.zsh_history
+
 # Source data, never a managed target. The skills CLI owns this file and stamps
 # updatedAt on every install, so a managed copy can never converge: it reports
 # drift forever and stops `chezmoi apply` with an overwrite prompt, which breaks
