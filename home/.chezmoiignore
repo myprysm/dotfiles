@@ -27,10 +27,13 @@
 .vim_runtime/temp_dirs/undodir/*
 
 {{ if ne .chezmoi.os "darwin" -}}
-# darwin-only targets
+# darwin-only targets. gnu-tools-path.zsh used to be listed here and never
+# existed in the source: macOS keeps its BSD userland on PATH and the GNU
+# formulae stay reachable as gsed/gcp, which is why the scripts are written
+# portably (#30 used awk rather than GNU `sed -i`) instead of shadowing them.
 Library/**
 .config/zsh/env.d/openblas.zsh
-.config/zsh/env.d/gnu-tools-path.zsh
+.config/zsh/env.d/25-darwin-build.zsh
 {{- end }}
 
 {{ if ne .chezmoi.os "linux" -}}
@@ -40,6 +43,14 @@ Library/**
 
 {{ if not .bundles.ops -}}
 .config/zsh/env.d/helm3-pin.zsh
+{{- end }}
+
+{{ if not .bundles.work -}}
+# openblas and mysql-client are work-bundle formulae, so their env belongs to
+# that bundle too — a darwin-only gate alone would export build flags pointing
+# at an uninstalled keg. mysql-client is keg-only, hence the explicit PATH.
+.config/zsh/env.d/openblas.zsh
+.config/zsh/env.d/45-mysql-client.zsh
 {{- end }}
 
 {{ if not .bundles.rust -}}

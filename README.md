@@ -37,6 +37,9 @@ and — deliberately manual — `scripts/secrets-restore.sh`).
 | Edit a tracked config | `chezmoi edit ~/.zshrc` (never edit the target directly) |
 | Add a package | edit `home/.chezmoidata/packages.yaml`, `chezmoi apply` re-runs the install scripts |
 | Machine-only tweak (never synced) | `~/.zshrc.local` — untracked, sourced last |
+| Machine-only login-shell PATH | `~/.zprofile.local` — untracked; `.zshrc` and `env.d` are interactive-only |
+| Machine-only / identity-bearing git config | `~/.gitconfig.local` — untracked; `core.sshCommand`, `includeIf` work trees, `safe.directory` |
+| Add a completion | **nothing to add.** brew's `share/zsh/site-functions` is on `fpath` via `brew shellenv`; a tool that only emits one from a subcommand gets a guarded `source <(…)` in `rc.d/60-completions.zsh`. Completion files are not checked in — they go stale |
 | Sync this machine with the repo | `chezmoi update` (pull + apply) |
 | Push my changes | `chezmoi cd && git add -p && git commit && git push` — **line-by-line review before every add** |
 

@@ -14,27 +14,47 @@ packages:
   # makes every unrelated install print a trust warning and fail.
   taps: [hashicorp/tap, ariga/tap, fairwindsops/tap, k0sproject/tap, netbirdio/tap]
   core:
-    brews: [bat, btop, direnv, eza, gh, htop, jq, mcfly, nvm, ripgrep, starship, tmux, uv, wget, yq]
+    # gitleaks is repo tooling: the written pre-commit review rule (#6) depends
+    # on it and /adopt runs it as its last gate. The hook itself is #18.
+    brews: [bat, btop, direnv, eza, gh, gitleaks, htop, jq, mcfly, nvm, ripgrep,
+            starship, tmux, uv, wget, yq]
     linux:
       brews: [gcc, bind]
     darwin:
-      brews: [coreutils, gnu-sed, gnu-time, watch, pinentry-mac]
+      # gnupg is declared rather than inherited, for the same reason #9 declared
+      # it on Linux and more urgently: .gitconfig sets commit.gpgsign=true on
+      # every OS and macOS ships no gpg at all, so a fresh Mac would reach a
+      # shell that cannot commit. pinentry-mac is inert without it.
+      # automake/cmake are this OS's build-essential equivalent (Linux gets
+      # those from bootstrap.sh's apt line).
+      brews: [automake, cmake, coreutils, gnu-sed, gnu-time, gnupg, watch, pinentry-mac]
       casks: [devtoys, keycastr, macfuse, qbit, warp, webpquicklook, xca]
   secret:
     brews: [bitwarden-cli]          # bw on every machine; op is bootstrap-installed with the work bundle
   bundles:
     ops:
+      # talosctl is homebrew/core, verified — siderolabs/tap is not needed.
       brews: [kubernetes-cli, k9s, helm, helm@3, talosctl, velero,
               hashicorp/tap/terraform, hashicorp/tap/vault, hashicorp/tap/packer,
-              rclone, hcloud, argocd, cilium-cli, crane, cyphernetes,
+              rclone, hcloud, argocd, cilium-cli, crane, cyphernetes, doctl,
               fairwindsops/tap/pluto, operator-sdk, k0sproject/tap/k0sctl, kind,
               netbirdio/tap/netbird, mkcert, nmap, cloudflared, krew]
       # `krew` appears in the plugin list too — that is krew's own self-upgrade,
       # and it only works once krew exists. Nothing installed it on a fresh
       # machine, so every `kubectl krew install` failed and `|| true` hid it.
       krew: [cnpg, krew, linstor, oidc-login]
-      # WSL's 14 repos — all public URLs, verified. The Mac's 36 are not
-      # yet audited for private/dead URLs; merging them is #13's job.
+      # Union of both machines, audited and deduped by URL in #13. The Mac's 36
+      # entries were checked for credentials before merging: zero non-empty
+      # username/password/certFile/keyFile/caFile fields, every URL public
+      # https. Its 36 collapse to 32 unique URLs — four repos were registered
+      # twice there under two names (argocd/argo, cnpg/cloudnative-pg,
+      # prometheus/prometheus-community, velero/vmware-tanzu), and WSL carried
+      # the argocd/argo pair too. One name per URL now; the more descriptive
+      # name wins. `helm repo add` only ever adds, so the redundant names
+      # already registered on a machine survive until removed by hand.
+      # WSL's 14 were a strict subset of the Mac's set.
+      # incubator is Helm's deprecated incubator repo — frozen upstream but
+      # still serving index.yaml (HTTP 200, checked), so it is kept, not dropped.
       helmRepos:
         - {name: external-dns, url: "https://kubernetes-sigs.github.io/external-dns/"}
         - {name: cilium, url: "https://helm.cilium.io/"}
@@ -48,8 +68,26 @@ packages:
         - {name: emberstack, url: "https://emberstack.github.io/helm-charts"}
         - {name: cnpg, url: "https://cloudnative-pg.github.io/charts"}
         - {name: vm, url: "https://victoriametrics.github.io/helm-charts"}
-        - {name: argo, url: "https://argoproj.github.io/argo-helm"}
         - {name: jellyfin, url: "https://jellyfin.github.io/jellyfin-helm"}
+        - {name: prometheus-community, url: "https://prometheus-community.github.io/helm-charts"}
+        - {name: grafana, url: "https://grafana.github.io/helm-charts"}
+        - {name: ingress-nginx, url: "https://kubernetes.github.io/ingress-nginx"}
+        - {name: metrics-server, url: "https://kubernetes-sigs.github.io/metrics-server"}
+        - {name: metallb, url: "https://metallb.github.io/metallb"}
+        - {name: oauth2-proxy, url: "https://oauth2-proxy.github.io/manifests"}
+        - {name: elastic, url: "https://helm.elastic.co"}
+        - {name: signoz, url: "https://charts.signoz.io"}
+        - {name: crowdsec, url: "https://crowdsecurity.github.io/helm-charts"}
+        - {name: temporal, url: "https://go.temporal.io/helm-charts"}
+        - {name: intel, url: "https://intel.github.io/helm-charts"}
+        - {name: stakater, url: "https://stakater.github.io/stakater-charts"}
+        - {name: open-webui, url: "https://open-webui.github.io/helm-charts"}
+        - {name: hcloud, url: "https://charts.hetzner.cloud"}
+        - {name: guerzon, url: "https://guerzon.github.io/vaultwarden"}
+        - {name: piraeus-charts, url: "https://piraeus.io/helm-charts"}
+        - {name: hwameistor-operator, url: "https://hwameistor.io/hwameistor-operator"}
+        - {name: hwameistor-drbd-adapter, url: "https://hwameistor.io/drbd-adapter"}
+        - {name: incubator, url: "https://charts.helm.sh/incubator"}
       # kubeone: no formula — pinned-release download script (run_once_23)
     media:
       brews: [ffmpeg, exiftool, ghostscript, gifsicle, mupdf-tools, qpdf, vips]

@@ -157,3 +157,15 @@ Done. Post-bootstrap checklist (tool-native auth, never in the repo):
   - $REPO_DIR/scripts/secrets-restore.sh
       ONLY on a machine that should hold your keys
 EOF
+
+# macOS-only. ~/.gnupg is hard-denied to this repo (it is a private keyring), so
+# nothing here can write gpg-agent.conf and it has to be a manual step. Without
+# it gpg-agent falls back to pinentry-curses: signing still works in a terminal,
+# but a GUI git client gets no passphrase prompt at all.
+if [ "$(uname -s)" = "Darwin" ]; then
+  cat <<EOF
+  - point gpg-agent at pinentry-mac (needed for GUI git clients only):
+      echo "pinentry-program \$(command -v pinentry-mac)" >> ~/.gnupg/gpg-agent.conf
+      gpgconf --kill gpg-agent
+EOF
+fi

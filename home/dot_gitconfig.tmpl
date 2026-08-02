@@ -28,3 +28,10 @@
     autoStash = true
 [alias]
     fo = "!f() { git fetch origin \"$1\":\"$1\"; }; f"
+# Per-machine escape hatch, untracked and never synced — the .zshrc.local
+# pattern for git. This is where identity-bearing and work-specific settings go:
+# core.sshCommand pinning a key by filename, includeIf blocks for work project
+# trees, safe.directory. git ignores a missing include path, so a machine
+# without the file is unaffected. Last, so local settings win.
+[include]
+    path = ~/.gitconfig.local

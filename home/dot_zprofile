@@ -6,3 +6,9 @@ if [[ -d /opt/homebrew ]]; then
 elif [[ -d /home/linuxbrew/.linuxbrew ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
+
+# Per-machine escape hatch for the LOGIN-shell layer — untracked, never synced.
+# .zshrc.local cannot serve this: env.d and .zshrc run for interactive shells
+# only, so anything a login shell must export (installer-managed PATH entries
+# such as JetBrains Toolbox scripts) has to land here.
+[[ -f "$HOME/.zprofile.local" ]] && source "$HOME/.zprofile.local"

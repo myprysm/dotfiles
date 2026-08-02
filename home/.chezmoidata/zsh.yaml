@@ -12,4 +12,15 @@ zsh:
     linux: [git, brew, command-not-found, docker, docker-compose, encode64,
             golang, kubectl, helm, npm, nvm, terraform, vault,
             zsh-claudecode-completion, zsh-syntax-highlighting, zsh-autosuggestions]
-    darwin: [git, brew, 1password, kubectl, helm, macos]           # stub — final list at migration (#13)
+    # Finalised on the Mac (#13) from its 24 declared plugins. Dropped:
+    # autoupdate (the pinned external owns updates), colorize (no pygmentize),
+    # command-not-found (the macOS handler needs the homebrew/command-not-found
+    # tap, which is not installed — inert), direnv (explicit hook in rc.d).
+    # Added: terraform and vault, whose binaries are installed here but which
+    # only WSL declared. `macos` was in the placeholder and is deliberately
+    # absent — the machine never declared it, so shipping it would be a new
+    # choice, not adoption. The seven plugins WSL dropped as dead are live here.
+    darwin: [git, brew, 1password, docker, docker-compose, encode64, golang,
+             kubectl, helm, npm, nvm, terraform, vault, composer, doctl, dotnet,
+             gradle, mvn, laravel, zsh-claudecode-completion,
+             zsh-syntax-highlighting, zsh-autosuggestions]
