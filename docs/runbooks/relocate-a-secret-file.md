@@ -116,12 +116,18 @@ first — `chezmoi init` runs `git pull` inside the source directory.
 
 ```sh
 grep -n 'secret_re=' ~/.claude/hooks/block-secret-reads.sh   # new dir present, dots as [.]
-jq '.permissions.deny' ~/.claude/settings.json               # Read(<newdir>/**) present
+jq '.permissions.deny' ~/.claude/settings.json               # Read(//<newdir>/**) present
 printf '{"tool_name":"Read","tool_input":{"file_path":"'"$NEWDIR"'/x"}}' \
   | bash ~/.claude/hooks/block-secret-reads.sh
 ```
 
 The last command must print a `deny` decision.
+
+The rendered deny rule must start with **two** slashes. In a Claude Code permission rule a
+single leading `/` is resolved relative to the settings file's own directory, so
+`Read(/home/you/secrets/**)` silently matches nothing; `//` is the absolute form. The
+template writes the leading slash itself (`Read(/{{ .secretsDir }}/**)`) because the
+variable already holds an absolute path.
 
 ## Step 7 — verify the tool still works
 
