@@ -1,6 +1,7 @@
 # Secrets policy
 
-> Decided in issues #6 and #11; the scripts it describes were implemented in #19.
+> Decided in issues #6 and #11; the scripts it describes were implemented in #19,
+> and their work/`op` half in #47.
 > Written under the redaction rule: no hostnames, key names, or identifying counts.
 
 ## Rules
@@ -30,6 +31,39 @@
 - **Re-auth instead** (ephemeral / re-issuable): gh, docker, npm/composer, vault-token,
   argocd, cloudflared, cloud CLIs, the managers' own state.
 
+## The work domain (1Password)
+
+`op` has no folders, so the personal vault's folder paths are mirrored as **tags**:
+`dotfiles`, `dotfiles/ssh`, `dotfiles/restore`, all inside the built-in `Employee` vault.
+The two are **not** interchangeable, and scripts must not treat them as such:
+
+- A `bw` folder is exact. An `op` tag is **prefix-inclusive** — `--tags dotfiles` also
+  returns everything tagged `dotfiles/ssh` and `dotfiles/restore`. Every enumeration
+  filters the tag exactly, client-side.
+- An `op` SSH Key item stores the key natively and has **no filename**, where a `bw`
+  keypair is an attachment whose filename places it. Work SSH items therefore carry the
+  same `path` field the restore items use, and it is mandatory: without it the item can
+  be neither restored nor compared. Its public half is **derived**, not stored, so one
+  item yields two files — the private key at 600 and the public half at 644.
+- `op` publishes each key's fingerprint as item metadata, in the same SHA256 form
+  `ssh-keygen` prints. The audit compares work keys with **no download at all**, a
+  stronger form of the never-read-private-material rule than the personal arm's
+  fetch-only-`.pub`.
+
+**Authorization is interactive and it blocks.** With the desktop app integration, `op`
+raises an approval prompt and waits — roughly two minutes before failing with
+`authorization timeout`. A *locked* 1Password app instead fails immediately with
+"account is not signed in" and raises no prompt at all. `op whoami` never prompts and
+reports "not signed in" even when the very next read would succeed, so it is useless as
+a gate: the only honest test is whether a read works. Every `op` call the repo makes is
+bounded by `timeout` for this reason.
+
+**No local backup, by design.** `op` has no export command — the whole command surface
+was checked, not assumed. A work archive would have to be assembled item by item, which
+means writing the employer's secrets onto a personal machine to guard against a loss the
+employer already guards against. The audit says so explicitly rather than leaving a
+domain silently absent from its freshness section.
+
 ## Procedures
 
 - **Restore**: `scripts/secrets-restore.sh` — explicit invocation, on the post-bootstrap
@@ -38,13 +72,19 @@
   Importing only the former leaves a machine that looks restored and then cannot commit.
 - **Audit**: `scripts/secrets-audit.sh` — compares local state against vault item names;
   reports unbacked local items and unrestored vault items; nags when the last local
-  backup is older than 30 days.
+  backup is older than 30 days. Both domains share **one** SSH table rather than getting
+  a section each: a key held in one domain and checked out under the other is exactly the
+  drift worth catching, and auditing them separately makes it invisible. Each entry
+  carries its side (`bw`, `op`, `local`). Where a work key's fingerprint also appears in
+  the personal vault, that is reported as a note and not a finding — during a domain move
+  both legitimately hold it, and the point is to be able to state that the `op` copy is
+  fingerprint-verified before anything is deleted from `bw`.
 - **Backup**: `scripts/secrets-backup.sh` — monthly; `bw export --format zip` (which
   now carries the attachment tree, so the per-item download loop #11 specified is no
   longer needed) into one passphrase-encrypted, machine-local archive under
   `~/.local/share/dotfiles-secrets`. Symmetric GPG, so the archive depends on a
-  passphrase and no key. Never in this repo. The work manager is not covered — it has
-  no export CLI and its vault is the employer's to back up.
+  passphrase and no key. Never in this repo. The work manager is not covered — see
+  **The work domain** above for why that is a decision rather than a gap.
 
 ## Repo guardrails
 

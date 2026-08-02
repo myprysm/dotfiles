@@ -39,15 +39,25 @@ fi
 #
 # Intent, unchanged: a machine that cannot reach the work vault should still end
 # up with its personal remotes rather than no rclone.conf at all. This mirrors
-# report_work_domain in secrets-common.sh. The file is written once, so when #47
-# seeds the work vault it also changes this script, which re-runs and picks the
-# work fragment up then.
+# work_domain_ready in secrets-common.sh. The file is written once, so seeding
+# the work fragment also changes this script, which re-runs and picks it up then.
+#
+# The read is BOUNDED, because op can block rather than fail: with the desktop
+# app integration it raises an approval prompt and waits about two minutes before
+# giving up. Unbounded, an unattended `chezmoi apply` stalls there for no gain.
+# coreutils cannot be assumed — run_once_ sorts ahead of run_onchange_, so on a
+# fresh machine this runs before the brew installer — hence the fallback.
+TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
+op_read() {
+  if [ -n "$TIMEOUT_BIN" ]; then "$TIMEOUT_BIN" 45 op read "$1"; else op read "$1"; fi
+}
 if ! command -v op >/dev/null 2>&1; then
-  echo "  ! op not installed — work remotes omitted from rclone.conf (#47)" >&2
-elif ! op read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }} >> "$tmp" 2>/dev/null; then
-  echo "  ! work rclone fragment not readable — omitted from rclone.conf (#47)" >&2
-  echo "  !   expected a note at op://Employee/<ref>/notesPlain; the work vault" >&2
-  echo "  !   is not seeded yet, so this is expected until #47 lands." >&2
+  echo "  ! op not installed — work remotes omitted from rclone.conf" >&2
+elif ! op_read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }} >> "$tmp" 2>/dev/null; then
+  echo "  ! work rclone fragment not readable — omitted from rclone.conf" >&2
+  echo "  !   expected a note at op://Employee/<ref>/notesPlain. Either the work" >&2
+  echo "  !   vault has no such note yet, or op's authorization prompt went" >&2
+  echo "  !   unapproved — unlock 1Password and re-run to pick the work remotes up." >&2
 fi
 {{- end }}
 

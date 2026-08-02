@@ -10,8 +10,12 @@
 # was lifted upstream (verified against bw 2026.6.0). Caveat inherited from the
 # implementation: organisation-owned and trashed ciphers get no attachments.
 #
-# The work domain is not covered: 1Password has no export CLI, and its vault is
-# the employer's to back up.
+# The work domain is deliberately not covered. `op` has no export command at all
+# (its whole command surface was checked, not assumed), so any work-domain
+# archive would have to be hand-rolled item by item — which means writing the
+# employer's secrets to a personal machine's disk to guard against a loss the
+# employer already guards against. Decided rather than deferred, and said out
+# loud at the end of a run so the gap is not mistaken for an oversight.
 set -euo pipefail
 . "$(dirname "$0")/secrets-common.sh"
 
@@ -41,3 +45,8 @@ note ""
 note "Wrote ${out/#$HOME/\~} ($(du -h "$out" | cut -f1))"
 note "Decrypt with: gpg --decrypt <archive> > vault.zip"
 note "Store the passphrase where it does not depend on this vault."
+if work_bundle_enabled; then
+  note ""
+  note "Work domain: not backed up, by design — op has no export command, and the"
+  note "work vault is the employer's to back up. See docs/secrets.md."
+fi

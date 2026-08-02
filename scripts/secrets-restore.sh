@@ -8,6 +8,9 @@
 #   dotfiles/ssh      attachments land in ~/.ssh under their own filenames
 #   dotfiles/restore  items carry `path` ($HOME-relative) and `mode` fields
 #   dotfiles          gpg-keys is imported into the keyring, not placed
+# The work domain (op, same paths as tags) works the same way with one
+# difference forced by the manager: an op SSH Key item has no filename, so its
+# `path` field is what places it, and its public half is derived, not stored.
 set -euo pipefail
 . "$(dirname "$0")/secrets-common.sh"
 
@@ -108,7 +111,52 @@ else
   fi
 fi
 
-report_work_domain || true
+# --- work domain -------------------------------------------------------------
+# Best-effort by design: a machine that cannot reach the work vault must still
+# finish with its personal secrets in place, never abort halfway.
+if work_domain_ready; then
+  note ""
+  note "Work SSH keys (1Password)"
+  # No attachments here, so nothing carries a filename: an op SSH Key item stores
+  # the key natively and DERIVES the public half. Placement therefore comes from
+  # the same `path` field the restore items use — mandatory on work SSH items,
+  # where on the bw side the attachment filename supplies it. One item yields two
+  # files: the private key at 600 and the derived public half at 644.
+  while read -r id; do
+    [ -n "$id" ] || continue
+    path="$(op_item_json "$id" | op_field path)"
+    if [ -z "$path" ]; then
+      warn "a work SSH item carries no path field — skipped (op has no filename to fall back on)"
+      continue
+    fi
+    if wanted "$HOME/$path"; then
+      place "$HOME/$path" 600 < <(op_run read "op://$OP_VAULT/$id/private key?ssh-format=openssh")
+    fi
+    if wanted "$HOME/$path.pub"; then
+      place "$HOME/$path.pub" 644 < <(op_run read "op://$OP_VAULT/$id/public key")
+    fi
+  done < <(op_items_tagged "$OP_TAG_SSH" | jq -r '.[].id')
+
+  note "Work restore items (1Password)"
+  while read -r id; do
+    [ -n "$id" ] || continue
+    json="$(op_item_json "$id")"
+    path="$(op_field path <<<"$json")"
+    mode="$(op_field mode <<<"$json")"
+    [ -n "$mode" ] || mode=600
+    if [ -z "$path" ]; then
+      warn "a work restore item carries no path field — skipped"
+      continue
+    fi
+    wanted "$HOME/$path" || continue
+    body="$(op_field notesPlain <<<"$json")"
+    if [ -z "$body" ]; then
+      warn "work restore item for ${path} has an empty note body — skipped rather than truncating"
+      continue
+    fi
+    place "$HOME/$path" "$mode" <<<"$body"
+  done < <(op_items_tagged "$OP_TAG_RESTORE" | jq -r '.[].id')
+fi
 
 note ""
 note "Done. $restored restored, $skipped left alone."

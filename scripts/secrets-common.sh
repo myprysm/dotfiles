@@ -118,14 +118,70 @@ bw_items() {
   bw list items --folderid "$id"
 }
 
-# Work domain is on only when the bundle is enabled AND op is installed.
-# op enumeration itself is deferred to #47, which seeds and verifies the work vault.
 work_bundle_enabled() {
   command -v chezmoi >/dev/null 2>&1 || return 1
   [ "$(chezmoi data --format json 2>/dev/null | jq -r '.bundles.work // false')" = "true" ]
 }
 
-report_work_domain() {
+# --- work domain (1Password) -------------------------------------------------
+#
+# op has no folders, so the containers mirror bw's folder paths as tags. The two
+# are NOT the symmetric pair the naming conventions assumed: a bw folder is
+# exact, while `op item list --tags dotfiles` ALSO returns everything tagged
+# dotfiles/ssh and dotfiles/restore — tag selection is sub-nested, stated in
+# `op item list --help` and confirmed against the live vault. Every enumeration
+# below therefore filters the tag exactly, client-side.
+OP_VAULT="${OP_VAULT:-Employee}"
+OP_TAG_SSH="dotfiles/ssh"
+OP_TAG_RESTORE="dotfiles/restore"
+
+# Every op call is bounded, because op can BLOCK rather than fail. With the
+# desktop app integration it raises a GUI approval prompt and waits — about two
+# minutes before giving up with "authorization timeout". Unbounded, a restore
+# loop over N work items stalls for N x 2 minutes having printed nothing.
+#
+# `op whoami` is no use as a gate: it never raises the prompt, and it reports
+# "account is not signed in" even when the very next read would have succeeded.
+# The only honest test is whether a real read works, which is what op_ready does.
+OP_TIMEOUT="${OP_TIMEOUT:-45}"
+if [ -z "${TIMEOUT_BIN:-}" ]; then
+  # coreutils on both OSes (declared in core.darwin.brews, base on Linux), but
+  # the scripts must not die on a machine that somehow lacks it: an unbounded
+  # call is worse than no call only when it is also unannounced.
+  TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
+fi
+
+op_run() {
+  if [ -n "$TIMEOUT_BIN" ]; then
+    "$TIMEOUT_BIN" "$OP_TIMEOUT" op "$@"
+  else
+    op "$@"
+  fi
+}
+
+# Reachability, tested by reading. The migration recorded why this cannot be
+# "is op installed": on a machine that has op but whose work vault is unseeded
+# or unauthorized, the binary exists and every read fails.
+op_ready() {
+  local rc=0
+  op_run vault get "$OP_VAULT" --format json >/dev/null 2>&1 || rc=$?
+  case "$rc" in
+    0) return 0 ;;
+    124)
+      warn "the work vault did not answer within ${OP_TIMEOUT}s — op's authorization"
+      warn "  prompt went unapproved. Unlock 1Password, run 'op vault list' once, retry."
+      return 1
+      ;;
+    *)
+      warn "the work vault is not reachable (op exit $rc) — check that this account"
+      warn "  can see the '$OP_VAULT' vault."
+      return 1
+      ;;
+  esac
+}
+
+# The gate every work arm calls. Returns 0 only when the work domain is usable.
+work_domain_ready() {
   if ! work_bundle_enabled; then
     note "work domain: bundle off — personal vault only"
     return 1
@@ -134,6 +190,21 @@ report_work_domain() {
     warn "work bundle is on but op is not installed — skipping the work domain"
     return 1
   fi
-  warn "work domain not implemented yet (see issue #47) — skipping"
-  return 1
+  op_ready
+}
+
+# Item summaries carrying exactly this tag. See the sub-nesting note above.
+op_items_tagged() {
+  op_run item list --vault "$OP_VAULT" --tags "$1" --format json 2>/dev/null \
+    | jq -c --arg t "$1" '[.[] | select((.tags // []) | any(. == $t))]'
+}
+
+op_item_json() {
+  op_run item get "$1" --vault "$OP_VAULT" --format json 2>/dev/null
+}
+
+# Field value by label, reading item JSON on stdin. Custom fields (path, mode)
+# and built-ins (notesPlain, fingerprint, public key) are the same shape here.
+op_field() {
+  jq -r --arg l "$1" '[((.fields // [])[] | select(.label == $l) | .value)][0] // ""'
 }
