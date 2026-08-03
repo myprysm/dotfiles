@@ -22,6 +22,11 @@ it, so the comment asserting the reverted behaviour stayed shipped.
 
 Issues live in GitHub Issues for myprysm/dotfiles (gh CLI). See `docs/agents/issue-tracker.md`.
 
+Open work, and the order it is taken in, live in the Notes of the wayfinder map
+(issue #1) — not in this file, and not in the ticket numbers. Read them there
+before picking anything up; the order is authoritative over the
+`wayfinder:grilling` / `wayfinder:task` labels, several of which are wrong.
+
 ### Triage labels
 
 Default five-label vocabulary (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
