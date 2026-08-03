@@ -86,6 +86,15 @@ domain silently absent from its freshness section.
   passphrase and no key. Never in this repo. The work manager is not covered — see
   **The work domain** above for why that is a decision rather than a gap.
 
+**Two secret-bearing directories, two treatments** (#59). `secretsDir` is prompted per
+machine, lives only in `~/.config/chezmoi/chezmoi.toml`, and never enters this repo: for a
+plaintext vault-password file the *location* is what protects it. `BACKUP_DIR`
+(`~/.local/share/dotfiles-secrets`) is hardcoded in `scripts/secrets-common.sh` and
+deliberately public: the archive is GPG-symmetric ciphertext, so what protects it is the
+passphrase, not obscurity. **Do not derive one from the other** — it would either make a safe
+path secret or a secret path public. `docs/runbooks/relocate-a-secret-file.md` depends on the
+asymmetry: a new `secretsDir` must not be a neighbour of the published one.
+
 ## Repo guardrails
 
 - GitHub push protection + secret scanning (enabled on the repo).
