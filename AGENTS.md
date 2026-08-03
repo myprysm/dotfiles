@@ -2,6 +2,20 @@
 
 Cross-machine environment setup for Linux/Mac, managed with chezmoi.
 
+## Code comments
+
+A comment must not assert the current state of code it is not adjacent to. Name the trap,
+not the inventory. Comments saying what another file now did, or that a list below them was
+still empty, went stale four times (#29) — each true when written, none revisited when the
+code under it moved.
+
+A comment resting on a decision cites that decision's ticket (`#<n>`).
+
+That citation is only worth carrying if something reads it, so: **a session that amends or
+reverses an earlier decision runs `git grep '#<n>'` and reviews every hit before closing.**
+This is the control. #21 measured a change, reverted it, and never looked for who was citing
+it, so the comment asserting the reverted behaviour stayed shipped.
+
 ## Agent skills
 
 ### Issue tracker

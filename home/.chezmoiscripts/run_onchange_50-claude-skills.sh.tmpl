@@ -15,8 +15,11 @@ fi
 # One invocation per SOURCE REPO, not per skill. The CLI clones the repo and
 # calls the GitHub tree API once per invocation, so a per-skill loop made 27
 # calls where 3 will do — enough, unauthenticated, to hit the API rate limit
-# partway through. bootstrap.sh now authenticates gh before apply; batching is
-# the other half, and it holds for anyone re-running apply outside bootstrap.
+# partway through. Batching alone is the fix, and authenticating first was
+# tried and rejected (#21): unauthenticated GitHub allows 60 core requests an
+# hour against a cost of 3 per apply, so a `gh auth login` in bootstrap.sh buys
+# nothing and adds a prompt — and batching also holds for anyone re-running
+# apply outside bootstrap, which an authenticated bootstrap would not.
 #
 # -y and -a are what keep this unattended: without them the CLI prompts per
 # skill and defaults to every detected agent — a fresh machine answered fifteen

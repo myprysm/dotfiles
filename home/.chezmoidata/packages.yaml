@@ -2,9 +2,10 @@
 # scripts in .chezmoiscripts/ render these lists inline, so any edit here
 # re-triggers the matching installer on next apply.
 #
-# Tap-qualified formula names (owner/tap/formula) tap on demand — no separate
-# taps list. Bare `terraform`/`vault` would pull different formulae than the
-# HashiCorp taps this estate actually uses.
+# Formula names are tap-qualified (owner/tap/formula): bare `terraform`/`vault`
+# would pull different formulae than the HashiCorp taps this estate actually
+# uses. Qualification alone was once thought sufficient; see the taps list below
+# for why it is not (#8).
 packages:
   # Homebrew 6 refuses to load formulae from untrusted third-party taps, so a
   # tap-qualified name is not enough — each tap is tapped and trusted before
@@ -15,7 +16,8 @@ packages:
   taps: [hashicorp/tap, ariga/tap, fairwindsops/tap, k0sproject/tap, netbirdio/tap]
   core:
     # gitleaks is repo tooling: the written pre-commit review rule (#6) depends
-    # on it and /adopt runs it as its last gate. The hook itself is #18.
+    # on it and /adopt runs it as its last gate, and the estate-wide pre-commit
+    # hook fails closed without it (#18).
     brews: [bat, btop, direnv, eza, gh, gitleaks, htop, jq, mcfly, nvm, ripgrep,
             starship, tmux, uv, wget, yq]
     linux:
