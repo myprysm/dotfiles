@@ -31,7 +31,7 @@ The one-liner (`bootstrap.sh`) taking a fresh machine to a working shell: brew, 
 _Avoid_: install, provision
 
 **Drop-in dir**:
-A typed fragment directory (`env.d/`, `aliases.d/`, `rc.d/`, `completions.d/`) under `~/.config/zsh`; adding behavior means dropping a file.
+A typed fragment directory (`env.d/`, `aliases.d/`, `rc.d/`, `completions.d/`) under `~/.config/zsh`; adding behavior means dropping a file. All four are sourced from `.zshrc`, so all four are **interactive-only**, `env.d` included despite the name.
 
 **Repo-visible ref**:
 A vault item name that appears in the public repo (templates, `secrets.yaml`, scripts). Must stay generic under the redaction rule: kebab-case `<consumer>-<artifact>`, no domain suffix.

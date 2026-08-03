@@ -32,7 +32,7 @@ and — deliberately manual — `scripts/secrets-restore.sh`).
 | I want to… | Do |
 | --- | --- |
 | Add an alias | drop a file: `chezmoi edit --create ~/.config/zsh/aliases.d/foo.zsh`, then `chezmoi apply` |
-| Add an env var / PATH entry | same, in `~/.config/zsh/env.d/` |
+| Add an env var / PATH entry | same, in `~/.config/zsh/env.d/` — **interactive shells only**: a script, `zsh -c`, cron (runs sh) and systemd (runs no shell) see none of it. A non-interactive consumer sets its own PATH, as both cron jobs on this machine do |
 | Add a tool hook (runs last) | same, in `~/.config/zsh/rc.d/` |
 | Edit a tracked config | `chezmoi edit ~/.zshrc` (never edit the target directly) |
 | Add a package | edit `home/.chezmoidata/packages.yaml`, `chezmoi apply` re-runs the install scripts |

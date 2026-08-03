@@ -2,7 +2,13 @@
 # Fixed skeleton: all real content lives in ~/.config/zsh/*.d/.
 ZSH_DROPINS="$HOME/.config/zsh"
 
-# 1 — environment (PATH, exports), pre-omz
+# 1 — environment (PATH, exports), pre-omz.
+# INTERACTIVE ONLY, and deliberately so: zsh reads .zshrc for interactive
+# shells, so nothing below reaches `zsh -c`, a script, cron (runs sh) or a
+# systemd unit (runs no shell at all). Moving env.d to .zshenv would fix the
+# first two and break more: .zshenv runs BEFORE .zprofile, so the four files
+# expanding $HOMEBREW_PREFIX would expand it empty — the ghost-PATH bug again.
+# A non-interactive consumer sets its own PATH.
 for f in "$ZSH_DROPINS"/env.d/*.zsh(N); do source "$f"; done
 
 # 2 — completions, pre-compinit
