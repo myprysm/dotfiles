@@ -29,7 +29,7 @@ tool-generic on purpose (redaction rule: this file is public). `~` = the invento
 | `~/.agents/**` except `~/.agents/.skill-lock.json` | skills-CLI-managed tree; only the lockfile migrates |
 | `~/.copilot/`, `~/.codex/`, `~/.gemini/`, `~/.cline/`, `~/.ai/`, `~/.cagent/`, `~/.codemod/`, `~/.openclaw/`, `~/.hindsight/` | agent-tool state, self-managed |
 | `$HOME/*.env*`, `backup-*.env.*`, filenames containing `credential`/`token`/`secret` | loose secret artifacts — route to the vault, never the repo |
-| `~/.config/pulse/cookie` | machine-local auth cookie |
+| `**/.*_history`, `**/*_history`, `~/.lesshst`, `~/.viminfo`, `~/.local/share/mcfly/**`, `~/Library/Application Support/McFly/**` | typed-input stores — whatever a tool saved of what was typed or yanked. A shell history is every credential ever typed at a prompt; a vim register is whatever was yanked out of a file these rules protect. `.chezmoiignore` refuses `chezmoi add` on these, but it says nothing about a hand-write into `home/`, which is what this row denies. A history *database* (McFly's `history.db`, atuin's) has no naming convention and is denied by directory: a new one needs a new entry, on both lists |
 | `~/.hermes/**`, `~/.qbit/**`, `~/.config/spacetime/cli.toml` | tool state, possibly token-bearing |
 | project-specific config dirs holding API keys or env values | identified during inventory, deny by content class |
 

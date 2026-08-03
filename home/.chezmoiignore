@@ -3,13 +3,32 @@
 .zshrc.local
 .zcompdump*
 
-# Never a managed target, and the ignore is the point: a history file records
-# every credential ever typed at a prompt, and this repo is public. 30-mcfly.zsh
-# seeds it at 600 so McFly's readability check passes on a fresh machine
-# (chezmoi's own `create_` would work, but leaves the path add-able: a single
-# `chezmoi add ~/.zsh_history` replaces the empty stub with the live file,
-# verbatim, and reports nothing). Ignored, `chezmoi add` refuses it outright.
-.zsh_history
+# Typed-input stores: whatever a tool persists of what a human typed or yanked,
+# so it can be recalled. Never a managed target, and the ignore is the point —
+# these record every credential ever typed at a prompt, and this repo is public.
+# 30-mcfly.zsh seeds .zsh_history at 600 so McFly's readability check passes on
+# a fresh machine (chezmoi's own `create_` would work, but leaves the path
+# add-able: a single `chezmoi add ~/.zsh_history` replaces the empty stub with
+# the live file, verbatim, and reports nothing). Ignored, `chezmoi add` refuses.
+#
+# Patterns carry a `**/` prefix because a bare `.*_history` is ROOT-ANCHORED (#61):
+# with it in force, `chezmoi add ~/proj/sub/.psql_history` stages the file with
+# no warning at all, and a recursive add of the parent sweeps it in the same
+# way — which is exactly the walk /adopt performs on a full machine.
+#
+# The text stores share a naming convention and one pattern covers every future
+# one. McFly's does not: it is a SQLite database named history.db in a tool
+# directory, so it is denied by DIRECTORY, and any other history-database tool
+# (atuin, for one) needs its own entry here — no pattern will catch it. Banning
+# `**/history.db` by name was considered and rejected: the name is generic
+# enough that some unrelated tool legitimately uses it, and the refusal is a
+# warning rather than an error, so it would fail quietly.
+**/.*_history
+**/*_history
+.lesshst
+.viminfo
+.local/share/mcfly/**
+Library/Application Support/McFly/**
 
 # Source data, never a managed target. The skills CLI owns this file and stamps
 # updatedAt on every install, so a managed copy can never converge: it reports

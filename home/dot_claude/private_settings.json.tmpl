@@ -53,7 +53,13 @@
       "Read(**/.ssh/**)",
       "Read(**/.aws/**)",
       "Read(**/credentials/**)",
-      "Read(**/secrets/**)"
+      "Read(**/secrets/**)",
+      "Read(/{{ .chezmoi.homeDir }}/**/.*_history)",
+      "Read(/{{ .chezmoi.homeDir }}/**/*_history)",
+      "Read(/{{ .chezmoi.homeDir }}/.lesshst)",
+      "Read(/{{ .chezmoi.homeDir }}/.viminfo)",
+      "Read(/{{ .chezmoi.homeDir }}/.local/share/mcfly/**)",
+      "Read(/{{ .chezmoi.homeDir }}/Library/Application Support/McFly/**)"
     ],
     "defaultMode": "auto"
   },

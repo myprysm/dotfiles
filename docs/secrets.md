@@ -116,6 +116,51 @@ domain silently absent from its freshness section.
     gitleaks gate, and the written line-by-line review rule stands regardless.
 - No custom scanner rules encoding internal patterns — that would publish the patterns.
 
+## Typed-input stores
+
+A file a tool maintains of what a human typed or yanked, so it can be recalled. A shell
+history is every credential ever typed at a prompt; a vim register is whatever was yanked
+out of a file the deny rules already protect. These are never adopted, and the rule is
+carried on **three** layers, because none of them covers what the others do (#61):
+
+1. **`home/.chezmoiignore`** — refuses `chezmoi add` whoever asks, and an ignored target is
+   never applied. It says nothing about what sits in the *source* tree.
+2. **`/adopt`'s deny-list** — covers the gap that leaves. The write gauntlet gates
+   `chezmoi add` *and any write under `home/`*, and a hand-written `home/dot_zsh_history`
+   reaches the public repo with the ignore rule fully in force and silent.
+3. **`Read` deny rules** in `~/.claude/settings.json` — an agent has no business reading one.
+
+The patterns:
+
+```
+**/.*_history   **/*_history   .lesshst   .viminfo
+.local/share/mcfly/**          Library/Application Support/McFly/**
+```
+
+Two properties are load-bearing and neither is obvious:
+
+- **The `**/` prefix.** A bare `.*_history` in `.chezmoiignore` is root-anchored: with it in
+  force, `chezmoi add ~/proj/sub/.psql_history` stages the file **with no warning**, and a
+  recursive add of the parent does the same — which is exactly the walk `/adopt` performs on
+  a full machine.
+- **History databases are denied by directory, not by pattern.** The text stores share a
+  naming convention; McFly's `history.db` does not, and neither does atuin's. A new
+  history-database tool needs a new entry on layers 1–3, since no pattern will catch it.
+  Banning `**/history.db` by name was rejected: the name is generic enough that an unrelated
+  tool could legitimately use it, and a chezmoi refusal is a warning rather than an error,
+  so it would fail quietly.
+
+**Permissions.** McFly creates its store at the ambient umask — 644 on both machines, while
+every text history file is 600 because its tool sets it explicitly. `rc.d/30-mcfly.zsh`
+tightens the directory to 700 and the database to 600 on every interactive shell, beside the
+`.zsh_history` seed and for the same reason: self-healing beats a one-off `chmod`, and the
+*directory* matters because SQLite writes sidecar files mid-transaction.
+
+**The limit, stated plainly.** `mcfly search` and `mcfly dump` read the store while naming
+no file, and Bash is governed by neither the deny rules nor the hook (#44). Layer 3 is a
+speed bump against a careless agent, exactly as the section below describes; layers 1 and 2
+are what actually keep the transcript out of the public repo.
+
 ## Agent guardrails
 
 A `PreToolUse` hook (`~/.claude/hooks/block-secret-reads.sh`, templated from this repo)

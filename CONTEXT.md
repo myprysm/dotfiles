@@ -23,6 +23,10 @@ The per-item proposed mapping of inventory findings onto the repo layout, approv
 The set of secret-bearing path patterns (from the machine inventories) the adopt skill refuses to stage, ever.
 _Avoid_: blocklist, exclusion set
 
+**Typed-input store**:
+A file a tool maintains of what a human typed or yanked, so it can be recalled: shell histories, `.viminfo` (its registers hold yanked text), `.lesshst`, McFly's SQLite database. Never adopted, on any layer — the reason is not that it is a shell but that a secret was typed once and the tool wrote it down.
+_Avoid_: command history (excludes the vim and pager stores by its own wording)
+
 **Redaction rule**:
 Published artifacts carry no secret values and no infrastructure identifiers; hostnames, key names, and remote names reduce to counts.
 
