@@ -1,9 +1,10 @@
-# Managed by chezmoi. The signing key id is an
-# identifier and stays out of the public repo.
+# Managed by chezmoi. There is deliberately no `signingkey` here: each machine
+# signs with its own key (#48), so the id is per-machine and belongs in the
+# ~/.gitconfig.local include at the bottom of this file. Rendering it from the
+# vault named a key the other machine's keyring held (#50).
 [user]
     name = Damien benon
     email = {{ .email }}
-    signingkey = {{ template "secret" (dict "ctx" . "key" "git-signing-key") }}
 [commit]
     gpgsign = true
 [tag]

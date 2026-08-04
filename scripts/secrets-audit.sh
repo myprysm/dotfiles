@@ -11,7 +11,7 @@
 set -euo pipefail
 . "$(dirname "$0")/secrets-common.sh"
 
-require bw jq yq ssh-keygen
+require bw jq yq ssh-keygen git
 bw_open
 bw sync >/dev/null
 
@@ -198,6 +198,76 @@ while read -r key domain ref; do
       ;;
   esac
 done < <(yq -r '.secrets | to_entries[] | .key + " " + .value.domain + " " + .value.ref' "$SECRETS_MAP")
+
+note "== Commit signing =="
+# The hole this section closes: the audit used to ask only whether a vault ref
+# RESOLVED, and printed `ok` for the signing key on a machine where
+# `git commit -S` failed with "No secret key". A ref that resolves to a key the
+# local keyring cannot use is drift, and drift is what this script exists to
+# find. Each machine now signs with its own key (#48/#50), so there is no ref to
+# resolve and the only real question is whether git can sign here.
+#
+# Metadata only: --list-secret-keys reads the keyring's public records and the
+# presence of a secret stub. No passphrase is requested and no key material is
+# read, so the property stated at the top of this file still holds. A real
+# signing test would prove more and is deliberately not done — it raises a
+# pinentry prompt, and an audit that blocks is an audit nobody runs unattended.
+sign_key="$(git config --get user.signingkey 2>/dev/null || true)"
+sign_on="$(git config --get commit.gpgsign 2>/dev/null || true)"
+gpg_bin="$(git_gpg)"
+if [ "$sign_on" != "true" ]; then
+  note "  n/a       commit.gpgsign is off on this machine"
+elif [ -z "${sign_key}" ]; then
+  flag "commit.gpgsign is on but no user.signingkey is set — git falls back to whatever gpg calls its default key, which is not a choice this estate makes. Set it in ~/.gitconfig.local"
+elif ! "$gpg_bin" --version >/dev/null 2>&1; then
+  flag "git signs through '$gpg_bin' (gpg.program) and it will not run — nothing can be signed here"
+else
+  note "  key       $sign_key"
+  note "  store     $gpg_bin (git's gpg.program)"
+  sec="$("$gpg_bin" --with-colons --list-secret-keys "$sign_key" 2>/dev/null \
+    | awk -F: '$1 == "sec" { print; exit }')"
+  if [ -z "$sec" ]; then
+    flag "user.signingkey $sign_key is configured but that store holds no matching secret key — git commit -S fails with \"No secret key\". Either this is another machine's key, or this machine has yet to generate one (see bootstrap.sh)"
+  else
+    # Field 2 is validity, field 7 the expiry timestamp (empty = never), field 12
+    # the capabilities — where an UPPERCASE letter means the key as a whole,
+    # subkeys included, can do it. So `S` and not `s` is the question.
+    validity="$(cut -d: -f2 <<<"$sec")"
+    expires="$(cut -d: -f7 <<<"$sec")"
+    caps="$(cut -d: -f12 <<<"$sec")"
+    case "$validity" in
+      r) flag "user.signingkey $sign_key is REVOKED — git commit -S will refuse it" ;;
+      e) flag "user.signingkey $sign_key has EXPIRED — git commit -S will refuse it" ;;
+      d) flag "user.signingkey $sign_key is disabled — git commit -S will refuse it" ;;
+      i) flag "user.signingkey $sign_key is invalid — git commit -S will refuse it" ;;
+      *)
+        if [[ "$caps" != *S* ]]; then
+          flag "user.signingkey $sign_key carries no signing capability (caps: $caps) — it is the wrong key for commit.gpgsign"
+        elif [ -n "$expires" ] && [ "$expires" -le "$(date +%s)" ]; then
+          flag "user.signingkey $sign_key expired on $(date -r "$expires" +%Y-%m-%d 2>/dev/null || echo "$expires")"
+        else
+          note "  ok        secret key present, sign-capable, not expired"
+        fi
+        ;;
+    esac
+  fi
+fi
+
+note "== Config fragments =="
+# rclone.conf is assembled from vault fragments by run_once_40, which never
+# overwrites an existing config: on divergence it writes a .from-vault copy
+# beside it and asks for a hand reconcile. That warning scrolls past once and is
+# then invisible, which is how the vault came to hold fewer remotes than the
+# machine with the audit reporting `ok`. The leftover copy is the standing
+# signal. Deliberately no content comparison: the fragment is credentials end to
+# end, and reading it would cost this script its never-read-private-material
+# property for a check the sidecar already gives away for free.
+sidecar="$HOME/.config/rclone/rclone.conf.from-vault"
+if [ -e "$sidecar" ]; then
+  flag "${sidecar/#$HOME/\~} exists — the vault fragment diverged from this machine and was never reconciled. Reconcile, re-seed the vault, then delete the copy"
+else
+  note "  ok        no unreconciled fragment copy"
+fi
 
 note "== Local backup freshness =="
 # -mtime rather than stat: BSD and GNU stat disagree on flags, find does not.

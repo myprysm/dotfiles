@@ -167,6 +167,28 @@ Done. Post-bootstrap checklist (tool-native auth, never in the repo):
       ONLY on a machine that should hold your keys
 EOF
 
+# Each machine signs with its own key, generated here and never exported, so
+# nothing restores one onto a fresh machine any more. Detected, never done for
+# you: ~/.gnupg is a private keyring this repo is hard-denied, which is the same
+# reason the pinentry step below is manual — and on WSL the key has to be
+# generated through the WINDOWS store, the one .gitconfig points gpg.program at,
+# which no test here can reach.
+GIT_GPG="$(git config --get gpg.program 2>/dev/null || true)"
+[ -n "$GIT_GPG" ] || GIT_GPG="gpg"
+if ! "$GIT_GPG" --list-secret-keys >/dev/null 2>&1 \
+   || [ -z "$("$GIT_GPG" --with-colons --list-secret-keys 2>/dev/null | grep '^sec' || true)" ]
+then
+  cat <<EOF
+  - THIS MACHINE HAS NO SIGNING KEY, and commit.gpgsign is on, so git cannot
+    commit until all three are done:
+      1. $GIT_GPG --quick-generate-key "\$(git config user.name) <\$(git config user.email)>" ed25519 sign 0
+      2. printf '[user]\\n\\tsigningkey = <id>\\n' >> ~/.gitconfig.local
+      3. $GIT_GPG --armor --export <id>    then paste it at github.com/settings/keys
+    Verify with scripts/secrets-audit.sh, whose Commit signing section fails
+    until all three are in place.
+EOF
+fi
+
 # macOS-only. ~/.gnupg is hard-denied to this repo (it is a private keyring), so
 # nothing here can write gpg-agent.conf and it has to be a manual step. Without
 # it gpg-agent falls back to pinentry-curses: signing still works in a terminal,

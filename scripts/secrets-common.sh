@@ -4,15 +4,8 @@
 # every identifying string lives in the vault, per the redaction rule.
 
 # Generic containers only. bw uses nested folders, op mirrors them as tags.
-BW_ROOT="dotfiles"
 BW_SSH="dotfiles/ssh"
 BW_RESTORE="dotfiles/restore"
-
-# WSL's git signs through the Windows GnuPG store; bootstrap.sh creates this
-# symlink and .gitconfig hardcodes the same path.
-# Overridable so the import branch can be exercised without touching the real
-# Windows keyring; the default is the only path .gitconfig knows about.
-WSL_GPG="${WSL_GPG:-/usr/local/bin/gpg}"
 
 # Machine-local, outside the repo and outside chezmoi's source dir.
 BACKUP_DIR="$HOME/.local/share/dotfiles-secrets"
@@ -25,18 +18,18 @@ warn() { printf '  ! %s\n' "$*" >&2; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 note() { printf '%s\n' "$*"; }
 
-is_wsl() {
-  grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null
+# The GnuPG binary git itself signs through, which is the only one whose keyring
+# can answer "can this machine sign?". Never a bare `gpg`: on WSL that resolves
+# to the Windows exe via /usr/local/bin, and .gitconfig points gpg.program there
+# deliberately — so asking git is both simpler and correct on every machine.
+# Overridable for testing.
+git_gpg() {
+  if [ -z "${GIT_GPG:-}" ]; then
+    GIT_GPG="$(git config --get gpg.program 2>/dev/null || true)"
+    [ -n "$GIT_GPG" ] || GIT_GPG="gpg"
+  fi
+  printf '%s\n' "$GIT_GPG"
 }
-
-# On WSL the shim above SHADOWS the native binary: the default PATH puts
-# /usr/local/bin ahead of /usr/bin, so on a machine without a brew-installed
-# gnupg a bare `gpg` IS the Windows exe. Resolve the native one explicitly, or
-# the "Linux keyring" import silently lands in the Windows store instead.
-# Overridable for testing, like WSL_GPG.
-if [ -z "${LINUX_GPG:-}" ]; then
-  if is_wsl; then LINUX_GPG="/usr/bin/gpg"; else LINUX_GPG="gpg"; fi
-fi
 
 require() {
   for cmd in "$@"; do

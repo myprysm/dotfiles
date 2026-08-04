@@ -40,5 +40,5 @@ tool-generic on purpose (redaction rule: this file is public). `~` = the invento
 | `~/.npmrc` | registry auth lines |
 | `~/.claude/settings.json` | permission allowlists carrying internal hostnames (redaction rule) |
 | `~/.claude/CLAUDE.md` | internal paths or names |
-| `~/.gitconfig` | `signingkey` → template via the secret router, never inline |
+| `~/.gitconfig` | `signingkey` → leave it in `~/.gitconfig.local`, never adopt it (per-machine key, secrets policy rule 5); also `core.sshCommand`, `includeIf` work-tree blocks, `safe.directory` |
 | any shell rc or alias file | inline credentials, internal URLs, work-specific values |

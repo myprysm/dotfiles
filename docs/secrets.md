@@ -1,7 +1,8 @@
 # Secrets policy
 
 > Decided in issues #6 and #11; the scripts it describes were implemented in #19,
-> and their work/`op` half in #47.
+> and their work/`op` half in #47. #6's vault-rendered `signingkey` was amended by
+> #48/#50 to a per-machine key.
 > Written under the redaction rule: no hostnames, key names, or identifying counts.
 
 ## Rules
@@ -15,6 +16,16 @@
 4. **The vault's filename is canonical.** One key, one name: where a machine holds the
    same key under a different filename, the machine is renamed to match the vault and
    its `~/.ssh/config` repointed — never the reverse.
+5. **Each machine signs commits with its own GPG key.** The key is generated on the
+   machine, never exported, and never enters a vault; only its public half is
+   registered on GitHub. Blast radius decides it: one shared identity means any single
+   compromised machine compromises the signature everywhere and revocation is
+   all-or-nothing, where per-machine keys revoke exactly the machine that was lost.
+   The recovery cost that makes this affordable is specific to signing — a signing
+   key's only far end is a GitHub settings page, self-service and one step, where an
+   SSH key's far ends must be coordinated, which is why those stay vaulted. The id is
+   identity-bearing and per-machine, so it lives in untracked `~/.gitconfig.local`,
+   never in the tracked `.gitconfig`.
 
 ## Per-domain routing
 
@@ -27,9 +38,13 @@
 ## Class roster
 
 - **Vaulted** (durable, non-reissuable): SSH private keys, `~/.ssh/config`,
-  GPG secret keys + ownertrust, Ansible Vault password files, triaged loose env files.
+  Ansible Vault password files, triaged loose env files.
 - **Re-auth instead** (ephemeral / re-issuable): gh, docker, npm/composer, vault-token,
   argocd, cloudflared, cloud CLIs, the managers' own state.
+- **Never vaulted**: GPG commit-signing keys — see rule 5. They are durable and not
+  reissuable in the ordinary sense, so they would belong in the first class on those
+  criteria alone; per-machine ownership is what takes them out of it, and the vault
+  holding one is the defect, not the backup.
 
 ## The work domain (1Password)
 
@@ -67,12 +82,26 @@ domain silently absent from its freshness section.
 ## Procedures
 
 - **Restore**: `scripts/secrets-restore.sh` — explicit invocation, on the post-bootstrap
-  checklist, never wired into `chezmoi apply`. On WSL the GPG secret key is imported
-  into **both** keyrings: the native one, and the Windows store that git signs through.
-  Importing only the former leaves a machine that looks restored and then cannot commit.
+  checklist, never wired into `chezmoi apply`. It restores no GPG key and imports into no
+  keyring (rule 5); a fresh machine generates its own, and `bootstrap.sh` prints the three
+  steps when it finds none.
 - **Audit**: `scripts/secrets-audit.sh` — compares local state against vault item names;
   reports unbacked local items and unrestored vault items; nags when the last local
-  backup is older than 30 days. Both domains share **one** SSH table rather than getting
+  backup is older than 30 days. It also asks whether this machine can **actually sign**:
+  a configured `user.signingkey` that the store git signs through cannot resolve to a
+  usable secret key is drift, and it used to be invisible — the audit asked only whether
+  a vault ref resolved and printed `ok` on a machine where `git commit -S` failed with
+  `No secret key`. The store is git's own `gpg.program`, which on WSL is the Windows
+  binary, so it is the only keyring whose answer means anything. Metadata only: presence,
+  signing capability, expiry and revocation, never a signing attempt — that would raise a
+  pinentry prompt, and an audit that blocks is an audit nobody runs unattended.
+  A second check of the same shape covers `rclone.conf`: the ref reported `ok` because
+  the vault note existed, while the vault held fewer remotes than the machine. The signal
+  is the `rclone.conf.from-vault` copy `run_once_40` leaves on divergence, whose one-shot
+  warning otherwise scrolls past for good. Deliberately no content comparison — the
+  fragment is credentials end to end, and reading it would cost this script its
+  never-read-private-material property for something the sidecar gives away free.
+  Both domains share **one** SSH table rather than getting
   a section each: a key held in one domain and checked out under the other is exactly the
   drift worth catching, and auditing them separately makes it invisible. Each entry
   carries its side (`bw`, `op`, `local`). Where a work key's fingerprint also appears in
