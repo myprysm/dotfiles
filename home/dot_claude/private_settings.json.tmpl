@@ -64,10 +64,6 @@
     "defaultMode": "auto"
   },
   "model": "opus",
-  "skillOverrides": {
-    "compress": "off",
-    "caveman-compress": "off"
-  },
   "hooks": {
     "PreToolUse": [
       {
@@ -76,30 +72,6 @@
           {
             "type": "command",
             "command": "bash {{ .chezmoi.homeDir }}/.claude/hooks/block-secret-reads.sh"
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"{{ .chezmoi.homeDir }}/.claude/hooks/caveman-activate.js\"",
-            "timeout": 5,
-            "statusMessage": "Loading caveman mode..."
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"{{ .chezmoi.homeDir }}/.claude/hooks/caveman-mode-tracker.js\"",
-            "timeout": 5,
-            "statusMessage": "Tracking caveman mode..."
           }
         ]
       }
@@ -130,6 +102,7 @@
     "csharp-lsp@claude-plugins-official": false,
     "stripe@claude-plugins-official": false,
     "php-lsp@claude-plugins-official": false,
+    "mattpocock-skills@claude-plugins-official": true,
     "hindsight-memory@hindsight": true,
     "caveman@caveman": true
   },
