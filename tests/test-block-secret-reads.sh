@@ -159,5 +159,94 @@ EOF
 cat ~/.env)"'
 
 echo
+echo "== regressions the split introduced, each confirmed then fixed (#69)"
+# Every one of these was DENIED before the split existed and ALLOWED after it.
+# `${VAR}` is the worst: ordinary syntax, no evasion, and the brace was ending
+# the simple command mid-path.
+probe deny 'cat ${HOME}/.env'
+probe deny 'head -2 ${HOME}/.env'
+probe deny '. ${HOME}/.envrc'
+probe deny 'cat ${HOME:-/root}/.env'
+probe deny 'jq . ${PWD}/terraform.tfstate'
+# A heredoc body is inert only when the delimiter is quoted AND no interpreter
+# runs it. An unquoted delimiter is expanded; an interpreter executes every line.
+probe deny 'sh <<EOF
+cat ~/.env
+EOF'
+probe deny 'bash <<'"'"'EOF'"'"'
+cat ~/.env
+EOF'
+probe deny 'cat <<EOF
+$(cat ~/.env)
+EOF'
+probe deny 'python3 - <<EOF
+print(open("/Users/dbenon/.env").read())
+EOF'
+# `&` is part of a redirection operator here, not a separator.
+probe deny 'cat 2>&1 ~/.env'
+probe deny 'grep -i key 2>&1 ~/.env'
+probe deny 'tail -n 5 2>&1 ~/.secrets/token'
+# A line continuation inside a redirection, and a substitution as its target.
+probe deny 'cat < \
+~/.env'
+probe deny 'read -r line < $(echo ~/.env); echo "$line"'
+
+echo
+echo "== a decorated command word is still the command (#69)"
+probe deny '/bin/cat ~/.env'
+probe deny '"cat" ~/.env'
+probe deny 'ca""t ~/.env'
+probe deny '\cat ~/.env'
+probe deny 'eval "cat ~/.env"'
+probe deny 'bash -c "cat ~/.env"'
+probe deny 'cat${IFS}/Users/dbenon/.env'
+probe deny '$(echo cat) ~/.env'
+# A wrapper's own options must not become the command word.
+probe deny 'timeout 5 cat ~/.env'
+probe deny 'sudo -u root cat ~/.env'
+probe deny 'env -u FOO cat ~/.env'
+probe deny 'command -p cat ~/.env'
+probe deny 'nice cat ~/.env'
+
+echo
+echo "== readers beyond the coreutils list (#69)"
+probe deny 'python3 -c "print(open(\"/Users/dbenon/.env\").read())"'
+probe deny 'perl -pe "" ~/.env'
+probe deny 'zcat ~/.env.gz'
+probe deny 'gunzip -c ~/.env.gz'
+probe deny 'openssl base64 -in ~/.env'
+# A copy is allowed by design, but not a copy into a standard stream.
+probe deny 'cp ~/.env /dev/stdout'
+probe allow 'cp ./.env /tmp/x'
+# `git show` prints file contents; the other subcommands must stay usable.
+probe deny 'git show HEAD:.env'
+probe allow 'git log --oneline -5'
+
+echo
+echo "== a quote inside the filename does not hide it (#69)"
+probe deny 'cat ~/.en"v"'
+
+echo
+echo "== a parse failure denies outright rather than guessing (#69)"
+# The old fallback consulted whole-command patterns, which could still answer
+# allow for a shape they did not recognise. Control only reaches the fallback
+# once a secret has already been named, so it denies.
+probe deny '/bin/cat ~/.env "unbalanced'
+probe deny 'timeout 5 cat ~/.env '"'"'unbalanced'
+
+echo
+echo "== heredoc delimiter forms the split must read correctly (#69)"
+# `<<-` strips every leading tab from the terminator; matching one tab refused a
+# legitimate body. A backslash-quoted delimiter is quoted, so the body is inert.
+probe allow 'git commit -m "$(cat <<-EOF
+		prose about .env and <
+		EOF
+)"'
+probe allow 'git commit -m "$(cat <<\EOF
+prose about .env and <
+EOF
+)"'
+
+echo
 echo "===== $pass passed, $fail failed ====="
 [ "$fail" -eq 0 ]
