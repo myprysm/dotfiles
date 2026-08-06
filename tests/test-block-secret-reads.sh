@@ -296,5 +296,90 @@ probe deny "echo .env $(head -c 9000 /dev/zero | tr '\0' 'x')"
 probe allow "echo nothing-secret-here $(head -c 9000 /dev/zero | tr '\0' 'x')"
 
 echo
+echo "== canonical secret paths, not just the word (#69)"
+# A kubeconfig is almost always ~/.kube/config. Only the WORD kubeconfig matched,
+# so the likely real path was uncovered in this hook and in the deny globs both.
+probe deny 'cat ~/.kube/config'
+probe deny 'cat ~/.talos/config'
+probe allow 'cat ~/.kube/README'
+
+echo
+echo "== the .env pattern takes any prefix and several suffix segments"
+probe deny 'cat prod.env'
+probe deny 'cat local.env'
+probe deny 'cat .env_local'
+probe deny 'cat ~/.env.production.local'
+probe allow 'cat ./.env.example'
+probe allow 'cat environment.md'
+
+echo
+echo "== the secrets directory, however it is spelled"
+# The absolute form was one spelling of many; $HOME, ~, a doubled slash and a `..`
+# detour all reach the same place.
+# This file is not a template, so the directory comes from chezmoi at run time.
+SECRETS_BASE=$(chezmoi data --format json 2>/dev/null | jq -r '.secretsDir // ""')
+SECRETS_BASE=${SECRETS_BASE##*/}
+if [ -n "$SECRETS_BASE" ]; then
+  probe deny "cat \$HOME/.local/state/$SECRETS_BASE/tok"
+  probe deny "cat ~/.local/state/$SECRETS_BASE/tok"
+  probe deny "head -1 .local//state/$SECRETS_BASE/tok"
+else
+  echo "  -- skipped: chezmoi did not report a secretsDir"
+fi
+
+echo
+echo "== content printers that are not obviously readers"
+probe deny 'curl -s file:///Users/dbenon/.env'
+probe deny 'git config -f ~/.env -l'
+probe deny 'git archive HEAD .env'
+probe deny 'shuf ~/.env'
+probe deny 'tar -xOf /tmp/a.tar .env'
+probe deny 'cp ~/.env /dev/tty'
+probe allow 'curl -s https://example.com/x'
+probe allow 'git config --global user.name "x"'
+probe allow 'tar -czf /tmp/b.tar.gz src/'
+
+echo
+echo "== Homebrew's g-prefixed GNU tools read the same as their namesakes"
+probe deny 'gsed -n 1p ~/.env'
+probe deny 'gcat ~/.env'
+probe deny 'ggrep KEY ~/.env'
+# The prefix is only stripped when the remainder is itself a reader, so `git`
+# must not become `it`.
+probe allow 'git status'
+
+echo
+echo "== a herestring feeding an interpreter is executed, not data"
+probe deny 'bash <<< "cat ~/.env"'
+probe deny 'sh <<<"head -1 ~/.envrc"'
+probe allow 'cat <<< "just prose about .env"'
+
+echo
+echo "== ANSI-C quoting rebuilds the filename, so a reader given one fails closed"
+probe deny "cat \$'\\x2eenv'"
+probe deny "cat \$'\\056envrc'"
+probe allow "echo \$'\\x41'"
+
+echo
+echo "== commands that print secrets with NO filename to match on"
+# Judged above the secret gate: nothing below it can see these, because there is
+# no path in the command at all.
+probe deny 'kubectl config view --raw'
+probe deny 'terraform state pull'
+probe deny 'direnv export bash'
+probe deny 'gcloud auth print-access-token'
+probe deny 'bw export --format json'
+probe allow 'kubectl get pods'
+probe allow 'kubectl config use-context prod'
+probe allow 'terraform plan'
+probe allow 'bw list items --folderid x'
+# Keyed on the command word and its operands, never on the argument text. A regex
+# over the text refused the commit message that introduced this very rule, which
+# is the mistake the whole split exists to prevent - and it happened again here.
+probe allow 'git commit -m "add a rule for kubectl config view and direnv export"'
+probe allow 'gh issue create --body "terraform state pull and bw export print secrets"'
+probe allow 'echo "documenting kubectl config view for the runbook"'
+
+echo
 echo "===== $pass passed, $fail failed ====="
 [ "$fail" -eq 0 ]
