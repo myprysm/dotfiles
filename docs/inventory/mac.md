@@ -19,7 +19,7 @@ Host: macOS 26.5.2 (build 25F84), Apple Silicon (arm64), login shell `/bin/zsh` 
 
 Prefix `/opt/homebrew` (Apple Silicon default). Homebrew 6.0.13 — same version as the WSL box.
 
-Taps (7): `fairwindsops/tap`, `hashicorp/tap`, `k0sproject/tap`, `minio/stable`, `netbirdio/tap`, `qbit-ai/tap`, `siderolabs/tap`. Only `hashicorp/tap` is shared with WSL (which also has `ariga/tap`); no `homebrew/command-not-found` tap — see §2.1.
+Taps (7): `fairwindsops/tap`, `hashicorp/tap`, `k0sproject/tap`, `minio/stable`, `netbirdio/tap`, `qbit-ai/tap`, `siderolabs/tap`. Only `hashicorp/tap` is shared with WSL (which also has `ariga/tap`); no `homebrew/command-not-found` tap — see §2.1. `netbirdio/tap` was dropped from the manifest on 2026-08-06 — see the `netbird` row below.
 
 **Leaves (71) — vs 29 on WSL.** Shared with WSL marked ●:
 
@@ -65,7 +65,7 @@ Taps (7): `fairwindsops/tap`, `hashicorp/tap`, `k0sproject/tap`, `minio/stable`,
 | `minio/stable/mc` ● | `mc`, completion in `.zshrc` | keep |
 | `mkcert` | local dev TLS | keep |
 | `mysql-client` | on PATH from `.zshrc` (the line that is dead on WSL) | keep |
-| `netbirdio/tap/netbird` | VPN CLI | keep |
+| `netbirdio/tap/netbird` | VPN CLI | **dropped from the manifest on 2026-08-06** — netbird now comes from its own official installer and is managed by hand, so the repo does not install it; the tap went with it |
 | `nmap`, `telnet` | network diagnostics | keep / borderline |
 | `nvm` ● | node version manager | keep |
 | `operator-sdk` | k8s operator dev | keep |
@@ -92,7 +92,7 @@ Full formula list is 273 (vs 73 on WSL) — the rest are transitive deps. Notabl
 
 The Mac's equivalent of "apt vs brew" is "brew vs app-bundled vs hand-copied":
 
-- App-bundled symlinks: Docker Desktop CLI set (`docker`, `docker-compose`, `kubectl.docker`, credential helpers incl. `docker-credential-osxkeychain`), VirtualBox suite, `mullvad`, `tailscale`, `netbird`, `newt`, `warp-cli`, `ollama`, `code`.
+- App-bundled symlinks: Docker Desktop CLI set (`docker`, `docker-compose`, `kubectl.docker`, credential helpers incl. `docker-credential-osxkeychain`), VirtualBox suite, `mullvad`, `tailscale`, `netbird` (as of 2026-08-06 the only netbird install — §1.1), `newt`, `warp-cli`, `ollama`, `code`.
 - Hand-copied binaries: `kubeone` (**same manual install as WSL** — `.zshrc` sources its completion), `kubent`, `clusterlint`, `talosctl-1.8.4` (old pinned copy beside the brew one), `rkdeveloptool`, `bcrypt-tool` (duplicate of the `~/go/bin` copy).
 - `/usr/local/go` exists (tarball Go) **and** brew Go 1.26.5 is installed; PATH puts brew first, so the tarball is stale — same unify-Go flag as WSL, opposite direction.
 - `/Library/Java/JavaVirtualMachines`: `graalvm-jdk-21.0.3` (manual, referenced by `JAVA_HOME`) + `temurin-21` + `temurin-26` (cask). Three JDKs, one hardcoded choice.

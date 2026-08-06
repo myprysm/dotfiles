@@ -13,7 +13,7 @@ packages:
   # this list to vendors' own taps and review any addition.
   # ariga/tap only supplies atlas as a transitive dep, but an untrusted tap
   # makes every unrelated install print a trust warning and fail.
-  taps: [hashicorp/tap, ariga/tap, fairwindsops/tap, k0sproject/tap, netbirdio/tap]
+  taps: [hashicorp/tap, ariga/tap, fairwindsops/tap, k0sproject/tap]
   core:
     # gitleaks is repo tooling: the written pre-commit review rule (#6) depends
     # on it and /adopt runs it as its last gate, and the estate-wide pre-commit
@@ -40,7 +40,7 @@ packages:
               hashicorp/tap/terraform, hashicorp/tap/vault, hashicorp/tap/packer,
               rclone, hcloud, argocd, cilium-cli, crane, cyphernetes, doctl,
               fairwindsops/tap/pluto, operator-sdk, k0sproject/tap/k0sctl, kind,
-              netbirdio/tap/netbird, mkcert, nmap, cloudflared, krew]
+              mkcert, nmap, cloudflared, krew]
       # `krew` appears in the plugin list too — that is krew's own self-upgrade,
       # and it only works once krew exists. Nothing installed it on a fresh
       # machine, so every `kubectl krew install` failed and `|| true` hid it.
