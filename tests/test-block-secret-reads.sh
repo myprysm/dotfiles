@@ -74,5 +74,20 @@ probe allow 'ls -R /tmp'
 probe allow 'cat ./.env.example'
 
 echo
+echo "== an encrypted-file path is still denied (#69 narrowed this arm)"
+probe deny 'cat secrets.vault'
+probe deny 'cat ~/.vault-token'
+probe deny 'cat .vault-token'
+probe deny 'head /home/x/prod.vault'
+probe deny 'cat "$HOME/.vault-token"'
+
+echo
+echo "== a secret manager's own JSON field is not a filename (#69)"
+probe allow "op item get ref --vault Employee --format json | jq -r '.vault.name'"
+probe allow "op item list --format json | jq '.[].vault.id'"
+probe allow "op item get ref --format json | jq -r '.vault'"
+probe allow "gh issue create --title x --body 'the hook matched .vault mid-filter'"
+
+echo
 echo "===== $pass passed, $fail failed ====="
 [ "$fail" -eq 0 ]
