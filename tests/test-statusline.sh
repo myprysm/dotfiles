@@ -65,6 +65,31 @@ echo "== the bar clamps above 100"
 out=$(render "{\"model\":{\"display_name\":\"M\"},$ctx,\"rate_limits\":{\"five_hour\":{\"used_percentage\":140}}}")
 has "ten cells, not fourteen" '5h ██████████ 140%'
 
+# The hook is invoked as plain `bash`, so the interpreter is whatever PATH gives.
+# Stock macOS /bin/bash is 3.2, and a bash-4 builtin (`mapfile`) once made the
+# whole line degrade to `? | ctx 0/0 (0%)` with status 0 on any machine where
+# brew's bash was not first. Same payload, both interpreters, same output.
+if [ -x /bin/bash ] && [ "$(/bin/bash -c 'echo ${BASH_VERSINFO[0]}')" -lt 4 ]; then
+  echo
+  echo "== identical output under stock /bin/bash $(/bin/bash -c 'echo $BASH_VERSION')"
+  payload="{\"model\":{\"display_name\":\"M\"},$ctx,\"rate_limits\":{\"five_hour\":{\"used_percentage\":47},\"seven_day\":{\"used_percentage\":83,\"resets_at\":$SOON}}}"
+  five=$(printf '%s' "$payload" | bash "$SL" | perl -pe 's/\e\[[0-9;]*m//g')
+  three=$(printf '%s' "$payload" | /bin/bash "$SL" 2>&1 | perl -pe 's/\e\[[0-9;]*m//g')
+  if [ "$five" = "$three" ]; then
+    pass=$((pass+1)); printf '  ok   bash 3.2 output matches bash 5\n'
+  else
+    fail=$((fail+1)); printf '  FAIL bash 3.2 differs\n         5.x: %s\n         3.2: %s\n' "$five" "$three"
+  fi
+  case $three in
+    *'command not found'*|*'ctx 0/0'*)
+      fail=$((fail+1)); printf '  FAIL bash 3.2 degraded: %s\n' "$three" ;;
+    *) pass=$((pass+1)); printf '  ok   no bash-4 builtin in the path\n' ;;
+  esac
+else
+  echo
+  echo "  -- skipped: no bash 3.x at /bin/bash on this machine"
+fi
+
 echo
 echo "===== $pass passed, $fail failed ====="
 [ "$fail" -eq 0 ]

@@ -16,32 +16,32 @@ BADGE=""
 [ -n "$CAVEMAN" ] && BADGE=$(printf '%s' "$IN" | bash "$CAVEMAN")
 
 # --- fields -----------------------------------------------------------------
-# One value per line, read with mapfile. A tab-separated `read` cannot carry an
-# empty field: TAB is an IFS whitespace character, so a run of tabs collapses to
-# one delimiter and every later field shifts left. With `resets_at` absent from
-# one window — which the payload does omit — the next window's percentage landed
-# in the timer and its own slot took the raw epoch, so the line printed a
-# ten-digit number as a percentage beside a full bar.
-mapfile -t FIELDS < <(
-  printf '%s' "$IN" | jq -r 2>/dev/null '
-    [ .model.display_name // "?"
-    , (.context_window.used_percentage // 0)
-    , (.context_window.total_input_tokens // 0)
-    , (.context_window.context_window_size // 0)
-    , (.rate_limits.five_hour.used_percentage // "")
-    , (.rate_limits.five_hour.resets_at // "")
-    , (.rate_limits.seven_day.used_percentage // "")
-    , (.rate_limits.seven_day.resets_at // "")
-    ] | .[]'
-)
-MODEL=${FIELDS[0]-}
-CTX_PCT=${FIELDS[1]-}
-CTX_IN=${FIELDS[2]-}
-CTX_SIZE=${FIELDS[3]-}
-H5_PCT=${FIELDS[4]-}
-H5_RESET=${FIELDS[5]-}
-D7_PCT=${FIELDS[6]-}
-D7_RESET=${FIELDS[7]-}
+# Split on a unit separator, which is NOT an IFS whitespace character. That is
+# the whole point: a run of IFS whitespace collapses to one delimiter, so the
+# original tab-separated read could not carry an empty field — with `resets_at`
+# absent from one window, which the payload does omit, every later field shifted
+# left and the line printed a raw epoch as a percentage.
+#
+# `mapfile` fixed that and broke something worse: it is a bash 4 builtin, and
+# stock macOS /bin/bash is 3.2, so on any machine where brew's bash is not first
+# on PATH the whole line silently degraded to `? | ctx 0/0 (0%)` with status 0.
+# A non-whitespace IFS needs no bash 4 and keeps empty fields in place.
+#
+# Known limit, unchanged in spirit from the `@tsv` original: a value containing a
+# newline would still truncate here. No model display name does.
+FIELD_LINE=$(printf '%s' "$IN" | jq -r 2>/dev/null '
+  [ .model.display_name // "?"
+  , (.context_window.used_percentage // 0)
+  , (.context_window.total_input_tokens // 0)
+  , (.context_window.context_window_size // 0)
+  , (.rate_limits.five_hour.used_percentage // "")
+  , (.rate_limits.five_hour.resets_at // "")
+  , (.rate_limits.seven_day.used_percentage // "")
+  , (.rate_limits.seven_day.resets_at // "")
+  ] | join("\u001f")')
+IFS=$'\037' read -r MODEL CTX_PCT CTX_IN CTX_SIZE H5_PCT H5_RESET D7_PCT D7_RESET <<EOF
+$FIELD_LINE
+EOF
 
 # A malformed or unexpected payload must not spew shell errors into the prompt.
 numeric_or() { # $1 = value, $2 = fallback
