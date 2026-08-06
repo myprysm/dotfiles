@@ -16,7 +16,13 @@ BADGE=""
 [ -n "$CAVEMAN" ] && BADGE=$(printf '%s' "$IN" | bash "$CAVEMAN")
 
 # --- fields -----------------------------------------------------------------
-IFS=$'\t' read -r MODEL CTX_PCT CTX_IN CTX_SIZE H5_PCT H5_RESET D7_PCT D7_RESET < <(
+# One value per line, read with mapfile. A tab-separated `read` cannot carry an
+# empty field: TAB is an IFS whitespace character, so a run of tabs collapses to
+# one delimiter and every later field shifts left. With `resets_at` absent from
+# one window — which the payload does omit — the next window's percentage landed
+# in the timer and its own slot took the raw epoch, so the line printed a
+# ten-digit number as a percentage beside a full bar.
+mapfile -t FIELDS < <(
   printf '%s' "$IN" | jq -r 2>/dev/null '
     [ .model.display_name // "?"
     , (.context_window.used_percentage // 0)
@@ -26,8 +32,16 @@ IFS=$'\t' read -r MODEL CTX_PCT CTX_IN CTX_SIZE H5_PCT H5_RESET D7_PCT D7_RESET 
     , (.rate_limits.five_hour.resets_at // "")
     , (.rate_limits.seven_day.used_percentage // "")
     , (.rate_limits.seven_day.resets_at // "")
-    ] | @tsv'
+    ] | .[]'
 )
+MODEL=${FIELDS[0]-}
+CTX_PCT=${FIELDS[1]-}
+CTX_IN=${FIELDS[2]-}
+CTX_SIZE=${FIELDS[3]-}
+H5_PCT=${FIELDS[4]-}
+H5_RESET=${FIELDS[5]-}
+D7_PCT=${FIELDS[6]-}
+D7_RESET=${FIELDS[7]-}
 
 # A malformed or unexpected payload must not spew shell errors into the prompt.
 numeric_or() { # $1 = value, $2 = fallback
