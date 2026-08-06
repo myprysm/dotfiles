@@ -36,6 +36,22 @@ if ! bw get notes {{ (index .secrets "rclone-conf-personal").ref | quote }} >> "
   echo "       Is the vault unlocked? $dest left untouched." >&2
   exit 1
 fi
+
+# The exit status alone is not enough. When bw's prompt library cannot use the
+# terminal it prints nothing and still exits 0 — #19 measured that for the
+# secrets scripts, and `chezmoi apply -v` reproduces it here, because it captures
+# this script's stdout so the prompt has nowhere to attach. The whole-file `-s`
+# test below cannot catch it either: the work fragment keeps the file non-empty.
+# Unchecked, a fresh machine got a work-only config at mode 600 and the word
+# "restored" (#53). The section header is what a fragment must have, not bytes.
+if ! grep -q '^\[' "$tmp"; then
+  echo "FATAL: the personal rclone fragment came back with no remote in it." >&2
+  echo "       bw exited 0 and printed nothing, which is what it does when it" >&2
+  echo "       cannot prompt on a terminal — 'chezmoi apply -v' does this." >&2
+  echo "       Unlock the vault, then run 'chezmoi apply' without -v." >&2
+  echo "       $dest left untouched." >&2
+  exit 1
+fi
 end_with_newline "$tmp"
 
 {{- if .bundles.work }}
