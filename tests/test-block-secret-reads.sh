@@ -118,5 +118,46 @@ EOF
 cat ~/.env'
 
 echo
+echo "== the split associates a secret with the command that reads it (#69)"
+# Text that merely describes a secret file reads nothing, however it is quoted.
+probe allow 'git commit -m "the guard matched .env beside a < bracket"'
+probe allow "git commit -m 'names ~/.env and kubeconfig, reads neither'"
+probe allow 'gh issue create --title "kubeconfig" --body "mentions .envrc and <"'
+probe allow 'echo "a message about .env"'
+# ...but a reader anywhere in it does read, however deeply nested.
+probe deny 'git commit -m "$(cat ~/.env)"'
+probe deny 'echo "$(<~/.env)"'
+probe deny 'echo `cat ~/.env`'
+probe deny 'echo "prose $(head -1 ~/.envrc) prose"'
+probe deny 'x=$(cat ~/.env); echo "$x"'
+# A prefix word must not hide the reader behind it.
+probe deny 'sudo cat ~/.env'
+probe deny 'if cat ~/.env; then echo x; fi'
+probe deny '( cat ~/.env )'
+probe deny 'command cat ~/.env'
+probe deny 'while read l; do echo "$l"; done < ~/.env'
+# A secret reaching a variable is dataflow the split cannot follow: deny.
+probe deny 'f=~/.env'
+probe deny 'export KUBECONFIG_FILE=~/.env'
+# A herestring is data, but it is still expanded.
+probe allow 'cat <<< "just prose about .env"'
+probe deny 'cat <<< "$(<~/.env)"'
+# Fails closed: an unbalanced quote means the split cannot be trusted.
+probe deny 'cat ~/.env "unbalanced'
+probe deny 'echo "$(cat ~/.env'
+# These two must be decided by the SPLIT, not by the fallback: each carries a
+# bare `<` in its text, which the fallback denies on sight. They are what proves
+# the heredoc body is skipped as text — `nl=$(printf ...)` was empty, so every
+# heredoc case had been passing through the fallback instead.
+probe allow 'git commit -m "$(cat <<EOF
+prose naming .env and kubeconfig, with a < in it
+EOF
+)"'
+probe deny 'git commit -m "$(cat <<EOF
+prose with a < in it
+EOF
+cat ~/.env)"'
+
+echo
 echo "===== $pass passed, $fail failed ====="
 [ "$fail" -eq 0 ]
