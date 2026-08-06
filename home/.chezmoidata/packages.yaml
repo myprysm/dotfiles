@@ -66,14 +66,24 @@ packages:
       uvTools:
         - package: "ansible==13.5.0"     # #17's pin: a cleanup must not double as a major upgrade
           python: "3.13"
-          # kubernetes/openshift/jmespath are libraries the modules import, not deps of
-          # ansible itself. `pip` is here because this env is what /etc/ansible/hosts
-          # names as localhost's interpreter, and playbooks that pip-install their own
+          # Libraries the modules and inventory plugins import, not deps of ansible
+          # itself. `pip` is here because this env is what /etc/ansible/hosts names as
+          # localhost's interpreter, and playbooks that pip-install their own
           # dependencies need one to exist: a uv tool env ships without pip, so the
           # ansible.builtin.pip module falls through to brew's python and PEP 668
-          # refuses it. Reconverging this record drops anything a playbook installed
-          # here, so the playbook must be re-run afterwards.
-          with: [kubernetes, openshift, jmespath, pip]
+          # refuses it.
+          #
+          # boto3 and pydo are pinned to what the work playbook's local-prepare role
+          # installs, and they are declared rather than left to it because a reconverge
+          # rebuilds this env from THIS list and drops whatever pip put here. An
+          # inventory plugin resolves its imports before any task runs, so a role could
+          # never repair that within the same invocation, and a tag-filtered run skips
+          # the role entirely. digitalocean.cloud then fails as
+          # `DigitalOceanReqs has no attribute 'Client'` — the collection does
+          # `from pydo import Client` in a class body and swallows the ImportError, so a
+          # missing library reads as a broken collection. The pins therefore live in two
+          # places: if the playbook moves one, this goes stale until someone re-runs it.
+          with: [kubernetes, openshift, jmespath, pip, "boto3==1.28.53", "pydo==0.3.0"]
           executablesFrom: ansible-core
         - package: "mkdocs==1.6.1"       # #5 §8 sent this to `uvx mkdocs`; declared instead, so a fresh machine has it
           python: "3.13"
