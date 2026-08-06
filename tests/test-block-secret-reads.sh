@@ -89,5 +89,34 @@ probe allow "op item get ref --format json | jq -r '.vault'"
 probe allow "gh issue create --title x --body 'the hook matched .vault mid-filter'"
 
 echo
+echo "== the ref map is readable: names, no values (#69)"
+probe allow "chezmoi data | jq '.secrets'"
+probe allow "jq -r '.secrets | keys[]' home/.chezmoidata/secrets.yaml"
+probe deny 'cat ~/.secrets/token'
+probe deny 'cat .secrets/token'
+probe deny 'cat ~/.secrets.bak'
+
+echo
+echo "== a heredoc feeds literal text, so it opens no file (#69)"
+probe allow 'git commit -m "$(cat <<EOF
+the message names .env and kubeconfig
+EOF
+)"'
+probe allow 'gh issue comment 1 --body "$(cat <<EOF
+the audit reads .envrc there
+EOF
+)"'
+# The neutralisation is adjacency-only. Each of these still opens a file.
+probe deny 'cat ~/.env <<EOF
+x
+EOF'
+probe deny 'cat < ~/.env'
+probe deny 'cat <<< "$(<~/.env)"'
+probe deny 'cat <<EOF
+x
+EOF
+cat ~/.env'
+
+echo
 echo "===== $pass passed, $fail failed ====="
 [ "$fail" -eq 0 ]
