@@ -108,7 +108,7 @@ window() { # $1 = label, $2 = percentage, $3 = reset epoch
   [ -z "$2" ] && return 0
   printf '%s%s%s%s %s %s%s%%%s' \
     "$SEP" "$DIM" "$1" "$RESET" \
-    "$(bar "$2" 8)" \
+    "$(bar "$2" 10)" \
     "$(colour_for "$2")" "$2" "$RESET"
   [ -n "$3" ] && printf '%s ↻%s%s' "$DIM" "$(countdown "$3")" "$RESET"
 }
