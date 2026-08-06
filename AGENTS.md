@@ -22,6 +22,24 @@ it, so the comment asserting the reverted behaviour stayed shipped.
 
 Issues live in GitHub Issues for myprysm/dotfiles (gh CLI). See `docs/agents/issue-tracker.md`.
 
+**Never create an issue without the operator's approval.** This rule has no exception. It
+also covers an issue that a skill tells you to create, and an issue that holds text from a
+ticket you are about to close. Write the proposal in the conversation instead. Give the
+title, the question, and the reason. The operator decides.
+
+The reason: three issues were created in one session without a request. The operator then
+had to read and judge work he never asked for. He states the rule as "you propose, I decide".
+An agent that opens issues also makes the tracker unreadable, and an unreadable tracker
+stops the operator from reviewing any of it.
+
+Two related rules, so the proposal path is not a way around them:
+
+- Do not close or re-scope an existing issue without approval either.
+- Write every issue body, every resolution comment and every map entry in Simplified
+  Technical English (ASD-STE100). Short sentences. One idea in each sentence. Active voice.
+  Keep every technical fact. The dense style became unreadable, which is what made the
+  unapproved issues costly.
+
 Open work, and the order it is taken in, live in the Notes of the wayfinder map
 (issue #1) — not in this file, and not in the ticket numbers. Read them there
 before picking anything up; the order is authoritative over the

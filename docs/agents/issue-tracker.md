@@ -2,6 +2,12 @@
 
 Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+## Approval gate
+
+**`gh issue create` needs the operator's approval every time.** Propose the issue in the
+conversation first: the title, the question, the reason. Wait for the answer. The same gate
+covers closing an issue and changing its scope. See the rule and its reason in `AGENTS.md`.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
