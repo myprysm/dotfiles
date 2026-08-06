@@ -91,7 +91,17 @@ else
   cp "$tmp" "$dest.from-vault"
   chmod 600 "$dest.from-vault"
   echo "  ! $dest exists and differs from the vault." >&2
-  echo "  !   on disk: $(grep -c '^\[' "$dest") remotes    vault: $(grep -c '^\[' "$tmp") remotes" >&2
+  # Section counts alone read as a contradiction when the difference is format:
+  # #53 met `on disk: 8 remotes    vault: 8 remotes` and had to establish by hand
+  # that the remotes were identical and only the line endings and section order
+  # differed. Line-set equality separates the two cases. Remote names stay out of
+  # the message: the operator pastes this log into a public issue.
+  if [ "$(tr -d '\r' < "$dest" | sort)" = "$(sort < "$tmp")" ]; then
+    echo "  !   FORMAT only: same remotes, same values, different line endings" >&2
+    echo "  !   or section order. Nothing is missing from either side." >&2
+  else
+    echo "  !   CONTENT differs. on disk: $(grep -c '^\[' "$dest") remotes    vault: $(grep -c '^\[' "$tmp") remotes" >&2
+  fi
   echo "  ! wrote $dest.from-vault instead; nothing was overwritten." >&2
   echo "  ! reconcile by hand, re-seed the vault, then delete the .from-vault copy." >&2
 fi
