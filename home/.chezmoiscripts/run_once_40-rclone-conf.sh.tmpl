@@ -20,6 +20,15 @@ trap 'rm -f "$tmp"' EXIT
 
 : > "$tmp"
 
+# A fragment whose last line has no newline would glue that line onto the next
+# fragment's opening `[section]`, silently losing a remote. `bw get notes` emits
+# no trailing newline (`op read` does), so the personal fragment always needs
+# this and it is the concatenation boundary that depends on it (#53).
+end_with_newline() {
+  [ -s "$1" ] || return 0
+  [ -z "$(tail -c1 "$1")" ] || printf '\n' >> "$1"
+}
+
 # The personal fragment is the base: failing to read it IS fatal, because the
 # result would be a config missing the remotes this machine depends on.
 if ! bw get notes {{ (index .secrets "rclone-conf-personal").ref | quote }} >> "$tmp"; then
@@ -27,6 +36,7 @@ if ! bw get notes {{ (index .secrets "rclone-conf-personal").ref | quote }} >> "
   echo "       Is the vault unlocked? $dest left untouched." >&2
   exit 1
 fi
+end_with_newline "$tmp"
 
 {{- if .bundles.work }}
 # The work fragment is best-effort, and the test is whether the READ succeeds —
@@ -59,6 +69,7 @@ elif ! op_read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-c
   echo "  !   vault has no such note yet, or op's authorization prompt went" >&2
   echo "  !   unapproved — unlock 1Password and re-run to pick the work remotes up." >&2
 fi
+end_with_newline "$tmp"
 {{- end }}
 
 [ -s "$tmp" ] || {
