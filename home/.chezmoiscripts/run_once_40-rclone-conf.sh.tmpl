@@ -77,15 +77,31 @@ TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
 op_read() {
   if [ -n "$TIMEOUT_BIN" ]; then "$TIMEOUT_BIN" 45 op read "$1"; else op read "$1"; fi
 }
+# Read into its OWN file and validate before appending. Appending straight to
+# $tmp meant an `op` that exited 0 while printing prose — a sign-in nag, or an
+# empty note — put that sentence into rclone.conf as a live config line, and the
+# script still reported "restored". The personal fragment has had a section-header
+# test since #53; the work fragment never got one, so the same wrong-success shape
+# survived on this side. It stays BEST-EFFORT: a bad fragment is dropped with a
+# warning, never a fatal, for the reasons recorded above.
+work_frag="$(mktemp)"
+trap 'rm -f "$tmp" "$work_frag"' EXIT
 if ! command -v op >/dev/null 2>&1; then
   echo "  ! op not installed — work remotes omitted from rclone.conf" >&2
-elif ! op_read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }} >> "$tmp" 2>/dev/null; then
+elif ! op_read {{ printf "op://Employee/%s/notesPlain" (index .secrets "rclone-conf-work").ref | quote }} > "$work_frag" 2>/dev/null; then
   echo "  ! work rclone fragment not readable — omitted from rclone.conf" >&2
   echo "  !   expected a note at op://Employee/<ref>/notesPlain. Either the work" >&2
   echo "  !   vault has no such note yet, or op's authorization prompt went" >&2
   echo "  !   unapproved — unlock 1Password and re-run to pick the work remotes up." >&2
+elif ! grep -q '^\[' "$work_frag"; then
+  echo "  ! the work rclone fragment carries no remote — omitted." >&2
+  echo "  !   op exited 0 but returned no INI section, which is what it does when" >&2
+  echo "  !   it prints a sign-in notice instead of the note. Your personal remotes" >&2
+  echo "  !   are unaffected. Unlock 1Password and re-run to pick the work ones up." >&2
+else
+  cat "$work_frag" >> "$tmp"
+  end_with_newline "$tmp"
 fi
-end_with_newline "$tmp"
 {{- end }}
 
 [ -s "$tmp" ] || {

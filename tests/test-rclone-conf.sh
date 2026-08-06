@@ -24,8 +24,12 @@ chezmoi execute-template --source "$REPO_ROOT/home" \
 
 pass=0; fail=0
 rc=0; got=""
+# RUN_PATH is overridable because one case removes the `op` stub to model a
+# machine that has no op at all. With the caller's PATH still appended, the dev
+# machine's real op leaked in and the case silently tested something else.
+RUN_PATH="$SB/bin:$PATH"
 run() {
-  HOME="$1" PATH="$SB/bin:$PATH" bash "$SB/script.sh" > "$SB/out" 2>&1; rc=$?
+  HOME="$1" PATH="$RUN_PATH" bash "$SB/script.sh" > "$SB/out" 2>&1; rc=$?
   f="$1/.config/rclone/rclone.conf"
   if [ -f "$f" ]; then got="$(grep -c '^\[' "$f") remotes"; else got="no config"; fi
 }
@@ -97,6 +101,37 @@ H="$SB/g"; mkdir -p "$H/.config/rclone"
 run "$H"; says "same lines, other order and CRLF: format" 'FORMAT only'
 H="$SB/h"; mkdir -p "$H/.config/rclone"; cat "$SB/personal" > "$H/.config/rclone/rclone.conf"
 run "$H"; says "a missing remote: content" 'CONTENT differs'
+
+echo
+echo "== the work fragment is validated too, and stays best-effort"
+mk_bw "cat \"$SB/personal\"; exit 0"
+mk_op() { printf '#!/bin/sh\n%s\n' "$1" > "$SB/bin/op"; chmod +x "$SB/bin/op"; }
+
+# op exits 0 while printing prose — a sign-in notice, or an empty note. Appending
+# without a check put that sentence into rclone.conf as a live line and still said
+# "restored". The personal side has had this test since #53.
+mk_op 'printf "please run op signin to continue"; exit 0'
+H="$SB/w1"; mkdir -p "$H"; run "$H"; check "prose from op is dropped" 0 "2 remotes"
+says "the message names the cause" 'no remote'
+if grep -q 'signin' "$H/.config/rclone/rclone.conf"; then
+  fail=$((fail+1)); echo "  FAIL vault prose landed inside the config"
+else
+  pass=$((pass+1)); echo "  ok   no prose inside the config"
+fi
+
+# This path once aborted a whole migration under `set -e`, and no probe could
+# have caught a relapse.
+mk_op 'exit 1'
+H="$SB/w2"; mkdir -p "$H"; run "$H"; check "an op failure is not fatal" 0 "2 remotes"
+says "the message says the fragment was omitted" 'not readable'
+
+# run_once_ scripts sort ahead of the brew installer, so on a fresh machine this
+# runs before op exists at all.
+rm -f "$SB/bin/op"
+RUN_PATH="$SB/bin:/usr/bin:/bin"
+H="$SB/w3"; mkdir -p "$H"; run "$H"; check "op absent is not fatal" 0 "2 remotes"
+says "the message names op" 'op not installed'
+RUN_PATH="$SB/bin:$PATH"
 
 echo
 echo "===== $pass passed, $fail failed ====="
