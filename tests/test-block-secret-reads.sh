@@ -39,6 +39,22 @@ probe() { # probe <deny|allow> <command>
   else fail=$((fail+1)); printf '  FAIL want %s got %s: %s\n' "$1" "$got" "$shown"; fi
 }
 
+# The hook guards three tools, and until now this suite probed only one of
+# them. That is how the template-suffix list drifted out of sight: the parser
+# is consulted for Bash alone, so 201 green Bash probes said nothing about
+# Read, which took the shell patterns and refused every `<name>.env.j2` an
+# ansible role carries. Both other tools are probed here now.
+probe_tool() { # probe_tool <Read|Grep> <deny|allow> <path>
+  case "$1" in
+    Read) payload=$(printf '{"tool_name":"Read","tool_input":{"file_path":%s}}' "$(printf '%s' "$3" | jq -Rs .)") ;;
+    Grep) payload=$(printf '{"tool_name":"Grep","tool_input":{"path":%s}}' "$(printf '%s' "$3" | jq -Rs .)") ;;
+  esac
+  out=$(printf '%s' "$payload" | bash "$HOOK")
+  if printf '%s' "$out" | grep -q '"deny"'; then got=deny; else got=allow; fi
+  if [ "$got" = "$2" ]; then pass=$((pass+1)); printf '  ok   %-5s %-4s %s\n' "$got" "$1" "$3"
+  else fail=$((fail+1)); printf '  FAIL want %s got %s: %s %s\n' "$2" "$got" "$1" "$3"; fi
+}
+
 echo "== bypassing the pre-commit scan is denied to agents (#18)"
 probe deny 'git commit --no-verify -m "x"'
 probe deny 'git commit -n -m "x"'
@@ -89,6 +105,57 @@ probe allow 'grep --color pattern file.txt'
 probe allow 'kubectl --kubeconfig ~/kubeconfig get pods'
 probe allow 'ls -R /tmp'
 probe allow 'cat ./.env.example'
+
+echo
+echo "== a template suffix is not the rendered secret, in BOTH layers"
+# The suffix list lives twice: tplNeutral in cmd/secret-guard/policy.go and the
+# sed in the hook. They drifted. A calibration added nine suffixes and the
+# intermediate-segment form to the parser only, and because the parser answers
+# for Bash alone, `cat wordpress.env.j2` was allowed while READING the same
+# file was refused. Two ansible roles hit it in real work before anyone saw it.
+# Probing both layers is what stops the two copies parting again.
+probe allow 'cat .env.j2'
+probe allow 'cat wordpress.env.j2'
+probe allow 'cat roles/website/templates/website/wordpress.env.j2'
+probe allow 'cat roles/backup-copy-worker/templates/backup-copy.env.j2'
+probe allow 'cat .env.jinja2'
+probe allow 'cat app.env.tpl'
+probe allow 'cat app.env.tftpl'
+probe allow 'cat app.env.gotmpl'
+probe allow 'cat app.env.erb'
+probe allow 'cat .env.hbs'
+probe allow 'cat .env.mustache'
+probe allow 'cat vault.yml.tpl'
+# The environment name may sit between the stem and the template marker.
+probe allow 'cat wordpress.env.production.j2'
+probe allow 'diff .env.example .env.production.j2'
+# Case does not change what a file is. The parser matches case-insensitively,
+# so the sed carries the I flag; BSD, GNU and busybox sed all take it.
+probe allow 'cat WORDPRESS.ENV.J2'
+# A backup of a TEMPLATE is still a template - it holds placeholders, not
+# values - so the marker keeps working with something after it. A backup of the
+# RENDERED file is the secret itself and is refused two lines down.
+probe allow 'cat wordpress.env.j2.bak'
+# The rendered file stays denied in every spelling.
+probe deny 'cat wordpress.env'
+probe deny 'cat .env.local'
+probe deny 'cat .env.bak'
+probe deny 'cat .env.production'
+probe deny 'cat vault.yml'
+probe deny 'cat prod.env'
+
+echo
+echo "== the same policy through Read and Grep, which never reach the parser"
+probe_tool Read allow '/srv/roles/website/templates/website/wordpress.env.j2'
+probe_tool Read allow '/srv/roles/backup-copy-worker/templates/backup-copy.env.j2'
+probe_tool Read allow '/srv/app/.env.example'
+probe_tool Read allow '/srv/app/wordpress.env.production.j2'
+probe_tool Read allow '/srv/app/README.md'
+probe_tool Read deny  '/srv/app/wordpress.env'
+probe_tool Read deny  '/srv/app/.env'
+probe_tool Read deny  '/srv/app/.env.local'
+probe_tool Grep allow '/srv/roles/website/templates/website/wordpress.env.j2'
+probe_tool Grep deny  '/srv/app/.env'
 
 echo
 echo "== an encrypted-file path is still denied (#69 narrowed this arm)"
