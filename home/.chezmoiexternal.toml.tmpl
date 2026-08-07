@@ -35,3 +35,26 @@
     url = "https://github.com/amix/vimrc/archive/46294d589d15d2e7308cf76c58f2df49bbec31e8.tar.gz"
     exact = true
     stripComponents = 1
+
+{{/*
+The compiled command guard, landed beside the hook that consults it. See
+.chezmoidata/secret-guard.yaml for why it arrives as a release asset and why an
+empty version declares no external at all: the hook's own shell splitter is the
+floor, so a machine without this binary is guarded exactly as it was before.
+
+The platform key gates the whole block. An unlisted os/arch would otherwise
+render an empty checksum, and chezmoi treats that as "no checksum" rather than
+as an error - an unverified download into a security hook.
+*/}}
+{{- $platform := printf "%s-%s" .chezmoi.os .chezmoi.arch -}}
+{{- if and .secretGuard.version (hasKey .secretGuard.sha256 $platform) -}}
+{{- $digest := index .secretGuard.sha256 $platform -}}
+{{- if $digest }}
+
+[".claude/hooks/secret-guard"]
+    type = "file"
+    executable = true
+    url = "https://github.com/myprysm/dotfiles/releases/download/secret-guard-{{ .secretGuard.version }}/secret-guard-{{ $platform }}"
+    checksum.sha256 = "{{ $digest }}"
+{{- end }}
+{{- end }}
