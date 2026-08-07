@@ -1,0 +1,4 @@
+# Build output of cmd/secret-guard. The binary that machines actually run is a
+# release asset with a pinned digest, never a file from a working tree.
+/secret-guard
+/dist/
