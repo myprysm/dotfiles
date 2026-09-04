@@ -117,7 +117,11 @@ WORK_BUNDLE="$(chezmoi execute-template '{{ .bundles.work }}')"
 if [ "$WORK_BUNDLE" = "true" ]; then
   case "$(uname -s)" in
     Darwin) brew install --cask 1password-cli ;;
-    Linux)  echo "TODO: op via 1Password apt repo" ;;
+    # macOS-only by declaration, not by omission (issue #54): the apt repo is
+    # the small half — op on Linux still needs a way to sign in, the desktop app
+    # integration needs a desktop app, and WSL has none.
+    Linux)  echo "    op is macOS-only — this machine gets no work domain (issue #54)." >&2
+            echo "    Turn the work bundle off here; see docs/secrets.md." >&2 ;;
   esac
 fi
 
@@ -136,16 +140,14 @@ else
 fi
 export BW_SESSION
 if [ "$WORK_BUNDLE" = "true" ]; then
-  # op is not installed on Linux yet (step 5 above, issue #47), so this must
-  # not be attempted blindly: on WSL the Windows directories are on PATH and
-  # something named `op` over there was found and refused to execute
-  # ("Permission denied"). Requiring it to actually run, rather than merely
-  # resolve, covers both the missing and the unrunnable case.
-  if op --version >/dev/null 2>&1; then
-    eval "$(op signin)"
-  else
-    echo "    op unavailable — work vault not authenticated (see issue #47)" >&2
-  fi
+  # Deliberately no sign-in. `eval "$(op signin)"` used to live here and claimed
+  # an authentication it never performed: under the desktop app integration
+  # `op signin` prints nothing, the session lives in the daemon, and the eval ran
+  # an empty string and succeeded. The honest test is a real read (op_ready, in
+  # scripts/secrets-common.sh), which every work caller already does for itself.
+  # Where that test belongs is issue #35's call, not this step's.
+  echo "    work domain NOT authenticated here — bootstrap does not sign in to op." >&2
+  echo "    The first work read raises 1Password's approval prompt; see docs/secrets.md." >&2
 fi
 
 echo "==> [7/7] chezmoi apply"
