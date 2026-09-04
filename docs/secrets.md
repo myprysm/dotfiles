@@ -2,7 +2,7 @@
 
 > Decided in issues #6 and #11; the scripts it describes were implemented in #19,
 > and their work/`op` half in #47. #6's vault-rendered `signingkey` was amended by
-> #48/#50 to a per-machine key.
+> #48/#50 to a per-machine key. The redaction check and the placeholder rule are #41.
 > Written under the redaction rule: no hostnames, key names, or identifying counts.
 
 ## Rules
@@ -26,6 +26,12 @@
    SSH key's far ends must be coordinated, which is why those stay vaulted. The id is
    identity-bearing and per-machine, so it lives in untracked `~/.gitconfig.local`,
    never in the tracked `.gitconfig`.
+6. **Redaction placeholders.** A tracked file sometimes must show a path or a name that
+   would otherwise be an identifier. It uses a placeholder instead. `OPERATOR` is the
+   canonical account name: `/Users/OPERATOR`, `/home/OPERATOR`. Rewrite a real value to
+   the placeholder. Do not keep the real value and mark it as permitted. Decided in #41,
+   after four probes in the read-guardrail suite were found carrying a real account name
+   while the Go suites beside them already used the placeholder.
 
 ## Per-domain routing
 
@@ -164,6 +170,30 @@ asymmetry: a new `secretsDir` must not be a neighbour of the published one.
   - The scan is the last layer, never the only one: the `/adopt` skill still runs its own
     gitleaks gate, and the written line-by-line review rule stands regardless.
 - No custom scanner rules encoding internal patterns — that would publish the patterns.
+- **Redaction check — decided in #41, not built yet.** The three layers above all look for
+  credential *values*. The redaction rule is about *identifiers*, and nothing detected a
+  breach of it. Two breaches reached this public repo and a manual review found both a day
+  later. The control decided: a shape-class scan of the staged diff, POSIX shell in this
+  same `pre-commit` template, plus a whole-tree `tests/test-redaction.sh` beside the other
+  suites. The hook arm fails closed like the gitleaks arm, and `--no-verify` stays the
+  bypass. The whole-tree arm is what finds a hit that is already committed; a staged-diff
+  scan never sees one.
+  - **Scope.** It runs only where the repo tracks the opt-in marker. An internal hostname is
+    ordinary content in a private repo, and a hook that refuses ordinary content is a hook
+    somebody turns off.
+  - **Classes:** absolute `/home/<name>` and `/Users/<name>`, `user@` addresses at a real
+    domain, `~/.ssh/<filename>`. A short allowlist inside the script carries the
+    placeholders and `/home/linuxbrew`. These classes encode shapes, not this estate's
+    identifiers, so the rule above still holds.
+  - **Not the FQDN class.** Measured across the tree: 738 unique hits, led by
+    `core.hooksPath`, `regexp.MustCompile` and `README.md`. A dotted code identifier and a
+    file name have the same shape as a hostname, and `.md`, `.sh` and `.io` are real TLDs.
+    Suppressing that needs an allowlist too large to read, and an allowlist nobody reads is
+    a rubber stamp. Internal hostnames stay a rule 2 class.
+  - **What it cannot catch.** A work project identifier is a word, and no shape separates it
+    from any other word. Of the three breaches found so far it catches two — a published
+    vault password path, and an account name — and misses the third. This line exists so the
+    coverage is not overstated.
 
 ## Typed-input stores
 
