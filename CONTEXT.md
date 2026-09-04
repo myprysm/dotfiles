@@ -37,6 +37,14 @@ _Avoid_: install, provision
 **Drop-in dir**:
 A typed fragment directory (`env.d/`, `aliases.d/`, `rc.d/`, `completions.d/`) under `~/.config/zsh`; adding behavior means dropping a file. All four are sourced from `.zshrc`, so all four are **interactive-only**, `env.d` included despite the name.
 
+**Bundle**:
+A named group of packages, configs and scripts a machine opts into at init (`work`, `go`, `ops`, `rust`, …), stored in that machine's chezmoi data. A bundle that is off leaves everything behind it out of the target state, so a gated tool is not installed and its scripts do not run.
+_Avoid_: profile, feature flag, module
+
+**Domain**:
+The owner of a secret, which fixes the manager it lives in: **personal** secrets in Bitwarden, **work** secrets in 1Password. Every secret has exactly one domain, and the domain decides the manager, not the machine. The work domain reaches only a machine with the work bundle on.
+_Avoid_: vault as a synonym for domain (a vault is a manager's container, not a secret's owner), account, environment
+
 **Repo-visible ref**:
 A vault item name that appears in the public repo (templates, `secrets.yaml`, scripts). Must stay generic under the redaction rule: kebab-case `<consumer>-<artifact>`, no domain suffix.
 
