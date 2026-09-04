@@ -13,3 +13,5 @@ Prefer the simplest solution that works. Do not add abstractions, error handling
 Do not add comments to code unless explicitly asked.
 
 You and every sub-agent will always start with the caveman skill enabled unless requested differently.
+
+Sub-agents are welcome — use them whenever they fit the task. One condition, and it is absolute: **I review the plan and the models before anything starts** — including any sub-agents those agents would spawn. **No dispatch without my approval.** Once approved, run them.
