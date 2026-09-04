@@ -32,7 +32,7 @@
 | Domain | Manager | CLI |
 |---|---|---|
 | personal | Bitwarden (self-hosted) | `bw` |
-| work | 1Password | `op` (installs only with the work bundle) |
+| work | 1Password | `op` (installs only with the work bundle, and only on macOS) |
 | escape hatch | HashiCorp Vault | generic `output` template function, documented, not wired in |
 
 ## Class roster
@@ -72,6 +72,17 @@ raises an approval prompt and waits — roughly two minutes before failing with
 reports "not signed in" even when the very next read would succeed, so it is useless as
 a gate: the only honest test is whether a read works. Every `op` call the repo makes is
 bounded by `timeout` for this reason.
+
+**The work domain is macOS-only.** `bootstrap.sh` installs `op` on macOS. Linux gets
+no install, and therefore no work domain. The reason is authentication and not packaging:
+the apt repository exists, but `op` on Linux still needs a way to sign in, the desktop app
+integration needs a desktop app, and WSL has none. An install alone would give a binary
+that cannot authenticate, which would look like support and would not be support. A Linux
+machine keeps the work bundle off. **Unattended authentication is out of scope for the
+same decision**: a service account token is the only non-interactive path `op` offers, it
+is long-lived, and it would put an employer-owned vault on a personal machine to serve a
+need that has not appeared — no scheduled apply exists, and every `op` call is started by
+a person. Decided in [issue 54](https://github.com/myprysm/dotfiles/issues/54).
 
 **No local backup, by design.** `op` has no export command — the whole command surface
 was checked, not assumed. A work archive would have to be assembled item by item, which
