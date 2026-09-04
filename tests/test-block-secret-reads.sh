@@ -264,7 +264,7 @@ probe deny 'cat <<EOF
 $(cat ~/.env)
 EOF'
 probe deny 'python3 - <<EOF
-print(open("/Users/dbenon/.env").read())
+print(open("/Users/OPERATOR/.env").read())
 EOF'
 # `&` is part of a redirection operator here, not a separator.
 probe deny 'cat 2>&1 ~/.env'
@@ -283,7 +283,7 @@ probe deny 'ca""t ~/.env'
 probe deny '\cat ~/.env'
 probe deny 'eval "cat ~/.env"'
 probe deny 'bash -c "cat ~/.env"'
-probe deny 'cat${IFS}/Users/dbenon/.env'
+probe deny 'cat${IFS}/Users/OPERATOR/.env'
 probe deny '$(echo cat) ~/.env'
 # A wrapper's own options must not become the command word.
 probe deny 'timeout 5 cat ~/.env'
@@ -294,7 +294,7 @@ probe deny 'nice cat ~/.env'
 
 echo
 echo "== readers beyond the coreutils list (#69)"
-probe deny 'python3 -c "print(open(\"/Users/dbenon/.env\").read())"'
+probe deny 'python3 -c "print(open(\"/Users/OPERATOR/.env\").read())"'
 probe deny 'perl -pe "" ~/.env'
 probe deny 'zcat ~/.env.gz'
 probe deny 'gunzip -c ~/.env.gz'
@@ -458,7 +458,7 @@ fi
 
 echo
 echo "== content printers that are not obviously readers"
-probe deny 'curl -s file:///Users/dbenon/.env'
+probe deny 'curl -s file:///Users/OPERATOR/.env'
 probe deny 'git config -f ~/.env -l'
 probe deny 'git archive HEAD .env'
 probe deny 'shuf ~/.env'
