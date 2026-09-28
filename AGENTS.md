@@ -4,6 +4,14 @@ Cross-machine environment setup for Linux/Mac, managed with chezmoi.
 
 ## Code comments
 
+In this repo, this section replaces the global "no comments unless asked" rule (#33).
+
+A comment records a trap the code cannot show: external behaviour that is wrong or
+undocumented, a failure that cost a session to find, or a shape that looks wrong on purpose.
+Its length follows the trap. A line that restates the code, a banner, or history ("was X, now
+Y") is not a trap. A session that edits a file trims the comments in that file that fail this
+test; nobody sweeps the tree for them.
+
 A comment must not assert the current state of code it is not adjacent to. Name the trap,
 not the inventory. Comments saying what another file now did, or that a list below them was
 still empty, went stale four times (#29) — each true when written, none revisited when the
@@ -15,6 +23,34 @@ That citation is only worth carrying if something reads it, so: **a session that
 reverses an earlier decision runs `git grep '#<n>'` and reviews every hit before closing.**
 This is the control. #21 measured a change, reverted it, and never looked for who was citing
 it, so the comment asserting the reverted behaviour stayed shipped.
+
+## Commits
+
+Conventional commits, `type(scope): subject` (#37). Types: `feat`, `fix`, `docs`, `refactor`,
+`test`, `chore`, `ci`, `build`, `perf`, `style`, `revert`.
+
+Every commit carries one scope from this list. A commit that opens a new area adds its scope
+here in the same commit. A change that spans two scopes is two commits.
+
+- `bootstrap` — `bootstrap.sh`
+- `packages` — `packages.yaml` and every package run script
+- `secrets` — `scripts/secrets-*`, `docs/secrets.md`
+- `rclone` — the rclone config
+- `zsh` — `.zshrc` and the zsh drop-ins
+- `git` — gitconfig and the estate-wide git hooks
+- `claude` — `~/.claude` settings, statusline, hooks, skill restore
+- `secret-guard` — the guard binary and its release
+- `externals` — `.chezmoiexternal`
+- `agents` — `AGENTS.md`, `docs/agents/`, the repo's `.claude/skills/`
+- `context` — `CONTEXT.md`, `docs/adr/`
+- `repo` — the repo as a whole
+- `<tool>` — a tool config under its own name (`k9s`, `starship`); list it on first use
+
+A doc or a test takes the scope of what it covers: `docs(secrets)`, `test(rclone)`.
+
+A ticket reference goes in a trailer: `Refs #<n>`. Use `Refs` only. GitHub closes an issue
+when a commit reaches `main` with a closing keyword before `#<n>` anywhere in its message —
+any form of close, fix or resolve — and closing needs the operator's approval.
 
 ## Agent skills
 
