@@ -95,7 +95,7 @@ eval "$("$BREW" shellenv)"
 echo "==> [3/7] chezmoi"
 brew install chezmoi
 
-echo "==> [4/7] chezmoi init (prompts: email, Bitwarden server URL, bundles)"
+echo "==> [4/7] chezmoi init (prompts: git name, email, Bitwarden server URL, bundles)"
 chezmoi init "$REPO"   # no --apply: secret CLIs must be installed + authed first
 
 # `chezmoi init` clones ONLY when the source directory is absent; on a machine
