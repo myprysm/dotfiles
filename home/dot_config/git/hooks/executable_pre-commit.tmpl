@@ -28,6 +28,54 @@ if ! "$GITLEAKS" git --pre-commit --staged --no-banner --redact; then
   exit 1
 fi
 
+# Redaction scan (#41), only in a repo that tracks the marker. It flags shape
+# classes, never an identifier: a rule naming a real host or user would
+# publish it. Placeholders are allowlisted below; a real value is rewritten,
+# not added here. The value is not printed, for the --redact reason above.
+TOP="$(git rev-parse --show-toplevel)"
+if [ -f "$TOP/.redaction-check" ]; then
+  DIFF="$(mktemp)"
+  if ! git diff --cached --no-color --no-ext-diff --unified=0 --diff-filter=ACMR \
+      --src-prefix=a/ --dst-prefix=b/ > "$DIFF"; then
+    rm -f "$DIFF"
+    echo "FATAL: the redaction scan could not read the staged diff — refusing to commit." >&2
+    exit 1
+  fi
+  rc=0
+  awk '
+    /^\+\+\+ / { f = substr($0, 7); next }
+    /^@@ / { split($3, a, ","); n = substr(a[1], 2) + 0; next }
+    /^\+/ {
+      s = " " substr($0, 2)
+      while (match(s, /[^A-Za-z0-9_.}\/-](\/home|\/Users)\/[A-Za-z0-9._-]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z][A-Za-z]+|~\/\.ssh\/[A-Za-z0-9._-]+/)) {
+        v = substr(s, RSTART, RLENGTH)
+        s = substr(s, RSTART + RLENGTH)
+        if (v ~ /^.\/(home|Users)\//) {
+          c = "absolute home path"
+          v = substr(v, 2)
+          if (v ~ /^\/(home|Users)\/(OPERATOR|x|u|you)$/ || v == "/home/linuxbrew") continue
+        } else if (v ~ /^~/) {
+          c = "~/.ssh path"
+          if (v == "~/.ssh/config") continue
+        } else {
+          c = "email address"
+          if (v ~ /@(([A-Za-z0-9-]+\.)*example\.(com|org|net)|.*\.(example|invalid|test|localhost))$/) continue
+        }
+        print f ":" n ": " c > "/dev/stderr"
+        hit = 1
+      }
+      n++
+    }
+    END { exit hit }
+  ' "$DIFF" || rc=$?
+  rm -f "$DIFF"
+  if [ "$rc" -ne 0 ]; then
+    echo "redaction scan: identifier-shaped value staged — commit refused." >&2
+    echo "       Rewrite it to the OPERATOR placeholder (docs/secrets.md rule 6)." >&2
+    exit 1
+  fi
+fi
+
 # Dispatch to the repo's own pre-commit is _chain's job, not a second copy of
 # it here. HOOK_NAME because $0 would otherwise read `_chain`.
 HOOK_NAME=pre-commit exec "$(dirname "$0")/_chain" "$@"
