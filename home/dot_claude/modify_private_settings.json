@@ -1,0 +1,99 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /*
+Merges the repo's settings into the live file (#73). Claude Code and other
+tools write keys here at runtime, so the live file is never replaced whole.
+Keys outside $owned pass through untouched; the live autoMode block names
+internal hosts and is never read into the repo.
+
+toPrettyJson sorts keys and Claude Code does not, so `chezmoi status` reports
+this file modified after any runtime write. Accepted (#73).
+*/ -}}
+
+{{- define "merge" -}}
+{{-   $dst := index . 0 -}}
+{{-   $src := index . 1 -}}
+{{-   range $k, $v := $src -}}
+{{-     $cur := get $dst $k -}}
+{{-     if and (kindIs "map" $cur) (kindIs "map" $v) -}}
+{{-       template "merge" (list $cur $v) -}}
+{{-     else if and (kindIs "slice" $cur) (kindIs "slice" $v) -}}
+{{-       $_ := set $dst $k (concat $cur $v | uniq) -}}
+{{-     else -}}
+{{-       $_ := set $dst $k $v -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}
+
+{{- $live := dict -}}
+{{- if trim .chezmoi.stdin -}}
+{{-   $live = fromJson .chezmoi.stdin -}}
+{{- end -}}
+
+{{- $base := includeTemplate "claude-settings.json" . | fromJson -}}
+{{- /* Claude Code reads ~/.claude/settings.local.json only for sessions started
+       in $HOME, so it takes effect everywhere only by being merged here (#73). */ -}}
+{{- $local := joinPath .chezmoi.homeDir ".claude/settings.local.json" -}}
+{{- if stat $local -}}
+{{-   template "merge" (list $base (include $local | fromJson)) -}}
+{{- end -}}
+
+{{- /* Replaced whole, or deleted when the base lacks it, so a retired key
+       stays listed. settings.local.json reaches only the keys listed here: a
+       key it should control must be added. */ -}}
+{{- $owned := list "$schema" "env" "permissions" "statusLine" "enabledPlugins" "extraKnownMarketplaces" "tui" "cleanupPeriodDays" "agentPushNotifEnabled" "skillOverrides" "skipWorkflowUsageWarning" -}}
+{{- range $owned -}}
+{{-   if hasKey $base . -}}
+{{-     $_ := set $live . (get $base .) -}}
+{{-   else -}}
+{{-     $_ := unset $live . -}}
+{{-   end -}}
+{{- end -}}
+{{- range list "model" "effortLevel" -}}
+{{-   if and (hasKey $base .) (not (hasKey $live .)) -}}
+{{-     $_ := set $live . (get $base .) -}}
+{{-   end -}}
+{{- end -}}
+
+{{- /* A hook command is the repo's when it runs a script under
+       ~/.claude/hooks/. Only those commands are removed: Orca and other tools
+       register their own entries in the same lists (#75), and an entry is
+       dropped only when nothing else is left in it. */ -}}
+{{- $repoHookDirs := list (printf "%s/.claude/hooks/" .chezmoi.homeDir) "~/.claude/hooks/" "$HOME/.claude/hooks/" "${HOME}/.claude/hooks/" -}}
+{{- $hooks := dict -}}
+{{- range $event, $entries := get $live "hooks" | default dict -}}
+{{-   $kept := list -}}
+{{-   range $entries -}}
+{{-     $cmds := get . "hooks" | default list -}}
+{{-     $rest := list -}}
+{{-     range $cmds -}}
+{{-       $cmd := get . "command" | default "" -}}
+{{-       $ours := false -}}
+{{-       range $repoHookDirs -}}
+{{-         if contains . $cmd -}}
+{{-           $ours = true -}}
+{{-         end -}}
+{{-       end -}}
+{{-       if not $ours -}}
+{{-         $rest = append $rest . -}}
+{{-       end -}}
+{{-     end -}}
+{{-     if eq (len $rest) (len $cmds) -}}
+{{-       $kept = append $kept . -}}
+{{-     else if $rest -}}
+{{-       $kept = append $kept (set . "hooks" $rest) -}}
+{{-     end -}}
+{{-   end -}}
+{{-   if $kept -}}
+{{-     $_ := set $hooks $event $kept -}}
+{{-   end -}}
+{{- end -}}
+{{- range $event, $entries := get $base "hooks" | default dict -}}
+{{-   $_ := set $hooks $event (concat (get $hooks $event | default list) $entries | uniq) -}}
+{{- end -}}
+{{- if $hooks -}}
+{{-   $_ := set $live "hooks" $hooks -}}
+{{- else -}}
+{{-   $_ := unset $live "hooks" -}}
+{{- end -}}
+
+{{- toPrettyJson $live }}
