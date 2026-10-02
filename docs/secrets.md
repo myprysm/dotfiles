@@ -149,11 +149,10 @@ asymmetry: a new `secretsDir` must not be a neighbour of the published one.
   with no per-clone step; a secret leaks the same from any repo, and a hook that needs a
   manual step is a hook a fresh clone does not have. `pre-commit` scans the staged diff
   (`gitleaks git --pre-commit --staged`, default rules only) and **fails closed** if gitleaks
-  is missing — the binary is a core brew, and the script phase installs it before the file
-  phase writes the `.gitconfig` that arms the hook, so a bootstrapped machine cannot hit it.
-  (That ordering is not an assumption: #13 established it live, where `.chezmoiscripts` sorting
-  ahead of `.claude`/`.config`/`.zshrc` meant an aborting script stopped the run before any
-  file was written at all.)
+  is missing — the binary is a core brew. Scripts run after files (#52,
+  `docs/adr/0001-apply-order-files-first-scripts-last.md`), so the `.gitconfig` that arms the
+  hook is written before the brew script installs gitleaks. If that script fails, commits on
+  the machine fail closed until it succeeds.
   - A global `hooksPath` **shadows every repo's own `.git/hooks`**, so these hooks chain:
     `pre-commit` scans and then delegates to `_chain`, and `commit-msg`, `prepare-commit-msg`,
     `pre-push`, `post-checkout`, `post-commit` and `post-merge` are symlinks to `_chain`, which
