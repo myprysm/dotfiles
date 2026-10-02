@@ -58,10 +58,8 @@ end_with_newline "$tmp"
 # The work fragment is best-effort, and the test is whether the READ succeeds —
 # not whether op is installed. Testing the binary was not enough: on a machine
 # that has op but whose work vault has not been seeded yet (#47 owns that), the
-# read fails, and under `set -e` that aborted the whole script. Because
-# .chezmoiscripts sorts ahead of .claude/.config/.zshrc, aborting here meant
-# chezmoi never reached the file phase at all — a missing work fragment stopped
-# the entire migration, which is the opposite of the intent recorded below.
+# read fails, and under `set -e` that aborted the whole script — and with it
+# the rest of the apply, which is the opposite of the intent recorded below.
 #
 # Intent, unchanged: a machine that cannot reach the work vault should still end
 # up with its personal remotes rather than no rclone.conf at all. This mirrors
@@ -71,8 +69,8 @@ end_with_newline "$tmp"
 # The read is BOUNDED, because op can block rather than fail: with the desktop
 # app integration it raises an approval prompt and waits about two minutes before
 # giving up. Unbounded, an unattended `chezmoi apply` stalls there for no gain.
-# coreutils cannot be assumed — run_once_ sorts ahead of run_onchange_, so on a
-# fresh machine this runs before the brew installer — hence the fallback.
+# coreutils cannot be assumed on a Mac: brew installs it, and a failed brew run
+# can leave it missing — hence the fallback.
 TIMEOUT_BIN="$(command -v timeout || command -v gtimeout || true)"
 op_read() {
   if [ -n "$TIMEOUT_BIN" ]; then "$TIMEOUT_BIN" 45 op read "$1"; else op read "$1"; fi

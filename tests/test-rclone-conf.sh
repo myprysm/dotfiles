@@ -20,7 +20,7 @@ printf '#!/bin/sh\n[ "$1" = "read" ] && cat %s && exit 0\nexit 1\n' "$SB/work" >
 chmod +x "$SB/bin/op"
 
 chezmoi execute-template --source "$REPO_ROOT/home" \
-  < "$REPO_ROOT/home/.chezmoiscripts/run_once_40-rclone-conf.sh.tmpl" > "$SB/script.sh" || exit 1
+  < "$REPO_ROOT/home/.chezmoiscripts/run_once_after_40-rclone-conf.sh.tmpl" > "$SB/script.sh" || exit 1
 
 pass=0; fail=0
 rc=0; got=""
@@ -125,8 +125,8 @@ mk_op 'exit 1'
 H="$SB/w2"; mkdir -p "$H"; run "$H"; check "an op failure is not fatal" 0 "2 remotes"
 says "the message says the fragment was omitted" 'not readable'
 
-# run_once_ scripts sort ahead of the brew installer, so on a fresh machine this
-# runs before op exists at all.
+# Only bootstrap.sh installs op, and only on macOS (#54). A machine without it
+# must still get its personal remotes.
 rm -f "$SB/bin/op"
 RUN_PATH="$SB/bin:/usr/bin:/bin"
 H="$SB/w3"; mkdir -p "$H"; run "$H"; check "op absent is not fatal" 0 "2 remotes"
