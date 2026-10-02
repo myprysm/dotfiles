@@ -8,6 +8,7 @@
      are computed from the answer, so every `.bundles.<name>` gate elsewhere
      is unaffected. */}}
 {{- $bundles := list "ops" "media" "playwright" "work" "go" "java" "rust" "ai" -}}
+{{- $name := promptStringOnce . "name" "Git name for this machine" -}}
 {{- $email := promptStringOnce . "email" "Git email for this machine" -}}
 {{- $bwServer := promptStringOnce . "bwServer" "Bitwarden server URL (machine-local, never committed)" -}}
 {{- $secretsDir := promptStringOnce . "secretsDir" "Absolute path of the machine-local secrets directory, no trailing slash, no regex metacharacters (machine-local, never committed)" -}}
@@ -17,6 +18,7 @@
 {{- $chosen := promptMultichoiceOnce . "bundleList" "Bundles to enable" $bundles (list) -}}
 
 [data]
+    name = {{ $name | quote }}
     email = {{ $email | quote }}
     bwServer = {{ $bwServer | quote }}
     secretsDir = {{ $secretsDir | quote }}
