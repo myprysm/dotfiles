@@ -169,7 +169,7 @@ asymmetry: a new `secretsDir` must not be a neighbour of the published one.
   - The scan is the last layer, never the only one: the `/adopt` skill still runs its own
     gitleaks gate, and the written line-by-line review rule stands regardless.
 - No custom scanner rules encoding internal patterns — that would publish the patterns.
-- **Redaction check — decided in #41, not built yet.** The three layers above all look for
+- **Redaction check — decided in #41, built in #70.** The three layers above all look for
   credential *values*. The redaction rule is about *identifiers*, and nothing detected a
   breach of it. Two breaches reached this public repo and a manual review found both a day
   later. The control decided: a shape-class scan of the staged diff, POSIX shell in this
@@ -177,13 +177,19 @@ asymmetry: a new `secretsDir` must not be a neighbour of the published one.
   suites. The hook arm fails closed like the gitleaks arm, and `--no-verify` stays the
   bypass. The whole-tree arm is what finds a hit that is already committed; a staged-diff
   scan never sees one.
-  - **Scope.** It runs only where the repo tracks the opt-in marker. An internal hostname is
+  - **Scope.** It runs only where the repo tracks the opt-in marker, `.redaction-check` in
+    the repo root. An internal hostname is
     ordinary content in a private repo, and a hook that refuses ordinary content is a hook
     somebody turns off.
   - **Classes:** absolute `/home/<name>` and `/Users/<name>`, `user@` addresses at a real
-    domain, `~/.ssh/<filename>`. A short allowlist inside the script carries the
-    placeholders and `/home/linuxbrew`. These classes encode shapes, not this estate's
-    identifiers, so the rule above still holds.
+    domain, `~/.ssh/<filename>`. A home path counts only when it is absolute: the
+    repo's own `home/` directory inside a longer path is not a hit. A short allowlist
+    inside the script carries the placeholders and `/home/linuxbrew`. The placeholders are
+    `OPERATOR` and the short names `x`, `u` and `you` that older test fixtures use.
+    The allowlist also carries `~/.ssh/config`, which is a standard file name and names
+    nothing. An address at a reserved domain (`example.com`, `.invalid`, `.test`) is not a
+    real domain. These classes encode shapes, not this estate's identifiers, so the rule
+    above still holds. The hook prints the file, the line and the class, never the value.
   - **Not the FQDN class.** Measured across the tree: 738 unique hits, led by
     `core.hooksPath`, `regexp.MustCompile` and `README.md`. A dotted code identifier and a
     file name have the same shape as a hostname, and `.md`, `.sh` and `.io` are real TLDs.
