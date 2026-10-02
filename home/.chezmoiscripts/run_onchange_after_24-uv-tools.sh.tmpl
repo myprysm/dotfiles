@@ -2,9 +2,8 @@
 #!/bin/bash
 # ops bundle: Python CLIs as uv tools.
 #
-# run_onchange_, never run_once_: the whole run_once_* family sorts AHEAD of
-# run_onchange_10-brew-packages (the ordering trap #13 hit with the rclone
-# script), so a run_once_ script here would run before brew installed `uv`.
+# run_onchange_, never run_once_: the tool list lives in .chezmoidata, so an
+# edit to it must change this rendered script and re-run it.
 #
 # No `|| true`. #9's krew defect was four installs failing silently behind
 # exactly that; uv exits non-zero and set -e must let it stop the apply.

@@ -2,6 +2,11 @@
 # One Brewfile rendered from .chezmoidata/packages.yaml (core + per-OS +
 # enabled bundles) piped to brew bundle.
 # Any list edit changes this rendered script → run_onchange_ re-runs it.
+#
+# Every script here is run_*_after_ so that a failing install cannot cost the
+# machine its shell: files are written first (#52, docs/adr/0001). Spell it
+# run_onchange_after_, never run_after_onchange_ — chezmoi keeps the misplaced
+# token as part of the target name.
 set -eu
 
 # `brew bundle` installs formulae in parallel by default (HOMEBREW_BUNDLE_JOBS
