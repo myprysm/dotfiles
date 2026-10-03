@@ -11,6 +11,8 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SB="$(mktemp -d)"
 trap 'rm -rf "$SB"' EXIT
 mkdir -p "$SB/bin"
+# On Linux jq may live only in brew's bin, beside a real bw and chezmoi (#80).
+ln -s "$(command -v jq)" "$SB/bin/jq"
 
 pass=0; fail=0
 check() { # check <label> <expected> <actual>

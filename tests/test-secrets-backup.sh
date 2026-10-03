@@ -27,7 +27,9 @@ bw_ok='case "$1" in
   export) shift; while [ $# -gt 0 ]; do case $1 in --output) shift; printf "PK\003\004fixture" > "$1" ;; esac; shift; done ;;
   *) exit 1 ;;
 esac'
-stub jq 'exec /usr/bin/jq "$@"'
+# jq is linked, not found on PATH: on Linux it may live only in brew's bin, and
+# that directory also holds a real gpg and bw (#80).
+ln -s "$(command -v jq)" "$SB/bin/jq"
 stub gpg 'out=""; while [ $# -gt 0 ]; do case $1 in --output) shift; out=$1 ;; esac; shift; done; [ -n "$out" ] && printf "encrypted" > "$out"'
 
 run() { # run <home>  -> rc, out
@@ -36,7 +38,8 @@ run() { # run <home>  -> rc, out
   rc=$?; out=$(cat "$SB/out")
 }
 archive_of() { ls "$1/.local/share/dotfiles-secrets"/*.gpg 2>/dev/null | head -1; }
-mode_of() { stat -f %Lp "$1" 2>/dev/null || stat -c %a "$1"; }
+# GNU first: GNU `stat -f` prints filesystem status to stdout before failing (#80).
+mode_of() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 
 echo "== an export that produces nothing must not be encrypted and shipped"
 # The failure that matters here is a SILENT one: an empty export encrypted into a
@@ -88,11 +91,12 @@ fi
 
 echo
 echo "== a missing prerequisite is refused by name"
-rm -f "$SB/bin/gpg"
+# bw, not gpg: Ubuntu ships /usr/bin/gpg, which the pinned PATH still reaches,
+# and the real gpg then waits on a passphrase prompt (#80).
+rm -f "$SB/bin/bw"
 H="$SB/h5"; mkdir -p "$H"; run "$H"
 check "exits non-zero" "1" "$rc"
-says "and names the missing binary" 'gpg is required' "$out"
-stub gpg 'out=""; while [ $# -gt 0 ]; do case $1 in --output) shift; out=$1 ;; esac; shift; done; [ -n "$out" ] && printf "encrypted" > "$out"'
+says "and names the missing binary" 'bw is required' "$out"
 
 echo
 echo "== KNOWN DEFECT, pinned so it is not lost: the archive uses a bare gpg"
