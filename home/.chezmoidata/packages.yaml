@@ -36,7 +36,9 @@ packages:
   bundles:
     ops:
       # talosctl is homebrew/core, verified — siderolabs/tap is not needed.
-      brews: [kubernetes-cli, k9s, helm, helm@3, talosctl, velero,
+      # python@3.13 is the interpreter uv picks for the `python: "3.13"` tools
+      # below. It looks like an orphan to brew; removing it breaks ansible (#49).
+      brews: [python@3.13, kubernetes-cli, k9s, helm, helm@3, talosctl, velero,
               hashicorp/tap/terraform, hashicorp/tap/vault, hashicorp/tap/packer,
               rclone, hcloud, argocd, cilium-cli, crane, cyphernetes, doctl,
               fairwindsops/tap/pluto, operator-sdk, k0sproject/tap/k0sctl, kind,
