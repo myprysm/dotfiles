@@ -53,3 +53,19 @@ An item name that exists only inside a secret manager (SSH keys, restore items).
 
 **Self-describing restore item**:
 A vault item that carries its own destination as private fields (`path`, optional `mode`); the restore script discovers it by folder/tag enumeration, so no names or paths live in the repo.
+
+**Secret guard**:
+The `block-secret-reads` PreToolUse hook. It stops the model's tool calls from reading secret-bearing paths. It does not stop a mod: every installed mod runs before it and can read any file the user can.
+_Avoid_: sandbox, permission system
+
+**Mod**:
+A Claude Code plugin whose `hooks/hooks.json` names a module under `modules`. It runs in process, with the user's full access. Trusted code, not checked by the secret guard.
+_Avoid_: plugin as a synonym (most plugins ship only command hooks, skills or servers), extension
+
+**Mod admission**:
+The review a mod passes before it is enabled, and again after each update. A mod is refused if it hooks `tool.call`, `classic.PreToolUse` or `tool.check`, or calls `fs.read` or `process.run`. The only control on which code runs ahead of the secret guard.
+_Avoid_: audit (reserved for the secrets drift check), approval
+
+**Mod check**:
+The session-start scan that finds every installed plugin that ships a mod, so that it goes through mod admission. It reports; it does not block, because the mod has already loaded.
+_Avoid_: audit (reserved for the secrets drift check), scan as a noun
