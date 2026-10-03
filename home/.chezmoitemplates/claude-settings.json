@@ -20,17 +20,6 @@
       "Read(/{{ .chezmoi.homeDir }}/.claude/**)",
       "Bash(playwright-cli check:*)",
       "Bash(playwright-cli run-code \"async page => {:*)",
-      "Bash(pip install:*)",
-      "Bash(python3 build_spreadsheet.py)",
-      "WebFetch(domain:forums.servethehome.com)",
-      "WebFetch(domain:www.tariffnumber.com)",
-      "WebFetch(domain:www.clearcust.com)",
-      "WebFetch(domain:www.webhostingtalk.com)",
-      "WebFetch(domain:www.ictrecht.nl)",
-      "WebFetch(domain:www.omniaretail.com)",
-      "Bash(python3 -c \":*)",
-      "WebFetch(domain:answers.serverpartdeals.com)",
-      "WebFetch(domain:hindsight.vectorize.io)",
       "mcp__plugin_hindsight-memory_hindsight__agent_knowledge_ingest"
     ],
     "deny": [
