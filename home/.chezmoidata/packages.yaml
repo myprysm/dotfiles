@@ -30,7 +30,7 @@ packages:
       # automake/cmake are this OS's build-essential equivalent (Linux gets
       # those from bootstrap.sh's apt line).
       brews: [automake, cmake, coreutils, gnu-sed, gnu-time, gnupg, watch, pinentry-mac]
-      casks: [devtoys, keycastr, macfuse, qbit, warp, webpquicklook, xca]
+      casks: [devtoys, keycastr, macfuse, warp, webpquicklook, xca]
   secret:
     brews: [bitwarden-cli]          # bw on every machine; op is bootstrap-installed with the work bundle
   bundles:
