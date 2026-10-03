@@ -29,6 +29,7 @@ top-level location; a finding with no row here is `report`, not improvisation.
 | single-value OS variance in a file | one `.tmpl` with a `.chezmoi.os` conditional |
 | whole-file OS variance | per-OS files + templated `.chezmoiignore` — no runtime guards |
 | per-machine drift (agent settings, …) | untracked `*.local` twin (`settings.local.json` pattern) |
+| agent config the tool also writes at runtime (`~/.claude/settings.json`, `~/.codex/config.toml`) | `modify_` template that owns a listed set of keys; shared values in `home/.chezmoitemplates/` |
 
 ## Packages
 
