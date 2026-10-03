@@ -122,8 +122,7 @@ check "item, attachment and file name per line" "i1 a1 id_x|i1 a2 id_x.pub" \
 echo
 echo "== git_gpg resolves the binary git signs through, never a bare gpg"
 # A bare `gpg` on WSL is the WINDOWS executable, reached through a /usr/local/bin
-# shim, so asking git is the only portable answer. This is the trap the archive
-# path still falls into - see the note in test-secrets-backup.sh.
+# shim, so asking git is the only portable answer for signing.
 stub git 'case "$*" in *"gpg.program"*) echo /opt/homebrew/bin/gpg ;; esac'
 check "git's configured program wins" "/opt/homebrew/bin/gpg" "$(helper 'git_gpg')"
 stub git 'exit 1'
