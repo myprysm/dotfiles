@@ -19,7 +19,9 @@ mk_bw() { printf '#!/bin/sh\n%s\n' "$1" > "$SB/bin/bw"; chmod +x "$SB/bin/bw"; }
 printf '#!/bin/sh\n[ "$1" = "read" ] && cat %s && exit 0\nexit 1\n' "$SB/work" > "$SB/bin/op"
 chmod +x "$SB/bin/op"
 
-chezmoi execute-template --source "$REPO_ROOT/home" \
+# Rendered with the work bundle on whatever this machine says: the work cases
+# test code that only exists when it is on (#80).
+chezmoi execute-template --override-data '{"bundles":{"work":true}}' --source "$REPO_ROOT/home" \
   < "$REPO_ROOT/home/.chezmoiscripts/run_once_after_40-rclone-conf.sh.tmpl" > "$SB/script.sh" || exit 1
 
 pass=0; fail=0
@@ -73,7 +75,8 @@ echo
 echo "== the good path"
 mk_bw "cat \"$SB/personal\"; exit 0"
 H="$SB/e"; mkdir -p "$H"; run "$H"; check "fresh machine gets both fragments" 0 "3 remotes"
-if [ "$(stat -f %Lp "$H/.config/rclone/rclone.conf" 2>/dev/null || stat -c %a "$H/.config/rclone/rclone.conf")" = "600" ]; then
+# GNU first: GNU `stat -f` prints filesystem status to stdout before failing (#80).
+if [ "$(stat -c %a "$H/.config/rclone/rclone.conf" 2>/dev/null || stat -f %Lp "$H/.config/rclone/rclone.conf")" = "600" ]; then
   pass=$((pass+1)); echo "  ok   written at mode 600"
 else
   fail=$((fail+1)); echo "  FAIL not written at mode 600"
