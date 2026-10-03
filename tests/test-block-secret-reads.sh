@@ -510,5 +510,44 @@ probe allow 'gh issue create --body "terraform state pull and bw export print se
 probe allow 'echo "documenting kubectl config view for the runbook"'
 
 echo
+echo "== codex: rg is allowed while it keeps its hidden and ignore filters (#96)"
+probe_codex() { # probe_codex <deny|allow> <command>
+  out=$(printf '{"tool_name":"Bash","tool_input":{"command":%s}}' "$(printf '%s' "$2" | jq -Rs .)" | bash "$HOOK" --codex)
+  if printf '%s' "$out" | grep -q '"deny"'; then got=deny; else got=allow; fi
+  if [ "$got" = "$1" ]; then pass=$((pass+1)); printf '  ok   %-5s codex %s\n' "$got" "$2"
+  else fail=$((fail+1)); printf '  FAIL want %s got %s: codex %s\n' "$1" "$got" "$2"; fi
+}
+probe_codex allow 'rg foo'
+probe_codex allow 'rg -n TODO src'
+probe_codex allow "rg -g '*.go' -t go -C 3 foo ."
+probe_codex allow 'rg --no-require-git foo'
+probe_codex allow 'rg --no-ignore-messages foo'
+probe_codex allow 'sudo rg API_KEY .'
+probe_codex deny 'rg -u foo'
+probe_codex deny 'rg -iu foo'
+probe_codex deny 'rg --unrestricted foo'
+probe_codex deny 'rg --hidden foo'
+probe_codex deny 'rg -. foo'
+probe_codex deny 'rg --no-ignore foo'
+probe_codex deny 'rg --no-ignore-vcs foo'
+probe_codex deny 'rg --pre cat foo'
+probe_codex deny 'rg --pre-glob x foo'
+probe_codex deny 'rg --hostname-bin ./x foo'
+probe_codex deny 'RIPGREP_CONFIG_PATH=/tmp/rc rg foo'
+probe_codex deny 'rg foo ~/.secrets/'
+probe_codex deny 'rg foo .env'
+probe_codex deny 'rg -f ~/.env src'
+probe_codex deny 'ag foo'
+probe_codex deny 'grep -r foo .'
+probe_codex deny 'cat ~/.env'
+# The reason must point codex at a search it can run. It has no Grep tool.
+out=$(printf '{"tool_name":"Bash","tool_input":{"command":"ag foo"}}' | bash "$HOOK" --codex)
+if printf '%s' "$out" | grep -q 'Grep tool'; then
+  fail=$((fail+1)); echo "  FAIL codex recursive denial names the Grep tool"
+else pass=$((pass+1)); echo "  ok   codex recursive denial does not name the Grep tool"; fi
+# Without --codex, rg stays denied as before.
+probe deny 'rg foo'
+
+echo
 echo "===== $pass passed, $fail failed ====="
 [ "$fail" -eq 0 ]
