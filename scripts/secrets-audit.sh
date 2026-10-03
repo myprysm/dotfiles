@@ -30,7 +30,7 @@ if work_domain_ready; then
 fi
 
 note "== SSH key estate =="
-bw_items "$BW_SSH" | jq -r '.[] | .id as $i | (.attachments // [])[] | "\($i) \(.id) \(.fileName)"' > "$tmp/vault-ssh"
+bw_attachments "$BW_SSH" > "$tmp/vault-ssh"
 cut -d' ' -f3- "$tmp/vault-ssh" | sort > "$tmp/vault-names"
 
 # Work SSH items join the same tables rather than getting a section of their own:

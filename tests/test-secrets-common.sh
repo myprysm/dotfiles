@@ -110,6 +110,16 @@ out=$(helper 'bw_items nosuchfolder || true')
 says "a missing folder asks whether the machine was seeded" 'seeded' "$out"
 
 echo
+echo "== bw_attachments lists one line per attachment, and skips items without any"
+stub bw 'case "$1 $2" in
+  status*) echo "{\"status\":\"unlocked\"}" ;;
+  "list folders") echo "[{\"id\":\"f1\",\"name\":\"dotfiles/ssh\"}]" ;;
+  "list items") echo "[{\"id\":\"i1\",\"attachments\":[{\"id\":\"a1\",\"fileName\":\"id_x\"},{\"id\":\"a2\",\"fileName\":\"id_x.pub\"}]},{\"id\":\"i2\"}]" ;;
+esac'
+check "item, attachment and file name per line" "i1 a1 id_x|i1 a2 id_x.pub" \
+  "$(helper 'bw_attachments dotfiles/ssh' | paste -sd'|' -)"
+
+echo
 echo "== git_gpg resolves the binary git signs through, never a bare gpg"
 # A bare `gpg` on WSL is the WINDOWS executable, reached through a /usr/local/bin
 # shim, so asking git is the only portable answer. This is the trap the archive

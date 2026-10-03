@@ -69,7 +69,7 @@ while read -r item att name; do
   esac
   wanted "$HOME/.ssh/$name" || continue
   place "$HOME/.ssh/$name" "$mode" < <(bw get attachment "$att" --itemid "$item" --raw)
-done < <(bw_items "$BW_SSH" | jq -r '.[] | .id as $i | (.attachments // [])[] | "\($i) \(.id) \(.fileName)"')
+done < <(bw_attachments "$BW_SSH")
 
 note "Self-describing restore items"
 while read -r item; do
