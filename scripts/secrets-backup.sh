@@ -3,12 +3,15 @@
 #
 # Vaultwarden is backed up infra-side; this is the second copy that survives
 # losing the server. One passphrase-encrypted archive in a machine-local
-# directory, never in this repo.
+# directory, never in this repo. The previous archive is shredded only after the
+# new one decrypts: the archive is symmetric, so a mistyped passphrase writes a
+# brick that looks like a success (#59).
 #
 # `bw export --format zip` bundles data.json AND the attachment tree, so the
 # per-item download loop the vault policy originally specified is no longer
-# was lifted upstream (verified against bw 2026.6.0). Caveat inherited from the
-# implementation: organisation-owned and trashed ciphers get no attachments.
+# needed — that limitation was lifted upstream (verified against bw 2026.6.0).
+# Caveat inherited from the implementation: organisation-owned and trashed
+# ciphers get no attachments.
 #
 # The work domain is deliberately not covered. `op` has no export command at all
 # (its whole command surface was checked, not assumed), so any work-domain
@@ -19,7 +22,14 @@
 set -euo pipefail
 . "$(dirname "$0")/secrets-common.sh"
 
-require bw jq gpg
+# Not a bare `gpg`, and not git_gpg: on WSL both are the Windows exe behind a
+# /usr/local/bin shim, which cannot open the Linux paths below. Overridable for
+# testing.
+gpg_bin="${BACKUP_GPG:-}"
+if [ -z "$gpg_bin" ]; then
+  if [ -x /usr/bin/gpg ]; then gpg_bin=/usr/bin/gpg; else gpg_bin=gpg; fi
+fi
+require bw jq "$gpg_bin"
 bw_open
 bw sync >/dev/null
 
@@ -38,8 +48,23 @@ bw export --format zip --output "$tmp/vault.zip"
 [ -s "$tmp/vault.zip" ] || die "the export produced nothing"
 
 note "Encrypting — you will be prompted for an archive passphrase."
-(umask 077; gpg --symmetric --cipher-algo AES256 --output "$out" "$tmp/vault.zip")
+(umask 077; "$gpg_bin" --symmetric --cipher-algo AES256 --output "$out" "$tmp/vault.zip")
 chmod 600 "$out"
+
+note "Verifying the archive decrypts — gpg may ask for the passphrase again."
+if ! "$gpg_bin" --decrypt --output /dev/null "$out"; then
+  rm -f "$out"
+  die "the new archive does not decrypt — removed it, the previous archive is kept"
+fi
+
+# Best effort only: APFS and ext4 inside a VHDX never overwrite the physical
+# block. What protects a remnant is that it was never plaintext.
+wipe="$(command -v shred || command -v gshred || true)"
+for old in "$BACKUP_DIR"/secrets-*.zip.gpg; do
+  [ "$old" != "$out" ] && [ -e "$old" ] || continue
+  if [ -n "$wipe" ]; then "$wipe" -u "$old"; else rm -f "$old"; fi
+  note "Shredded the previous archive ${old/#$HOME/\~}"
+done
 
 note ""
 note "Wrote ${out/#$HOME/\~} ($(du -h "$out" | cut -f1))"

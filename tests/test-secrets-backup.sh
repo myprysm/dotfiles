@@ -30,10 +30,11 @@ esac'
 # jq is linked, not found on PATH: on Linux it may live only in brew's bin, and
 # that directory also holds a real gpg and bw (#80).
 ln -s "$(command -v jq)" "$SB/bin/jq"
-stub gpg 'out=""; while [ $# -gt 0 ]; do case $1 in --output) shift; out=$1 ;; esac; shift; done; [ -n "$out" ] && printf "encrypted" > "$out"'
+gpg_ok='out=""; while [ $# -gt 0 ]; do case $1 in --output) shift; out=$1 ;; esac; shift; done; [ -n "$out" ] && printf "encrypted" > "$out"'
+stub gpg "$gpg_ok"
 
 run() { # run <home>  -> rc, out
-  HOME="$1" PATH="$SB/bin:/usr/bin:/bin" BW_SESSION=preset \
+  HOME="$1" PATH="$SB/bin:/usr/bin:/bin" BW_SESSION=preset BACKUP_GPG="$SB/bin/gpg" \
     bash "$REPO_ROOT/scripts/secrets-backup.sh" > "$SB/out" 2>&1
   rc=$?; out=$(cat "$SB/out")
 }
@@ -69,10 +70,26 @@ says "tells the operator how to decrypt" 'gpg --decrypt' "$out"
 says "warns that the passphrase must not live in the vault" 'does not depend on this vault' "$out"
 
 echo
-echo "== a second run does not overwrite the first"
+echo "== a second run replaces the first, once the new archive decrypts"
 sleep 1
 run "$H"
-check "two archives now" "2" "$(ls "$H/.local/share/dotfiles-secrets" | wc -l | tr -d ' ')"
+check "exits zero" "0" "$rc"
+check "still one archive" "1" "$(ls "$H/.local/share/dotfiles-secrets" | wc -l | tr -d ' ')"
+check "and it is the new one" "no" "$([ "$(archive_of "$H")" = "$a" ] && echo yes || echo no)"
+says "names the archive it shredded" 'Shredded the previous archive' "$out"
+
+echo
+echo "== an archive that does not decrypt is removed, and the previous one kept"
+# The archive is symmetric: a mistyped passphrase writes a brick that looks like
+# a success. Pruning before the check would destroy the last good archive.
+a=$(archive_of "$H")
+stub gpg 'case " $* " in *" --decrypt "*) exit 2 ;; esac; '"$gpg_ok"
+sleep 1
+run "$H"
+check "exits non-zero" "1" "$rc"
+says "says the archive does not decrypt" 'does not decrypt' "$out"
+check "previous archive kept, alone" "$a" "$(ls "$H/.local/share/dotfiles-secrets"/*.gpg)"
+stub gpg "$gpg_ok"
 
 echo
 echo "== the work domain gap is stated out loud when the bundle is on"
@@ -99,24 +116,17 @@ check "exits non-zero" "1" "$rc"
 says "and names the missing binary" 'bw is required' "$out"
 
 echo
-echo "== KNOWN DEFECT, pinned so it is not lost: the archive uses a bare gpg"
-# secrets-common.sh has git_gpg() precisely because a bare `gpg` on WSL resolves
-# to the WINDOWS executable through a /usr/local/bin shim. This script calls a
-# bare gpg anyway, so on WSL the archive is encrypted by Windows gnupg against a
-# Linux temp path. The LINUX_GPG helper that guarded the restore against exactly
-# this was deleted as dead by #50, so the knowledge lives only in that resolution.
-# This probe asserts the CURRENT behaviour and will flip when the defect is fixed
-# — at which point the expectation below is what needs changing, deliberately.
+echo "== the archive never goes through a bare gpg"
+# On WSL a bare `gpg` and git's gpg.program are both the Windows exe behind a
+# /usr/local/bin shim, which cannot open Linux paths. The LINUX_GPG guard against
+# this was deleted as dead by #50. A real /usr/bin/gpg cannot be stubbed, so this
+# probe reads the script.
 if grep -qE '^require .*[[:space:]]gpg([[:space:]]|$)' "$REPO_ROOT/scripts/secrets-backup.sh"; then
-  pass=$((pass+1)); echo "  ok   still requires a bare gpg (defect present, tracked for the WSL batch)"
+  fail=$((fail+1)); echo "  FAIL requires a bare gpg again"
 else
-  fail=$((fail+1)); echo "  FAIL the bare-gpg requirement changed — update this probe deliberately"
+  pass=$((pass+1)); echo "  ok   no bare gpg requirement"
 fi
-if grep -q 'git_gpg' "$REPO_ROOT/scripts/secrets-backup.sh"; then
-  fail=$((fail+1)); echo "  FAIL git_gpg is now used — flip the expectation above, the defect is fixed"
-else
-  pass=$((pass+1)); echo "  ok   git_gpg not yet used here (defect present)"
-fi
+says "prefers /usr/bin/gpg" 'gpg_bin=/usr/bin/gpg' "$(cat "$REPO_ROOT/scripts/secrets-backup.sh")"
 
 echo
 echo "===== $pass passed, $fail failed ====="
