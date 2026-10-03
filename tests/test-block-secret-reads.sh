@@ -519,7 +519,24 @@ probe_codex() { # probe_codex <deny|allow> <command>
 }
 probe_codex allow 'rg foo'
 probe_codex allow 'rg -n TODO src'
-probe_codex allow "rg -g '*.go' -t go -C 3 foo ."
+probe_codex allow 'rg -C 3 foo src'
+probe_codex allow "rg -g '!vendor' foo"
+probe_codex allow "rg --glob='!*.min.js' foo"
+probe_codex allow 'rg -T go foo'
+probe_codex allow 'rg --type-not go foo'
+probe_codex deny "rg -g '*.go' foo"
+probe_codex deny "rg -g'*.go' foo"
+probe_codex deny "rg --glob='*' foo"
+probe_codex deny "rg -ng '*.go' foo"
+probe_codex deny 'rg --iglob X foo'
+probe_codex deny 'rg -t go foo'
+probe_codex deny 'rg -tgo foo'
+probe_codex deny 'rg --type=go foo'
+probe_codex deny "rg --type-add 'x:*' foo"
+probe_codex deny 'rg -L foo'
+probe_codex deny 'rg -nL foo'
+probe_codex deny 'rg --follow foo'
+probe_codex deny 'rg --ignore-file wl foo'
 probe_codex allow 'rg --no-require-git foo'
 probe_codex allow 'rg --no-ignore-messages foo'
 probe_codex allow 'sudo rg API_KEY .'
