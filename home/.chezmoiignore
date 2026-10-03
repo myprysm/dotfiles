@@ -81,6 +81,13 @@ Library/**
 .config/zsh/env.d/46-libpq.zsh
 {{- end }}
 
+{{ if not .bundles.ai -}}
+# Only the shared opencode.json is tracked. opencode deep-merges
+# opencode.jsonc over it from the same directory, so each machine's providers
+# and default model live in an untracked opencode.jsonc (#78).
+.config/opencode/**
+{{- end }}
+
 {{ if not .bundles.rust -}}
 .config/zsh/env.d/20-cargo.zsh
 {{- end }}

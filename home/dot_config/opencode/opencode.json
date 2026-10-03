@@ -1,0 +1,9 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "~/.config/opencode/opencode-rules.md"
+  ],
+  "disabled_providers": [
+    "opencode"
+  ]
+}

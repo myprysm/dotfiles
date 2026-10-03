@@ -44,6 +44,7 @@ here in the same commit. A change that spans two scopes is two commits.
 - `agents` — `AGENTS.md`, `docs/agents/`, the repo's `.claude/skills/`
 - `context` — `CONTEXT.md`, `docs/adr/`
 - `repo` — the repo as a whole
+- `opencode` — `~/.config/opencode`
 - `<tool>` — a tool config under its own name (`k9s`, `starship`); list it on first use
 
 A doc or a test takes the scope of what it covers: `docs(secrets)`, `test(rclone)`.
