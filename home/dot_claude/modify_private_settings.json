@@ -6,7 +6,9 @@ Keys outside $owned pass through untouched; the live autoMode block names
 internal hosts and is never read into the repo.
 
 toPrettyJson sorts keys and Claude Code does not, so `chezmoi status` reports
-this file modified after any runtime write. Accepted (#73).
+this file modified after any runtime write. Accepted (#73). Orca is one such
+writer: it rewrites its hooks on every connect to WSL, moved after ours and
+with its own key order. Reordering here cannot match it (#82).
 */ -}}
 
 {{- define "merge" -}}
