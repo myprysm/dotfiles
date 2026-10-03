@@ -4,3 +4,10 @@ sandbox_mode = "workspace-write"
 
 [shell_environment_policy]
 ignore_default_excludes = false
+
+[[hooks.PreToolUse]]
+matcher = "Bash"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "bash {{ .chezmoi.homeDir }}/.claude/hooks/block-secret-reads.sh --codex"

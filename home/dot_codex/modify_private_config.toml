@@ -33,7 +33,8 @@ reports this file modified after any runtime write, as for Claude (#73).
 {{- end -}}
 
 {{- /* Replaced whole, or deleted when the base lacks it. Never list "hooks":
-       the hook trust state lives under it. */ -}}
+       the hook trust state lives under it; only hooks.PreToolUse is owned,
+       below. */ -}}
 {{- range list "approval_policy" "sandbox_mode" "shell_environment_policy" -}}
 {{-   if hasKey $base . -}}
 {{-     $_ := set $live . (get $base .) -}}
@@ -47,6 +48,53 @@ reports this file modified after any runtime write, as for Claude (#73).
 {{-   if and (hasKey $base .) (not (hasKey $live .)) -}}
 {{-     $_ := set $live . (get $base .) -}}
 {{-   end -}}
+{{- end -}}
+
+{{- /* Codex silently skips a hook whose hooks.state entry is missing or whose
+       trusted_hash does not match, and `codex exec` never prompts, so the
+       guard would be off with no sign of it (#96). The hash is pre-seeded
+       with codex 0.160's formula (hooks/src/engine/discovery.rs hook_hash,
+       config/src/fingerprint.rs): sha256 of the sorted, compact JSON of the
+       event, the matcher and the normalized handler. Recheck it when codex
+       is upgraded: a changed formula turns the guard off silently. toJson
+       escapes <, > and &, which serde does not, so the command must not
+       carry them. */ -}}
+{{- $liveHooks := dict -}}
+{{- if hasKey $live "hooks" -}}
+{{-   $liveHooks = get $live "hooks" -}}
+{{- end -}}
+{{- $baseHooks := dict -}}
+{{- if hasKey $base "hooks" -}}
+{{-   $baseHooks = get $base "hooks" -}}
+{{- end -}}
+{{- if hasKey $baseHooks "PreToolUse" -}}
+{{-   $groups := get $baseHooks "PreToolUse" -}}
+{{-   $_ := set $liveHooks "PreToolUse" $groups -}}
+{{-   $state := dict -}}
+{{-   if hasKey $liveHooks "state" -}}
+{{-     $state = get $liveHooks "state" -}}
+{{-   end -}}
+{{-   $src := joinPath .chezmoi.homeDir ".codex/config.toml" -}}
+{{-   range $gi, $g := $groups -}}
+{{-     range $hi, $h := $g.hooks -}}
+{{-       $handler := dict "type" $h.type "command" $h.command "timeout" (get $h "timeout" | default 600) "async" (get $h "async" | default false) -}}
+{{-       $ident := dict "event_name" "pre_tool_use" "hooks" (list $handler) -}}
+{{-       if hasKey $g "matcher" -}}
+{{-         $_ := set $ident "matcher" $g.matcher -}}
+{{-       end -}}
+{{-       $key := printf "%s:pre_tool_use:%d:%d" $src $gi $hi -}}
+{{-       $entry := dict -}}
+{{-       if hasKey $state $key -}}
+{{-         $entry = get $state $key -}}
+{{-       end -}}
+{{-       $_ := set $entry "trusted_hash" (printf "sha256:%s" ($ident | toJson | sha256sum)) -}}
+{{-       $_ := set $state $key $entry -}}
+{{-     end -}}
+{{-   end -}}
+{{-   $_ := set $liveHooks "state" $state -}}
+{{-   $_ := set $live "hooks" $liveHooks -}}
+{{- else if hasKey $liveHooks "PreToolUse" -}}
+{{-   $_ := unset $liveHooks "PreToolUse" -}}
 {{- end -}}
 
 {{- toToml $live -}}
