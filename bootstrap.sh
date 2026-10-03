@@ -140,12 +140,12 @@ else
 fi
 export BW_SESSION
 if [ "$WORK_BUNDLE" = "true" ]; then
-  # Deliberately no sign-in. `eval "$(op signin)"` used to live here and claimed
-  # an authentication it never performed: under the desktop app integration
-  # `op signin` prints nothing, the session lives in the daemon, and the eval ran
-  # an empty string and succeeded. The honest test is a real read (op_ready, in
-  # scripts/secrets-common.sh), which every work caller already does for itself.
-  # Where that test belongs is issue #35's call, not this step's.
+  # Deliberately no sign-in. `eval "$(op signin)"` claims an authentication it
+  # never performs: under the desktop app integration `op signin` prints nothing,
+  # the session lives in the daemon, and the eval runs an empty string and
+  # succeeds. The honest test is a real read (op_ready, in
+  # scripts/secrets-common.sh). Each work caller makes it for itself, and
+  # bootstrap has no caller that needs it (#35).
   echo "    work domain NOT authenticated here — bootstrap does not sign in to op." >&2
   echo "    The first work read raises 1Password's approval prompt; see docs/secrets.md." >&2
 fi
