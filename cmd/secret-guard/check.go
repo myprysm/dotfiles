@@ -879,6 +879,10 @@ func (c *checker) simple(argWords []*syntax.Word, words []flatWord) {
 			}
 		}
 	case alwaysRecursive[cmdBase]:
+		if Agent == "codex" && cmdBase == "rg" {
+			c.rgCodex(args)
+			break
+		}
 		// `rg --version` and `ag --help` search nothing.
 		if !onlyInfoFlags(args) {
 			c.deny(catRecursive, cmdBase+" searches recursively and reads files it never names")
@@ -1273,6 +1277,102 @@ func (c *checker) grep(name string, args []flatWord) {
 		}
 		c.checkOperand(args[i], name+" reads a secret path")
 	}
+}
+
+// rgCodex judges rg for codex, which has no filtered search tool of its own
+// (#96). A tree walk is allowed while rg keeps its default filters, which skip
+// hidden files and gitignored files. Secrets that are neither hidden nor
+// ignored - `*.pem`, `*.tfstate`, `kubeconfig`, `vault.yml` in a plain
+// directory - are still printed by a walk that never names them. That hole
+// was accepted to give codex a search at all.
+//
+// An option missing from rgOptArg costs a false positive, never a false
+// negative: its value is taken as the pattern, and the real pattern is then
+// judged as a path.
+func (c *checker) rgCodex(args []flatWord) {
+	// A config file can carry --hidden or --no-ignore without the command
+	// naming either.
+	if c.envNames["RIPGREP_CONFIG_PATH"] {
+		c.deny(catRecursive, "RIPGREP_CONFIG_PATH can load flags that turn off rg's hidden and ignore filters")
+		return
+	}
+	if c.inSecretDir {
+		c.deny(catSecret, "rg searches inside a directory the command changed into")
+		return
+	}
+	patternSeen := false
+	stopFlags := false
+	for i := 0; i < len(args); i++ {
+		w := stripAll(args[i].lit)
+		if !stopFlags && w == "--" {
+			stopFlags = true
+			continue
+		}
+		if !stopFlags && isFlag(w) {
+			if why := rgDisablesFilters(w); why != "" {
+				c.deny(catRecursive, "rg "+why)
+				return
+			}
+			opt, val, attached := splitOpt(w, rgOptArg)
+			if !rgOptArg[opt] {
+				continue
+			}
+			if !attached {
+				if i+1 >= len(args) {
+					continue
+				}
+				i++
+				if rgFileOptArg[opt] {
+					c.check(args[i], "rg "+opt+" reads a secret path")
+				}
+			} else if rgFileOptArg[opt] {
+				c.checkText(val, "rg "+opt+" reads a secret path")
+			}
+			if opt == "-e" || opt == "--regexp" || opt == "-f" || opt == "--file" {
+				patternSeen = true
+			}
+			continue
+		}
+		if !patternSeen {
+			patternSeen = true
+			continue
+		}
+		c.checkOperand(args[i], "rg reads a secret path")
+		if hitsSecretDir(stripAll(args[i].lit)) {
+			c.deny(catSecret, "rg searches a secret directory")
+		}
+	}
+}
+
+// rgDisablesFilters returns why an rg option is refused for codex, or "".
+func rgDisablesFilters(w string) string {
+	if strings.HasPrefix(w, "--") {
+		name, _, _ := strings.Cut(w, "=")
+		switch {
+		case name == "--unrestricted":
+			return "--unrestricted turns off the hidden and ignore filters"
+		case name == "--hidden":
+			return "--hidden searches hidden files"
+		case name == "--no-ignore-messages":
+			return ""
+		case name == "--no-ignore" || strings.HasPrefix(name, "--no-ignore-"):
+			return name + " turns off ignore files"
+		case name == "--pre" || name == "--pre-glob" || name == "--hostname-bin":
+			return name + " runs a command"
+		}
+		return ""
+	}
+	for _, ch := range w[1:] {
+		switch {
+		case ch == 'u':
+			return "-u turns off the hidden and ignore filters"
+		case ch == '.':
+			return "-. searches hidden files"
+		case rgOptArg["-"+string(ch)]:
+			return ""
+		}
+	}
+	return ""
 }
 
 // hitsHookPath reports whether a word names the pre-commit hook: the file

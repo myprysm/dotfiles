@@ -13,6 +13,10 @@ import (
 // the chezmoi template. Empty when the template did not define one.
 var SecretsDir string
 
+// Agent names the agent whose command is judged. "codex" relaxes the rg rule
+// (#96); anything else gets the full rule set.
+var Agent string
+
 var (
 	// The template suffix does not have to follow `.env` DIRECTLY. Requiring
 	// that refused `cat .env.testing.example` and
@@ -320,6 +324,18 @@ var (
 		-B --before-context -C --context -D --devices -d --directories
 		--binary-files --label --include --exclude --exclude-dir --exclude-from
 		--group-separator --context-separator -NUM`)
+
+	// rg options that consume the following word, from `rg --help` of
+	// ripgrep 15.2.0.
+	rgOptArg = set(`-e --regexp -f --file -E --encoding -m --max-count
+		-j --threads -g --glob -d --max-depth -t --type -T --type-not
+		-A --after-context -B --before-context -C --context -M --max-columns
+		-r --replace --pre --pre-glob --dfa-size-limit --engine
+		--regex-size-limit --iglob --ignore-file --max-filesize --type-add
+		--type-clear --color --colors --context-separator
+		--field-context-separator --field-match-separator --hostname-bin
+		--hyperlink-format --path-separator --sort --sortr --generate`)
+	rgFileOptArg = set(`-f --file`)
 
 	// grep options whose value is a file grep OPENS, rather than a pattern.
 	grepFileOptArg = set(`-f --file --exclude-from`)

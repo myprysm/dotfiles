@@ -75,8 +75,10 @@ func parseAs(lang syntax.LangVariant, src string) (*syntax.File, error) {
 
 func main() {
 	dir := flag.String("secretsdir", "", "absolute path of the machine-local secrets directory")
+	agent := flag.String("agent", "", "the agent whose command is judged; \"codex\" relaxes the rg rule")
 	flag.Parse()
 	SecretsDir = strings.TrimRight(*dir, "/")
+	Agent = *agent
 
 	in, err := io.ReadAll(io.LimitReader(os.Stdin, maxInput+1))
 	if err != nil {
