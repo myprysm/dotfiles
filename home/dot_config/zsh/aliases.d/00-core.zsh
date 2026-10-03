@@ -7,5 +7,5 @@ alias jqd64='jq -r ".data|map_values(@base64d)"'
 alias genpass="dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- '\n' | tr -- '+/' '-_'; echo"
 alias ll="eza -l"
 alias la="eza -la"
-# corepack supplies the pnpm shim; `pnpx` is legacy
-alias ccusage="pnpm dlx ccusage@latest"
+# The pnpm shim exists only after `corepack enable`, which no install step runs.
+alias ccusage="corepack pnpm dlx ccusage@latest"
