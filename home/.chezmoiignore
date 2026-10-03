@@ -87,6 +87,10 @@ Library/**
 .config/opencode/**
 {{- end }}
 
+{{ if not .bundles.ai -}}
+.codex/**
+{{- end }}
+
 {{ if not .bundles.rust -}}
 .config/zsh/env.d/20-cargo.zsh
 {{- end }}

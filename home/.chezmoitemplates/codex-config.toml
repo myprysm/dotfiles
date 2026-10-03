@@ -1,0 +1,6 @@
+model = "gpt-6.1-sol"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[shell_environment_policy]
+ignore_default_excludes = false

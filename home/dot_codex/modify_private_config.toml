@@ -1,0 +1,52 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /*
+Merges the repo's keys into the live file (#84). Codex writes hooks.state,
+projects, tui, notice and /model here at runtime, so the live file is never
+replaced whole. toToml drops comments and sorts keys, so `chezmoi status`
+reports this file modified after any runtime write, as for Claude (#73).
+*/ -}}
+
+{{- define "merge" -}}
+{{-   $dst := index . 0 -}}
+{{-   range $k, $v := index . 1 -}}
+{{-     $cur := get $dst $k -}}
+{{-     if and (kindIs "map" $cur) (kindIs "map" $v) -}}
+{{-       template "merge" (list $cur $v) -}}
+{{-     else -}}
+{{-       $_ := set $dst $k $v -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}
+
+{{- $live := dict -}}
+{{- if trim .chezmoi.stdin -}}
+{{-   $live = fromToml .chezmoi.stdin -}}
+{{- end -}}
+
+{{- $base := includeTemplate "codex-config.toml" . | fromToml -}}
+{{- /* Codex has no local overlay of its own: a `<name>.config.toml` beside
+       config.toml loads only with `-p <name>`, so this file is not named
+       that way (#84). */ -}}
+{{- $local := joinPath .chezmoi.homeDir ".codex/config.local.toml" -}}
+{{- if stat $local -}}
+{{-   template "merge" (list $base (include $local | fromToml)) -}}
+{{- end -}}
+
+{{- /* Replaced whole, or deleted when the base lacks it. Never list "hooks":
+       the hook trust state lives under it. */ -}}
+{{- range list "approval_policy" "sandbox_mode" "shell_environment_policy" -}}
+{{-   if hasKey $base . -}}
+{{-     $_ := set $live . (get $base .) -}}
+{{-   else -}}
+{{-     $_ := unset $live . -}}
+{{-   end -}}
+{{- end -}}
+{{- /* Codex writes /model back here, so owning it would undo that choice on
+       every apply. */ -}}
+{{- range list "model" -}}
+{{-   if and (hasKey $base .) (not (hasKey $live .)) -}}
+{{-     $_ := set $live . (get $base .) -}}
+{{-   end -}}
+{{- end -}}
+
+{{- toToml $live -}}
