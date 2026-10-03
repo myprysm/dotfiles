@@ -13,7 +13,7 @@ packages:
   # this list to vendors' own taps and review any addition.
   # ariga/tap only supplies atlas as a transitive dep, but an untrusted tap
   # makes every unrelated install print a trust warning and fail.
-  taps: [hashicorp/tap, ariga/tap, fairwindsops/tap, k0sproject/tap]
+  taps: [hashicorp/tap, ariga/tap, fairwindsops/tap, k0sproject/tap, anomalyco/tap]
   core:
     # gitleaks is repo tooling: the written pre-commit review rule (#6) depends
     # on it and /adopt runs it as its last gate, and the estate-wide pre-commit
@@ -175,4 +175,4 @@ packages:
       brews: [go]
     rust: {}                        # rustup official installer (run_once_31); no cargo-install list
     ai:
-      brews: [llama.cpp]
+      brews: [llama.cpp, anomalyco/tap/opencode]
