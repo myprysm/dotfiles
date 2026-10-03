@@ -29,7 +29,7 @@ packages:
       # shell that cannot commit. pinentry-mac is inert without it.
       # automake/cmake are this OS's build-essential equivalent (Linux gets
       # those from bootstrap.sh's apt line).
-      brews: [automake, cmake, coreutils, gnu-sed, gnu-time, gnupg, watch, pinentry-mac]
+      brews: [automake, cmake, coreutils, gnu-sed, gnu-time, gnupg, watch, pinentry-mac, git-gui]
       casks: [devtoys, keycastr, macfuse, warp, webpquicklook, xca]
   secret:
     brews: [bitwarden-cli]          # bw on every machine; op is bootstrap-installed with the work bundle
