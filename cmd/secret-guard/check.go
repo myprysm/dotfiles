@@ -1283,8 +1283,14 @@ func (c *checker) grep(name string, args []flatWord) {
 // (#96). A tree walk is allowed while rg keeps its default filters, which skip
 // hidden files and gitignored files. Secrets that are neither hidden nor
 // ignored - `*.pem`, `*.tfstate`, `kubeconfig`, `vault.yml` in a plain
-// directory - are still printed by a walk that never names them. That hole
-// was accepted to give codex a search at all.
+// directory - are still printed by a walk that never names them. So is a
+// hidden file whitelisted by a `!` rule in a `.ignore` or `.rgignore` the
+// tree carries, measured against ripgrep 15.2.0: the guard cannot see what a
+// file says. Both holes were accepted to give codex a search at all.
+//
+// Every INCLUDE filter is refused, not only the flags named for it: a glob
+// or a type whitelists matching files past the hidden filter, and a glob past
+// .gitignore too. `-g '*'` and `-t go` both printed hidden canaries.
 //
 // An option missing from rgOptArg costs a false positive, never a false
 // negative: its value is taken as the pattern, and the real pattern is then
@@ -1309,24 +1315,44 @@ func (c *checker) rgCodex(args []flatWord) {
 			continue
 		}
 		if !stopFlags && isFlag(w) {
-			if why := rgDisablesFilters(w); why != "" {
+			opt, val, attached, why := rgOption(w)
+			if why != "" {
 				c.deny(catRecursive, "rg "+why)
 				return
 			}
-			opt, val, attached := splitOpt(w, rgOptArg)
-			if !rgOptArg[opt] {
+			if opt == "" {
 				continue
 			}
+			valWord := flatWord{lit: val}
 			if !attached {
 				if i+1 >= len(args) {
 					continue
 				}
 				i++
-				if rgFileOptArg[opt] {
-					c.check(args[i], "rg "+opt+" reads a secret path")
+				valWord = args[i]
+				val = stripAll(args[i].lit)
+			}
+			switch opt {
+			case "-g", "--glob", "--iglob":
+				if !strings.HasPrefix(val, "!") {
+					c.deny(catRecursive, "rg "+opt+" includes files past the hidden and ignore filters")
+					return
 				}
-			} else if rgFileOptArg[opt] {
-				c.checkText(val, "rg "+opt+" reads a secret path")
+			case "-t", "--type", "--type-add":
+				c.deny(catRecursive, "rg "+opt+" includes files past the hidden filter")
+				return
+			case "--ignore-file":
+				c.deny(catRecursive, "rg --ignore-file can whitelist hidden files")
+				return
+			case "--pre", "--pre-glob", "--hostname-bin":
+				c.deny(catRecursive, "rg "+opt+" runs a command")
+				return
+			case "-f", "--file":
+				if attached {
+					c.checkText(val, "rg "+opt+" reads a secret path")
+				} else {
+					c.check(valWord, "rg "+opt+" reads a secret path")
+				}
 			}
 			if opt == "-e" || opt == "--regexp" || opt == "-f" || opt == "--file" {
 				patternSeen = true
@@ -1344,35 +1370,43 @@ func (c *checker) rgCodex(args []flatWord) {
 	}
 }
 
-// rgDisablesFilters returns why an rg option is refused for codex, or "".
-func rgDisablesFilters(w string) string {
+// rgOption reads one rg option word. It returns the option that takes a
+// value, if any, with that value when it rides on the word; or why the word
+// is refused. A short bundle is read letter by letter: `-nf <file>` carries
+// -f, and splitting only the first two letters walked past it.
+func rgOption(w string) (opt, val string, attached bool, why string) {
 	if strings.HasPrefix(w, "--") {
-		name, _, _ := strings.Cut(w, "=")
+		name, v, hasVal := strings.Cut(w, "=")
 		switch {
 		case name == "--unrestricted":
-			return "--unrestricted turns off the hidden and ignore filters"
+			return "", "", false, "--unrestricted turns off the hidden and ignore filters"
 		case name == "--hidden":
-			return "--hidden searches hidden files"
+			return "", "", false, "--hidden searches hidden files"
+		case name == "--follow":
+			return "", "", false, "--follow leaves the tree through symlinks"
 		case name == "--no-ignore-messages":
-			return ""
+			return "", "", false, ""
 		case name == "--no-ignore" || strings.HasPrefix(name, "--no-ignore-"):
-			return name + " turns off ignore files"
-		case name == "--pre" || name == "--pre-glob" || name == "--hostname-bin":
-			return name + " runs a command"
+			return "", "", false, name + " turns off ignore files"
+		case rgOptArg[name]:
+			return name, v, hasVal, ""
 		}
-		return ""
+		return "", "", false, ""
 	}
-	for _, ch := range w[1:] {
+	for j, ch := range w[1:] {
 		switch {
 		case ch == 'u':
-			return "-u turns off the hidden and ignore filters"
+			return "", "", false, "-u turns off the hidden and ignore filters"
 		case ch == '.':
-			return "-. searches hidden files"
+			return "", "", false, "-. searches hidden files"
+		case ch == 'L':
+			return "", "", false, "-L leaves the tree through symlinks"
 		case rgOptArg["-"+string(ch)]:
-			return ""
+			rest := w[2+j:]
+			return "-" + string(ch), rest, rest != "", ""
 		}
 	}
-	return ""
+	return "", "", false, ""
 }
 
 // hitsHookPath reports whether a word names the pre-commit hook: the file

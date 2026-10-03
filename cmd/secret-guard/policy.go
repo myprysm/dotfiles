@@ -335,7 +335,6 @@ var (
 		--type-clear --color --colors --context-separator
 		--field-context-separator --field-match-separator --hostname-bin
 		--hyperlink-format --path-separator --sort --sortr --generate`)
-	rgFileOptArg = set(`-f --file`)
 
 	// grep options whose value is a file grep OPENS, rather than a pattern.
 	grepFileOptArg = set(`-f --file --exclude-from`)
