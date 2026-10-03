@@ -44,5 +44,10 @@ brew bundle --file=/dev/stdin <<EOF
 {{ range $bundle.brews }}brew {{ . | quote }}
 {{ end -}}
 {{ end -}}
+{{/* Unlike core.darwin.casks, bundle casks render on every OS: a macOS-only cask here breaks the Linux apply. */ -}}
+{{ if and (index $.bundles $name) (hasKey $bundle "casks") -}}
+{{ range $bundle.casks }}cask {{ . | quote }}
+{{ end -}}
+{{ end -}}
 {{ end -}}
 EOF

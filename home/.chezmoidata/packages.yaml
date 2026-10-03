@@ -178,3 +178,5 @@ packages:
     rust: {}                        # rustup official installer (run_once_31); no cargo-install list
     ai:
       brews: [llama.cpp, anomalyco/tap/opencode]
+      # codex left homebrew/core for homebrew/cask; the cask ships a Linux build.
+      casks: [codex]
