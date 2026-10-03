@@ -131,6 +131,21 @@ domain silently absent from its freshness section.
   `~/.local/share/dotfiles-secrets`. Symmetric GPG, so the archive depends on a
   passphrase and no key. Never in this repo. The work manager is not covered — see
   **The work domain** above for why that is a decision rather than a gap.
+  Every machine that holds the personal vault keeps its own archive, and **exactly one**
+  (#59). A run writes the new archive, decrypts it to `/dev/null`, and only then shreds
+  the previous one. The archive is symmetric, so a mistyped passphrase writes a brick that
+  looks like a success; when the check fails, the run removes the new archive and keeps
+  the old. The script calls `/usr/bin/gpg` when it exists, never a bare `gpg`: on WSL a
+  bare `gpg` and git's `gpg.program` are the Windows binary, which cannot open the Linux
+  paths.
+  **Shred is best effort.** The script uses `shred`, then `gshred`, then `rm`. Neither
+  machine is a case where `shred` works: APFS is copy-on-write with snapshots, and WSL2's
+  ext4 sits inside a VHDX on NTFS. The overwrite never reaches the physical block. What
+  protects a remnant is that the archive was never plaintext — shred is defence in depth
+  against a leaked passphrase, not erasure.
+  **A vault deletion is followed by a backup run on every machine that holds the vault**
+  (#48). Until that run, the previous archive still holds the deleted material. The audit
+  cannot see another machine's disk, so nothing reports a machine that skipped the run.
 
 **Two secret-bearing directories, two treatments** (#59). `secretsDir` is prompted per
 machine, lives only in `~/.config/chezmoi/chezmoi.toml`, and never enters this repo: for a
