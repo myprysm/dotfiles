@@ -48,6 +48,8 @@ here in the same commit. A change that spans two scopes is two commits.
 - `codex` — `~/.codex` config and global instructions
 - `skills` — the skill pin, its `.chezmoiexternal` entry, the shared-skill symlinks in
   `~/.agents/skills` and `~/.claude/skills`, and the bump runbook
+- `hindsight` — the `hindsight` bundle, the `~/.hindsight` config, the hindsight pin and its
+  external entry, `docs/runbooks/bump-hindsight-pin.md`, and the hindsight build spec
 - `<tool>` — a tool config under its own name (`k9s`, `starship`); list it on first use
 
 A doc or a test takes the scope of what it covers: `docs(secrets)`, `test(rclone)`.
