@@ -20,6 +20,7 @@ is() {
   if [ "$2" = "$3" ]; then pass=$((pass+1)); printf '  ok   %s\n' "$1"
   else fail=$((fail+1)); printf '  FAIL %s\n         want: %s\n         got:  %s\n' "$1" "$3" "$2"; fi
 }
+nonzero() { is "$1" "$([ "$code" -ne 0 ] && echo yes)" "yes"; }
 msg() { printf '%s' "$out" | jq -r '.systemMessage' 2>&1; }
 
 reset_home() {
@@ -59,7 +60,7 @@ installed "$(jq -n --arg a "$a" --arg b "$b" '{version:2,plugins:{
   "modded@mkt":[{scope:"user",installPath:$b,version:"3.1.0"}]}}')"
 run "$SB/bin"
 is "one line for the mod" "$(msg)" "modded@mkt 3.1.0: ships a mod — run mod admission (#91) — admission could not run: claude not found"
-is "finding exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
+nonzero "finding exits non-zero"
 
 echo "== a mod under ~/.claude/mods/plugins"
 reset_home
@@ -69,14 +70,14 @@ printf '%s' "$MOD" > "$SB/home/.claude/mods/plugins/bar/hooks/hooks.json"
 printf '%s' '{"name":"bar","version":"0.1.0"}' > "$SB/home/.claude/mods/plugins/bar/.claude-plugin/plugin.json"
 run "$SB/bin"
 is "repo mod reported" "$(msg)" "bar@dotfiles 0.1.0: ships a mod — run mod admission (#91) — admission could not run: claude not found"
-is "finding exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
+nonzero "finding exits non-zero"
 
 echo "== installed_plugins.json the script cannot read"
 reset_home
 installed 'not json'
 run "$SB/bin"
 is "unreadable file reported" "$(msg)" "mod check could not run: $SB/home/.claude/plugins/installed_plugins.json is not valid JSON"
-is "exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
+nonzero "exits non-zero"
 
 reset_home
 installed '{"version":3,"plugins":{}}'
@@ -86,7 +87,7 @@ is "unknown format reported" "$(msg)" "mod check could not run: $SB/home/.claude
 reset_home
 run "$SB/bin"
 is "missing file reported" "$(msg)" "mod check could not run: $SB/home/.claude/plugins/installed_plugins.json not found"
-is "exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
+nonzero "exits non-zero"
 
 reset_home
 installed '{"version":2,"plugins":[]}'
@@ -105,7 +106,7 @@ run "$SB/bin"
 is "every line kept" "$(msg)" "mod check could not run: $SB/gone not found
 modded@mkt 3.1.0: ships a mod — run mod admission (#91) — admission could not run: claude not found
 mod check could not run: $b/hooks/hooks.json is not a JSON object"
-is "exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
+nonzero "exits non-zero"
 
 reset_home
 installed 'not json'
@@ -120,7 +121,7 @@ reset_home
 installed '{"version":2,"plugins":{}}'
 run "$SB/nojq"
 is "jq missing reported" "$(msg)" "mod check could not run: jq not found"
-is "exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
+nonzero "exits non-zero"
 
 echo
 echo "$pass passed, $fail failed"
