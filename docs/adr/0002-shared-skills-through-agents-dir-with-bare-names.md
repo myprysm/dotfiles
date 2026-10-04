@@ -32,3 +32,6 @@ anywhere, unless the skills are edited (#110).
   paths lead to the same payload.
 - Skills under `in-progress/` at the pin are not delivered, because they are not in the
   manifest list.
+- The payload must not hold the plugin manifest. codex prefixes each skill under a plugin
+  manifest with the plugin name, and it finds `.claude-plugin/plugin.json` from the symlink
+  target. The external excludes `.claude-plugin/`.
