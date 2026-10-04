@@ -86,6 +86,10 @@ _Avoid_: version (the manifest version does not identify the content)
 A change of the skill pin. The operator makes it by hand, and a collision check comes first. The dotfiles skill pin and the Loop's skill pin are bumped apart and can differ.
 _Avoid_: update, upgrade (reserved for a new version of an agent)
 
+**Enrolled machine**:
+A machine with the hindsight bundle on. Enrollment is turning that bundle on; a machine without it gets no hindsight runtime, wiring or credential.
+_Avoid_: opted-in, hindsight-enabled
+
 **Hindsight pin**:
 The one exact version of the hindsight-coding-agents runtime that every enrolled machine runs. Only a repo commit changes it; the runtime never updates itself.
 _Avoid_: latest, version range
