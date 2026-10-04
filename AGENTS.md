@@ -106,3 +106,5 @@ Procedures with a fixed order and steps that must be verified live in `docs/runb
 Read the relevant one before starting rather than reconstructing the steps:
 
 - `relocate-a-secret-file.md` — moving a secret whose location was published.
+- `bump-skill-pin.md` — moving the Matt Pocock skills to a new upstream commit, and the
+  collision check after an agent upgrade.

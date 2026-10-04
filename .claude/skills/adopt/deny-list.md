@@ -26,7 +26,7 @@ tool-generic on purpose (redaction rule: this file is public). `~` = the invento
 | `~/.config/Bitwarden CLI/**`, `~/.config/op/**`, `~/.config/1Password/**` | secret-manager state |
 | `~/.claude.json` | agent state incl. MCP config (can carry tokens) |
 | `~/.claude/projects/**`, `~/.claude/sessions/**`, `~/.claude/plugins/**`, `~/.claude/history.jsonl`, `~/.claude/shell-snapshots/**`, `~/.claude/settings.local.json`, `~/.claude/*.bak`, `~/.claude/{daemon,cache,debug}*/**` | per-machine agent state (only `CLAUDE.md`, `settings.json`, `statusline.sh`, hand-written skills migrate) |
-| `~/.agents/**` except `~/.agents/.skill-lock.json` | skills-CLI-managed tree; only the lockfile migrates |
+| `~/.agents/**` except `~/.agents/.skill-lock.json` | skills-CLI and chezmoi symlinks; only the lockfile migrates |
 | `~/.copilot/`, `~/.gemini/`, `~/.cline/`, `~/.ai/`, `~/.cagent/`, `~/.codemod/`, `~/.openclaw/`, `~/.hindsight/` | agent-tool state, self-managed |
 | `~/.codex/**` except `AGENTS.md`; `config.toml` only through its modify template | codex state (#14). `config.toml` is never staged: `home/dot_codex/modify_private_config.toml` merges the repo's keys into it, and the hook trust hashes, project trust and `/model` that codex writes there stay out of the repo (#84), except the trust hash of the secret-read hook, which the template computes and writes (#96). `hooks.json` is Orca's. `config.local.toml` is the untracked per-machine twin |
 | `$HOME/*.env*`, `backup-*.env.*`, filenames containing `credential`/`token`/`secret` | loose secret artifacts — route to the vault, never the repo |
