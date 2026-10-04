@@ -1,0 +1,188 @@
+# Runbook — bump the skill pin
+
+Use this to move the Matt Pocock skills to a new upstream commit. The skill pin is the sha in
+the `.local/share/mattpocock-skills` entry of `home/.chezmoiexternal.toml.tmpl`. Dotfiles owns
+this pin. It is not linked to the Loop pin, and the two pins can differ. Only the operator
+changes it (#114).
+
+Run the [collision check](#collision-check) also after each `brew upgrade` of codex or
+opencode (#114, item 8). Claude Code updates itself, so a new Claude Code collision can stay
+unknown until the next bump. This risk is accepted.
+
+The commands below use these variables. Set them in one shell session:
+
+```sh
+PIN=<new 40-hex sha>
+PAYLOAD=~/.local/share/mattpocock-skills
+```
+
+---
+
+## Step 1 — pick the pin
+
+Use a tag if one exists. If not, use a commit on upstream `main`. Record the full 40-hex sha
+and the commit subject:
+
+```sh
+curl -s https://api.github.com/repos/mattpocock/skills/commits/$PIN | jq -r '.sha, (.commit.message | split("\n")[0])'
+```
+
+## Step 2 — read the changes
+
+Get the new manifest:
+
+```sh
+NEW=$(mktemp -d)
+curl -sL https://github.com/mattpocock/skills/archive/$PIN.tar.gz | tar xz -C "$NEW" --strip-components=1
+diff <(jq -r '.skills[]' "$PAYLOAD/.claude-plugin/plugin.json" | sort) \
+     <(jq -r '.skills[]' "$NEW/.claude-plugin/plugin.json" | sort)
+```
+
+Write down the added, removed and renamed names. A path that moves to a different category
+is a change too: its symlink target changes. Read the upstream changelog.
+
+Each frontmatter `name` must be equal to its directory name (#113). Check it for each new
+name:
+
+```sh
+for p in $(jq -r '.skills[]' "$NEW/.claude-plugin/plugin.json"); do
+  n=$(sed -n 's/^name: *//p' "$NEW/$p/SKILL.md" | head -1)
+  [ "$n" = "${p##*/}" ] || echo "MISMATCH $p: $n"
+done
+```
+
+## Step 3 — collision check
+
+Do the [collision check](#collision-check) with the new manifest
+(`MANIFEST=$NEW/.claude-plugin/plugin.json`). A new collision stops the bump. The operator
+decides it, as in #113.
+
+## Step 4 — edit
+
+1. In `home/.chezmoiexternal.toml.tmpl`, change the sha in the URL and the subject comment.
+2. For each added name, add two files. Each holds one line:
+   - `home/dot_agents/skills/symlink_<name>.tmpl`
+   - `home/dot_claude/skills/symlink_<name>.tmpl`
+
+   ```
+   {{ .chezmoi.homeDir }}/.local/share/mattpocock-skills/skills/<category>/<name>
+   ```
+
+   Both links go to the payload. Do not chain one link to the other (ADR 0002).
+3. For each removed name, remove its two files. For a moved or renamed name, change them.
+4. Do not deliver a skill under `skills/in-progress/`.
+
+## Step 5 — apply and verify
+
+Run `chezmoi diff`, then `chezmoi apply`. Then run the [checks](#checks).
+
+## Step 6 — commit
+
+Make one commit:
+
+```
+chore(skills): bump skill pin to <short-sha>
+```
+
+Put the full sha and the subject in the body. Open a PR for review. The operator merges it.
+
+---
+
+## Collision check
+
+Compare each manifest name with the built-in skills of each agent and with the other skills
+in `~/.claude/skills` and `~/.agents/skills` (#113). Set `MANIFEST` to the manifest you check
+(the new one at a bump, `$PAYLOAD/.claude-plugin/plugin.json` after an agent upgrade):
+
+```sh
+names=$(jq -r '.skills[] | split("/")[-1]' "$MANIFEST" | paste -sd'|')
+```
+
+**Claude Code.** Search the binary for `name:` literals, assignments and `aliases:` entries:
+
+```sh
+bin=$(readlink -f "$(command -v claude)")
+grep -aoE "(name:|[A-Za-z_\$][A-Za-z0-9_\$]*=)\"($names)\"|aliases:\[[^]]*\"($names)\"[^]]*\]" "$bin" | sort -u
+```
+
+At Claude Code 2.1.289 this prints `code-review` and `prototype`, as two assignments. These
+two are known and accepted (#113). A name that the binary builds in a different way is not
+found by this check.
+
+**codex.** The system skills are directories:
+
+```sh
+ls ~/.codex/skills/.system | grep -xE "$names"
+```
+
+**opencode.** Write the list to a file before you read it. Through a pipe, the output stops
+at 64 KiB and `jq` fails on the cut JSON (opencode 1.18.34):
+
+```sh
+opencode debug skill </dev/null > /tmp/opencode-skills.json
+jq -r '.[] | select(.location == "<built-in>") | .name' /tmp/opencode-skills.json | grep -xE "$names"
+```
+
+**Other skills in the two dirs.** An entry that is not a link into the payload and has a
+manifest name is a collision:
+
+```sh
+for d in ~/.agents/skills ~/.claude/skills; do
+  for e in "$d"/*; do
+    case "$(readlink "$e" 2>/dev/null)" in */mattpocock-skills/*) continue ;; esac
+    basename "$e"
+  done
+done | grep -xE "$names"
+```
+
+Each command prints nothing when there is no new collision. The agent versions that #113
+checked are Claude Code 2.1.289, codex 0.160 and opencode 1.18.34.
+
+---
+
+## Checks
+
+Run these on each machine after the apply.
+
+1. **Payload at the pin.** The external URL has the new sha:
+
+   ```sh
+   grep -o 'mattpocock/skills/archive/[0-9a-f]*' "$(chezmoi source-path)/.chezmoiexternal.toml.tmpl"
+   ```
+
+2. **Names at the pin.** Each manifest name has a link in both dirs:
+
+   ```sh
+   for n in $(jq -r '.skills[] | split("/")[-1]' "$PAYLOAD/.claude-plugin/plugin.json"); do
+     for d in ~/.agents/skills ~/.claude/skills; do [ -L "$d/$n" ] || echo "MISSING $d/$n"; done
+   done
+   ```
+
+3. **No dangling link.** This prints nothing:
+
+   ```sh
+   find -L ~/.agents/skills ~/.claude/skills -maxdepth 1 -type l
+   ```
+
+4. **No `in-progress` skill.** This prints nothing:
+
+   ```sh
+   for d in ~/.agents/skills ~/.claude/skills; do for l in "$d"/*; do [ -L "$l" ] && readlink "$l"; done; done | grep in-progress
+   ```
+
+5. **Claude Code.** The init event lists the bare names, and no `mattpocock-skills:` name:
+
+   ```sh
+   claude -p hi --model claude-haiku-4-5-20251001 --output-format stream-json --verbose --max-turns 1 | head -1 | jq -r '.skills[]'
+   ```
+
+6. **opencode.** The list has each manifest name:
+
+   ```sh
+   opencode debug skill </dev/null > /tmp/opencode-skills.json
+   jq -r '.[].name' /tmp/opencode-skills.json
+   ```
+
+7. **codex.** No command lists skills without a model turn. Ask in `codex exec` for the list
+   of available skill names. The answer comes from the model, so it is weak evidence. Record
+   it as such.
