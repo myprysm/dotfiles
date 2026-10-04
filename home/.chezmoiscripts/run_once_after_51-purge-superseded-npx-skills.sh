@@ -1,11 +1,11 @@
 #!/bin/bash
-# Purge the CLI-installed skills that marketplace plugins now supersede, on
-# every machine that still carries them. Dropping a name from the tracked
-# lockfile stops 50-claude-skills from restoring it, but removes nothing
-# already on disk, and chezmoi leaves a target standing when its source entry
-# goes away — so without this a migrated machine keeps a second, unmanaged copy
-# of every skill the plugin ships, and the standalone hooks keep firing
-# alongside the plugin's.
+# Purge the CLI-installed caveman skills that the caveman plugin now
+# supersedes, on every machine that still carries them. Dropping a name from
+# the tracked lockfile stops 50-claude-skills from restoring it, but removes
+# nothing already on disk, and chezmoi leaves a target standing when its source
+# entry goes away — so without this a migrated machine keeps a second,
+# unmanaged copy of every skill the plugin ships, and the standalone hooks keep
+# firing alongside the plugin's.
 #
 # Keyed on the lockfile's `source` field rather than a name list: the CLI
 # records who each skill came from, so a repo that renames or adds a skill is
@@ -16,7 +16,7 @@ set -eu
 
 DRY="${DRY:-0}"
 LOCK="$HOME/.agents/.skill-lock.json"
-SUPERSEDED='mattpocock/skills JuliusBrussee/caveman'
+SUPERSEDED='JuliusBrussee/caveman'
 
 command -v python3 >/dev/null 2>&1 || { echo "python3 not found — skipping skill purge" >&2; exit 0; }
 [ -f "$LOCK" ] || exit 0
@@ -90,7 +90,7 @@ done
 # machine that has never seen it is unverified — these calls are idempotent and
 # make the outcome not depend on the answer.
 if command -v claude >/dev/null 2>&1; then
-  for plugin in mattpocock-skills@claude-plugins-official caveman@caveman; do
+  for plugin in caveman@caveman; do
     [ "$DRY" = 1 ] && { echo "  claude plugin install $plugin"; continue; }
     claude plugin install "$plugin" >/dev/null 2>&1 \
       || echo "  ! 'claude plugin install $plugin' failed — install it by hand" >&2

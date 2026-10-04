@@ -102,7 +102,7 @@
     "csharp-lsp@claude-plugins-official": false,
     "stripe@claude-plugins-official": false,
     "php-lsp@claude-plugins-official": false,
-    "mattpocock-skills@claude-plugins-official": true,
+    "mattpocock-skills@claude-plugins-official": false,
     "hindsight-memory@hindsight": true,
     "caveman@caveman": true
   },
