@@ -94,6 +94,10 @@ _Avoid_: latest, version range
 A change of the hindsight pin. The operator makes it by hand, after the bump checks pass.
 _Avoid_: update (the runtime's own self-update), upgrade (reserved for a new version of an agent)
 
+**Hindsight wiring**:
+The hook entries, MCP entries and opencode plugin entry that connect an agent to the staged hindsight runtime. The repo writes it on an enrolled machine; the upstream installer never does.
+_Avoid_: install, integration
+
 **Collision check**:
 The comparison of the skill pin's names with the built-in skills of Claude Code, codex and opencode and with the other skills in the agents' home dirs. Done before each skill bump and after an agent upgrade.
 _Avoid_: conflict check
