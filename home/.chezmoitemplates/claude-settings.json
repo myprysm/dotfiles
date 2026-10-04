@@ -65,6 +65,16 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash {{ .chezmoi.homeDir }}/.claude/hooks/mod-check.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

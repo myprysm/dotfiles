@@ -12,6 +12,7 @@ trap 'rm -rf "$SB"' EXIT
 mkdir -p "$SB/home/.claude" "$SB/src/.chezmoitemplates"
 TPL="$(cat "$REPO_ROOT/home/dot_claude/modify_private_settings.json")"
 REPO_HOOK="bash $SB/home/.claude/hooks/block-secret-reads.sh"
+MOD_CHECK="bash $SB/home/.claude/hooks/mod-check.sh"
 
 BASE="$REPO_ROOT/home/.chezmoitemplates/claude-settings.json"
 base() { jq -c "$1" "$BASE"; }
@@ -35,6 +36,7 @@ echo "== empty stdin (fresh machine)"
 out=$(render "$SB/src" "")
 is "renders valid JSON" 'type' '"object"'
 is "repo hook installed" "[.hooks.PreToolUse[].hooks[].command]" "[\"$REPO_HOOK\"]"
+is "mod check installed" "[.hooks.SessionStart[].hooks[].command]" "[\"$MOD_CHECK\"]"
 is "model set from base" '.model' "$(base .model)"
 
 echo "== foreign keys and runtime keys"
@@ -51,7 +53,7 @@ is "retired key deleted" 'has("tui")' 'false'
 is "other key kept" '.other' '1'
 
 echo "== hooks"
-live=$(jq -n --arg old "bash $SB/home/.claude/hooks/retired.sh" --arg repo "$REPO_HOOK" '{hooks:{
+live=$(jq -n --arg old "bash $SB/home/.claude/hooks/retired.sh" --arg repo "$REPO_HOOK" --arg mod "$MOD_CHECK" '{hooks:{
   PreToolUse:[
     {matcher:"*",hooks:[{type:"command",command:"orca-hook"}]},
     {matcher:"Bash",hooks:[{type:"command",command:$old}]},
@@ -59,11 +61,11 @@ live=$(jq -n --arg old "bash $SB/home/.claude/hooks/retired.sh" --arg repo "$REP
     {matcher:"Edit",hooks:[{type:"command",command:"bash ~/.claude/hooks/tilde.sh"}]},
     {matcher:"Edit",hooks:[{type:"command",command:"bash $HOME/.claude/hooks/home.sh"}]},
     {matcher:"Write",hooks:[{type:"command",command:"orca-shared"},{type:"command",command:$old}]}],
-  SessionStart:[{hooks:[{type:"command",command:"orca-hook"}]}],
+  SessionStart:[{hooks:[{type:"command",command:"orca-hook"}]},{hooks:[{type:"command",command:$mod}]}],
   Stop:[{hooks:[{type:"command",command:$old}]}]}}')
 out=$(render "$SB/src" "$live")
 is "foreign hook kept" '[.hooks.PreToolUse[].hooks[].command | select(. == "orca-hook")] | length' '1'
-is "foreign-only event kept" '.hooks.SessionStart[0].hooks[0].command' '"orca-hook"'
+is "foreign hook kept next to the mod check" '[.hooks.SessionStart[].hooks[].command]' "[\"orca-hook\",\"$MOD_CHECK\"]"
 is "retired repo hook removed" "[.. | strings | select(test(\"retired.sh\"))] | length" '0'
 is "repo hook not duplicated" "[.hooks.PreToolUse[].hooks[].command | select(. == \"$REPO_HOOK\")] | length" '1'
 is "repo hook takes the base matcher" "[.hooks.PreToolUse[] | select(.hooks[0].command == \"$REPO_HOOK\") | .matcher]" "[$(base '.hooks.PreToolUse[0].matcher')]"
