@@ -94,6 +94,33 @@ run "$SB/bin"
 is "missing file reported" "$(msg)" "mod check could not run: $SB/home/.claude/plugins/installed_plugins.json not found"
 is "exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
 
+reset_home
+installed '{"version":2,"plugins":[]}'
+run "$SB/bin"
+is "plugins not an object reported" "$(msg)" "mod check could not run: $SB/home/.claude/plugins/installed_plugins.json has unknown format"
+
+echo "== a scan error keeps the other findings"
+reset_home
+a=$(plugin modded 3.1.0 "$MOD")
+b=$(plugin empty 1.0.0 " ")
+installed "$(jq -n --arg a "$a" --arg b "$b" --arg gone "$SB/gone" '{version:2,plugins:{
+  "gone@mkt":[{scope:"user",installPath:$gone,version:"1.0.0"}],
+  "modded@mkt":[{scope:"user",installPath:$a,version:"3.1.0"}],
+  "empty@mkt":[{scope:"user",installPath:$b,version:"1.0.0"}]}}')"
+run "$SB/bin"
+is "every line kept" "$(msg)" "mod check could not run: $SB/gone not found
+modded@mkt 3.1.0: ships a mod — run mod admission (#91)
+mod check could not run: $b/hooks/hooks.json is not a JSON object"
+is "exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
+
+reset_home
+installed 'not json'
+mkdir -p "$SB/home/.claude/mods/plugins/bar/hooks"
+printf '%s' "$MOD" > "$SB/home/.claude/mods/plugins/bar/hooks/hooks.json"
+run "$SB/bin"
+is "mods tree scanned after a bad installed file" "$(msg)" "mod check could not run: $SB/home/.claude/plugins/installed_plugins.json is not valid JSON
+bar@dotfiles unknown: ships a mod — run mod admission (#91)"
+
 echo "== jq missing"
 reset_home
 installed '{"version":2,"plugins":{}}'

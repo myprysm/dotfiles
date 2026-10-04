@@ -8,14 +8,7 @@ set -u
 file="$HOME/.claude/plugins/installed_plugins.json"
 lines=()
 
-cannot_run() {
-  if command -v jq >/dev/null 2>&1; then
-    jq -cn --arg m "mod check could not run: $1" '{systemMessage:$m}'
-  else
-    printf '{"systemMessage":"mod check could not run: %s"}\n' "$1"
-  fi
-  exit 1
-}
+not_run() { lines+=("mod check could not run: $1"); }
 
 # The hooks: and calls: line format was never seen on a real mod (#98, item 11).
 refused() { # refused <plugin dir>
@@ -35,25 +28,37 @@ refused() { # refused <plugin dir>
 
 check() { # check <id> <version> <plugin dir>
   local h="$3/hooks/hooks.json" has
-  [ -d "$3" ] || cannot_run "$3 not found"
+  [ -d "$3" ] || { not_run "$3 not found"; return; }
   [ -f "$h" ] || return 0
-  has=$(jq -r 'has("modules")' "$h" 2>/dev/null) || cannot_run "$h is not valid JSON"
-  [ "$has" = true ] || return 0
+  has=$(jq -r 'if type == "object" then has("modules") else error end' "$h" 2>/dev/null)
+  case "$has" in
+    true) ;;
+    false) return 0 ;;
+    *) not_run "$h is not a JSON object"; return ;;
+  esac
   lines+=("$1 $2: ships a mod — run mod admission (#91)$(refused "$3")")
 }
 
-command -v jq >/dev/null 2>&1 || cannot_run "jq not found"
-[ -f "$file" ] || cannot_run "$file not found"
-[ -r "$file" ] || cannot_run "$file not readable"
-version=$(jq -r '.version' "$file" 2>/dev/null) || cannot_run "$file is not valid JSON"
-[ "$version" = 2 ] || cannot_run "$file has unknown format (version $version)"
-entries=$(jq -r '.plugins | to_entries[] | .key as $id | .value[] |
-  if (.installPath | type) == "string" then [$id, (.version // "unknown"), .installPath] | @tsv
-  else error end' "$file" 2>/dev/null) || cannot_run "$file has unknown format"
+scan_installed() {
+  local version entries id ver dir
+  [ -f "$file" ] || { not_run "$file not found"; return; }
+  [ -r "$file" ] || { not_run "$file not readable"; return; }
+  version=$(jq -r '.version' "$file" 2>/dev/null) || { not_run "$file is not valid JSON"; return; }
+  [ "$version" = 2 ] || { not_run "$file has unknown format (version $version)"; return; }
+  entries=$(jq -r '.plugins | if type != "object" then error else to_entries[] end |
+    .key as $id | .value[] |
+    if (.installPath | type) == "string" then [$id, (.version // "unknown"), .installPath] | @tsv
+    else error end' "$file" 2>/dev/null) || { not_run "$file has unknown format"; return; }
+  while IFS=$'\t' read -r id ver dir; do
+    [ -n "$id" ] && check "$id" "$ver" "$dir"
+  done <<< "$entries"
+}
 
-while IFS=$'\t' read -r id ver dir; do
-  [ -n "$id" ] && check "$id" "$ver" "$dir"
-done <<< "$entries"
+if ! command -v jq >/dev/null 2>&1; then
+  printf '{"systemMessage":"mod check could not run: jq not found"}\n'
+  exit 1
+fi
+scan_installed
 
 for d in "$HOME"/.claude/mods/plugins/*/; do
   [ -d "$d" ] || continue
