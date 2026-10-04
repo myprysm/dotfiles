@@ -69,3 +69,15 @@ _Avoid_: audit (reserved for the secrets drift check), approval
 **Mod check**:
 The session-start scan that finds every installed plugin that ships a mod, so that it goes through mod admission. It reports; it does not block, because the mod has already loaded.
 _Avoid_: audit (reserved for the secrets drift check), scan as a noun
+
+**Shared skill**:
+A skill that reaches Claude Code, codex and opencode under one bare name, from one skill pin.
+_Avoid_: global skill, plugin skill
+
+**Agent-specific skill**:
+A skill that only one agent reads, because its subject is that agent.
+_Avoid_: personal skill (Claude Code's name for any skill in its home dir)
+
+**Skill pin**:
+The one upstream commit of a skill repo that every agent uses. Only a repo commit changes it.
+_Avoid_: version (the manifest version does not identify the content)
