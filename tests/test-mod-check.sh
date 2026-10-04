@@ -64,7 +64,7 @@ installed "$(jq -n --arg a "$a" --arg b "$b" '{version:2,plugins:{
   "plain@mkt":[{scope:"user",installPath:$a,version:"1.0.0"}],
   "modded@mkt":[{scope:"user",installPath:$b,version:"3.1.0"}]}}')"
 run "$SB/bin"
-is "one line for the mod" "$(msg)" "modded@mkt 3.1.0: ships a mod — run mod admission (#91)"
+is "one line for the mod" "$(msg)" "modded@mkt 3.1.0: ships a mod — run mod admission (#91) — admission could not run: claude not found"
 is "finding exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
 
 echo "== a mod under ~/.claude/mods/plugins"
@@ -74,7 +74,7 @@ mkdir -p "$SB/home/.claude/mods/plugins/bar/hooks" "$SB/home/.claude/mods/plugin
 printf '%s' "$MOD" > "$SB/home/.claude/mods/plugins/bar/hooks/hooks.json"
 printf '%s' '{"name":"bar","version":"0.1.0"}' > "$SB/home/.claude/mods/plugins/bar/.claude-plugin/plugin.json"
 run "$SB/bin"
-is "repo mod reported" "$(msg)" "bar@dotfiles 0.1.0: ships a mod — run mod admission (#91)"
+is "repo mod reported" "$(msg)" "bar@dotfiles 0.1.0: ships a mod — run mod admission (#91) — admission could not run: claude not found"
 is "finding exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
 
 echo "== installed_plugins.json the script cannot read"
@@ -109,7 +109,7 @@ installed "$(jq -n --arg a "$a" --arg b "$b" --arg gone "$SB/gone" '{version:2,p
   "empty@mkt":[{scope:"user",installPath:$b,version:"1.0.0"}]}}')"
 run "$SB/bin"
 is "every line kept" "$(msg)" "mod check could not run: $SB/gone not found
-modded@mkt 3.1.0: ships a mod — run mod admission (#91)
+modded@mkt 3.1.0: ships a mod — run mod admission (#91) — admission could not run: claude not found
 mod check could not run: $b/hooks/hooks.json is not a JSON object"
 is "exits non-zero" "$([ "$code" -ne 0 ] && echo yes)" "yes"
 
@@ -119,7 +119,7 @@ mkdir -p "$SB/home/.claude/mods/plugins/bar/hooks"
 printf '%s' "$MOD" > "$SB/home/.claude/mods/plugins/bar/hooks/hooks.json"
 run "$SB/bin"
 is "mods tree scanned after a bad installed file" "$(msg)" "mod check could not run: $SB/home/.claude/plugins/installed_plugins.json is not valid JSON
-bar@dotfiles unknown: ships a mod — run mod admission (#91)"
+bar@dotfiles unknown: ships a mod — run mod admission (#91) — admission could not run: claude not found"
 
 echo "== jq missing"
 reset_home

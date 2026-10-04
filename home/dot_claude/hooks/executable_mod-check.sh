@@ -11,18 +11,19 @@ lines=()
 not_run() { lines+=("mod check could not run: $1"); }
 
 # The hooks: and calls: line format was never seen on a real mod (#98, item 11).
-refused() { # refused <plugin dir>
-  command -v claude >/dev/null 2>&1 || return 0
-  local out line w items=()
-  out=$(claude plugin validate "$1" 2>&1)
+admission() { # admission <plugin dir>
+  local out line w seen= items=()
+  command -v claude >/dev/null 2>&1 || { printf ' — admission could not run: claude not found'; return; }
+  out=$(claude plugin validate "$1" 2>&1) || { printf ' — admission could not run: claude plugin validate failed'; return; }
   while IFS= read -r line; do
     case "$line" in
-      *hooks:*) for w in tool.call classic.PreToolUse tool.check; do
+      *hooks:*) seen=1; for w in tool.call classic.PreToolUse tool.check; do
                   [[ $line == *"$w"* ]] && items+=("$w"); done ;;
-      *calls:*) for w in fs.read process.run; do
+      *calls:*) seen=1; for w in fs.read process.run; do
                   [[ $line == *"$w"* ]] && items+=("$w"); done ;;
     esac
   done <<< "$out"
+  [ -n "$seen" ] || { printf ' — admission could not run: no hooks: or calls: line from claude plugin validate'; return; }
   [ ${#items[@]} -gt 0 ] && printf ' — refused: %s' "${items[*]}"
 }
 
@@ -36,7 +37,7 @@ check() { # check <id> <version> <plugin dir>
     false) return 0 ;;
     *) not_run "$h is not a JSON object"; return ;;
   esac
-  lines+=("$1 $2: ships a mod — run mod admission (#91)$(refused "$3")")
+  lines+=("$1 $2: ships a mod — run mod admission (#91)$(admission "$3")")
 }
 
 scan_installed() {
