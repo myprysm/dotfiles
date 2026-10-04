@@ -43,6 +43,11 @@
     url = "https://github.com/mattpocock/skills/archive/c55ee46073ed923f86ce59a5eb3b6d895095d1b7.tar.gz"
     exact = true
     stripComponents = 1
+    # codex prefixes every skill under a plugin manifest with the plugin name,
+    # found by walking up from the symlink target: without this, codex lists
+    # mattpocock-skills:<name>, not the bare names (#110). The pattern matches
+    # the archive name before stripComponents, hence the leading */.
+    exclude = ["*/.claude-plugin"]
 
 {{/*
 The compiled command guard, landed beside the hook that consults it. See

@@ -13,8 +13,11 @@ The commands below use these variables. Set them in one shell session:
 
 ```sh
 PIN=<new 40-hex sha>
-PAYLOAD=~/.local/share/mattpocock-skills
+SRC=$(chezmoi source-path)
 ```
+
+The payload has no plugin manifest: the external excludes `.claude-plugin/`, so that codex
+lists bare names. The delivered names are the `symlink_` entries in `$SRC/dot_agents/skills`.
 
 ---
 
@@ -29,13 +32,13 @@ curl -s https://api.github.com/repos/mattpocock/skills/commits/$PIN | jq -r '.sh
 
 ## Step 2 — read the changes
 
-Get the new manifest:
+Get the new manifest. Compare its paths with the targets of the delivered links:
 
 ```sh
 NEW=$(mktemp -d)
 curl -sL https://github.com/mattpocock/skills/archive/$PIN.tar.gz | tar xz -C "$NEW" --strip-components=1
-diff <(jq -r '.skills[]' "$PAYLOAD/.claude-plugin/plugin.json" | sort) \
-     <(jq -r '.skills[]' "$NEW/.claude-plugin/plugin.json" | sort)
+diff <(sed 's#.*/mattpocock-skills/##' "$SRC"/dot_agents/skills/symlink_*.tmpl | sort) \
+     <(jq -r '.skills[] | ltrimstr("./")' "$NEW/.claude-plugin/plugin.json" | sort)
 ```
 
 Write down the added, removed and renamed names. A path that moves to a different category
@@ -53,8 +56,8 @@ done
 
 ## Step 3 — collision check
 
-Do the [collision check](#collision-check) with the new manifest
-(`MANIFEST=$NEW/.claude-plugin/plugin.json`). A new collision stops the bump. The operator
+Do the [collision check](#collision-check) with the names of the new manifest. A new
+collision stops the bump. The operator
 decides it, as in #113.
 
 ## Step 4 — edit
@@ -90,12 +93,13 @@ Put the full sha and the subject in the body. Open a PR for review. The operator
 
 ## Collision check
 
-Compare each manifest name with the built-in skills of each agent and with the other skills
-in `~/.claude/skills` and `~/.agents/skills` (#113). Set `MANIFEST` to the manifest you check
-(the new one at a bump, `$PAYLOAD/.claude-plugin/plugin.json` after an agent upgrade):
+Compare each skill name with the built-in skills of each agent and with the other skills in
+`~/.claude/skills` and `~/.agents/skills` (#113). At a bump, use the names of the new
+manifest. After an agent upgrade, use the delivered names:
 
 ```sh
-names=$(jq -r '.skills[] | split("/")[-1]' "$MANIFEST" | paste -sd'|')
+names=$(jq -r '.skills[] | split("/")[-1]' "$NEW/.claude-plugin/plugin.json" | paste -sd'|')   # at a bump
+names=$(ls "$SRC/dot_agents/skills" | sed -n 's/^symlink_\(.*\)\.tmpl$/\1/p' | paste -sd'|')  # after an upgrade
 ```
 
 **Claude Code.** Search the binary for `name:` literals, assignments and `aliases:` entries:
@@ -124,7 +128,7 @@ jq -r '.[] | select(.location == "<built-in>") | .name' /tmp/opencode-skills.jso
 ```
 
 **Other skills in the two dirs.** An entry that is not a link into the payload and has a
-manifest name is a collision:
+delivered name is a collision:
 
 ```sh
 for d in ~/.agents/skills ~/.claude/skills; do
@@ -150,12 +154,14 @@ Run these on each machine after the apply.
    grep -o 'mattpocock/skills/archive/[0-9a-f]*' "$(chezmoi source-path)/.chezmoiexternal.toml.tmpl"
    ```
 
-2. **Names at the pin.** Each manifest name has a link in both dirs:
+2. **Names at the pin.** Each delivered name has a link in both dirs, and the payload has no
+   plugin manifest. This prints nothing:
 
    ```sh
-   for n in $(jq -r '.skills[] | split("/")[-1]' "$PAYLOAD/.claude-plugin/plugin.json"); do
+   for n in $(ls "$SRC/dot_agents/skills" | sed -n 's/^symlink_\(.*\)\.tmpl$/\1/p'); do
      for d in ~/.agents/skills ~/.claude/skills; do [ -L "$d/$n" ] || echo "MISSING $d/$n"; done
    done
+   ls -d ~/.local/share/mattpocock-skills/.claude-plugin 2>/dev/null
    ```
 
 3. **No dangling link.** This prints nothing:
@@ -180,7 +186,7 @@ Run these on each machine after the apply.
 
    A `skillOverrides` entry in `~/.claude/settings.local.json` hides a delivered name here.
 
-6. **opencode.** The list has each manifest name:
+6. **opencode.** The list has each delivered name:
 
    ```sh
    opencode debug skill </dev/null > /tmp/opencode-skills.json
@@ -196,6 +202,5 @@ Run these on each machine after the apply.
    jq -r '.. | strings' "$f" | grep -oE '^- [a-z0-9:-]+: ' | sort -u
    ```
 
-   codex 0.160 reads the skills from `~/.agents/skills`, but lists them as
-   `mattpocock-skills:<name>`, not as bare names. It lists only the skills that the model can
-   invoke.
+   Expect bare names, and no `mattpocock-skills:` name. codex lists only the skills that the
+   model can invoke: the skills without `disable-model-invocation: true`.
