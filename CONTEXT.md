@@ -102,6 +102,10 @@ _Avoid_: update (the runtime's own self-update), upgrade (reserved for a new ver
 The hook entries, MCP entries and opencode plugin entry that connect an agent to the staged hindsight runtime. The repo writes it on an enrolled machine; the upstream installer never does.
 _Avoid_: install, integration
 
+**Hindsight opt-out**:
+A session on an enrolled machine started with `HINDSIGHT_DISABLE_HOOKS=1`. It neither recalls nor retains. Every other session on an enrolled machine does both, headless or not.
+_Avoid_: headless mode, disabled session
+
 **Collision check**:
 The comparison of the skill pin's names with the built-in skills of Claude Code, codex and opencode and with the other skills in the agents' home dirs. Done before each skill bump and after an agent upgrade.
 _Avoid_: conflict check
