@@ -170,11 +170,15 @@ Run these on each machine after the apply.
    for d in ~/.agents/skills ~/.claude/skills; do for l in "$d"/*; do [ -L "$l" ] && readlink "$l"; done; done | grep in-progress
    ```
 
-5. **Claude Code.** The init event lists the bare names, and no `mattpocock-skills:` name:
+5. **Claude Code.** The init event lists the bare names, and no `mattpocock-skills:` name. Hook
+   events come before the init event, so select it by its subtype:
 
    ```sh
-   claude -p hi --model claude-haiku-4-5-20251001 --output-format stream-json --verbose --max-turns 1 | head -1 | jq -r '.skills[]'
+   claude -p hi --model claude-haiku-4-5-20251001 --output-format stream-json --verbose --max-turns 1 </dev/null \
+     | jq -r 'select(.type == "system" and .subtype == "init") | .skills[]'
    ```
+
+   A `skillOverrides` entry in `~/.claude/settings.local.json` hides a delivered name here.
 
 6. **opencode.** The list has each manifest name:
 
@@ -183,6 +187,15 @@ Run these on each machine after the apply.
    jq -r '.[].name' /tmp/opencode-skills.json
    ```
 
-7. **codex.** No command lists skills without a model turn. Ask in `codex exec` for the list
-   of available skill names. The answer comes from the model, so it is weak evidence. Record
-   it as such.
+7. **codex.** No command lists skills without a model turn. Run one turn, then read the skill
+   catalog that codex wrote into the session file. The catalog does not come from the model:
+
+   ```sh
+   (cd /tmp && codex exec --skip-git-repo-check -s read-only "Reply with the single word ok." >/dev/null 2>&1)
+   f=$(ls -t $(find ~/.codex/sessions -name '*.jsonl' -mmin -5) | head -1)
+   jq -r '.. | strings' "$f" | grep -oE '^- [a-z0-9:-]+: ' | sort -u
+   ```
+
+   codex 0.160 reads the skills from `~/.agents/skills`, but lists them as
+   `mattpocock-skills:<name>`, not as bare names. It lists only the skills that the model can
+   invoke.
