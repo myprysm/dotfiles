@@ -12,7 +12,7 @@ set -u
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT="$REPO_ROOT/home/dot_claude/hooks/executable_mod-check.sh"
 BASH_BIN="$(command -v bash)"
-SB="$(mktemp -d)"
+SB="$(mktemp -d)" || exit 1
 trap 'rm -rf "$SB"' EXIT
 mkdir -p "$SB/bin" "$SB/nojq"
 ln -s "$(command -v jq)" "$SB/bin/jq"
