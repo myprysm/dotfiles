@@ -1,12 +1,6 @@
 #!/bin/bash
-# Tests the mod check (#98): which installed plugins it reports as shipping a
-# mod, and that it never passes silently when it cannot run. Runs the script
-# against fixture plugin trees under a scratch HOME; reads nothing real.
-#
 # PATH holds only jq, so the `claude plugin validate` path never runs: no real
 # mod exists to verify a fixture for it against (#98, item 9).
-#
-#   ./tests/test-mod-check.sh
 set -u
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,10 +13,10 @@ ln -s "$(command -v jq)" "$SB/bin/jq"
 
 pass=0; fail=0
 out=""; code=0
-run() { # run <bin dir>
+run() {
   out=$(HOME="$SB/home" PATH="$1" "$BASH_BIN" "$SCRIPT" 2>&1); code=$?
 }
-is() { # is <label> <got> <expected>
+is() {
   if [ "$2" = "$3" ]; then pass=$((pass+1)); printf '  ok   %s\n' "$1"
   else fail=$((fail+1)); printf '  FAIL %s\n         want: %s\n         got:  %s\n' "$1" "$3" "$2"; fi
 }
@@ -32,13 +26,13 @@ reset_home() {
   rm -rf "$SB/home"
   mkdir -p "$SB/home/.claude/plugins/cache"
 }
-plugin() { # plugin <name> <version> <hooks.json or empty>
+plugin() {
   local dir="$SB/home/.claude/plugins/cache/mkt/$1/$2"
   mkdir -p "$dir"
   [ -n "$3" ] && { mkdir -p "$dir/hooks"; printf '%s' "$3" > "$dir/hooks/hooks.json"; }
   printf '%s' "$dir"
 }
-installed() { # installed <json>
+installed() {
   printf '%s' "$1" > "$SB/home/.claude/plugins/installed_plugins.json"
 }
 

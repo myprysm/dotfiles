@@ -1,9 +1,4 @@
 #!/bin/bash
-# Tests the Claude settings modify_ template (#73, #75): which live keys and
-# hooks survive an apply, and how settings.local.json merges in. Renders the
-# chezmoi source against fixture files under a scratch HOME; reads nothing real.
-#
-#   ./tests/test-claude-settings.sh
 set -u
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -22,11 +17,11 @@ jq 'del(.tui)' "$BASE" > "$SB/retired/.chezmoitemplates/claude-settings.json"
 
 pass=0; fail=0
 out=""
-render() { # render <source> <live json>
+render() {
   printf '%s' "$2" | HOME="$SB/home" chezmoi execute-template --source "$1" \
     --override-data '{"secretsDir":"/nonexistent"}' --with-stdin "$TPL"
 }
-is() { # is <label> <jq filter> <expected>
+is() {
   got=$(printf '%s' "$out" | jq -c "$2" 2>&1)
   if [ "$got" = "$3" ]; then pass=$((pass+1)); printf '  ok   %s\n' "$1"
   else fail=$((fail+1)); printf '  FAIL %s\n         want: %s\n         got:  %s\n' "$1" "$3" "$got"; fi

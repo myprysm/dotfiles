@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# Mod check (#98): reports each installed plugin that ships a mod. A SessionStart
-# hook, also run by hand. Prints only JSON: SessionStart adds plain stdout to the
-# model's context, while systemMessage reaches the operator only. Claude Code
-# still honours valid JSON on exit 1, so a finding exits 1 and is still shown.
+# Prints only JSON: SessionStart adds plain stdout to the model's context, while
+# systemMessage reaches the operator only. Claude Code still honours valid JSON
+# on exit 1, so a finding exits 1 and is still shown (#98).
 set -u
 
 file="$HOME/.claude/plugins/installed_plugins.json"
@@ -11,7 +10,7 @@ lines=()
 not_run() { lines+=("mod check could not run: $1"); }
 
 # The hooks: and calls: line format was never seen on a real mod (#98, item 11).
-admission() { # admission <plugin dir>
+admission() {
   local out line w seen= items=()
   command -v claude >/dev/null 2>&1 || { printf ' — admission could not run: claude not found'; return; }
   out=$(claude plugin validate "$1" 2>&1) || { printf ' — admission could not run: claude plugin validate failed'; return; }
@@ -27,7 +26,7 @@ admission() { # admission <plugin dir>
   [ ${#items[@]} -gt 0 ] && printf ' — refused: %s' "${items[*]}"
 }
 
-check() { # check <id> <version> <plugin dir>
+check() {
   local h="$3/hooks/hooks.json" has
   [ -d "$3" ] || { not_run "$3 not found"; return; }
   [ -f "$h" ] || return 0
