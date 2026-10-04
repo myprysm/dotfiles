@@ -86,6 +86,14 @@ _Avoid_: version (the manifest version does not identify the content)
 A change of the skill pin. The operator makes it by hand, and a collision check comes first. The dotfiles skill pin and the Loop's skill pin are bumped apart and can differ.
 _Avoid_: update, upgrade (reserved for a new version of an agent)
 
+**Hindsight pin**:
+The one exact version of the hindsight-coding-agents runtime that every enrolled machine runs. Only a repo commit changes it; the runtime never updates itself.
+_Avoid_: latest, version range
+
+**Hindsight bump**:
+A change of the hindsight pin. The operator makes it by hand, after the bump checks pass.
+_Avoid_: update (the runtime's own self-update), upgrade (reserved for a new version of an agent)
+
 **Collision check**:
 The comparison of the skill pin's names with the built-in skills of Claude Code, codex and opencode and with the other skills in the agents' home dirs. Done before each skill bump and after an agent upgrade.
 _Avoid_: conflict check
