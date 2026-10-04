@@ -62,9 +62,11 @@ live=$(jq -n --arg old "bash $SB/home/.claude/hooks/retired.sh" --arg repo "$REP
     {matcher:"Edit",hooks:[{type:"command",command:"bash $HOME/.claude/hooks/home.sh"}]},
     {matcher:"Write",hooks:[{type:"command",command:"orca-shared"},{type:"command",command:$old}]}],
   SessionStart:[{hooks:[{type:"command",command:"orca-hook"}]},{hooks:[{type:"command",command:$mod}]}],
+  Notification:[{hooks:[{type:"command",command:"orca-hook"}]}],
   Stop:[{hooks:[{type:"command",command:$old}]}]}}')
 out=$(render "$SB/src" "$live")
 is "foreign hook kept" '[.hooks.PreToolUse[].hooks[].command | select(. == "orca-hook")] | length' '1'
+is "foreign-only event kept" '.hooks.Notification[0].hooks[0].command' '"orca-hook"'
 is "foreign hook kept next to the mod check" '[.hooks.SessionStart[].hooks[].command]' "[\"orca-hook\",\"$MOD_CHECK\"]"
 is "retired repo hook removed" "[.. | strings | select(test(\"retired.sh\"))] | length" '0'
 is "repo hook not duplicated" "[.hooks.PreToolUse[].hooks[].command | select(. == \"$REPO_HOOK\")] | length" '1'
