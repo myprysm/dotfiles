@@ -42,7 +42,7 @@ here in the same commit. A change that spans two scopes is two commits.
 - `secret-guard` — the guard binary and its release
 - `externals` — `.chezmoiexternal`
 - `agents` — `AGENTS.md`, `docs/agents/`, the repo's `.claude/skills/`
-- `context` — `CONTEXT.md`, `docs/adr/`
+- `context` — `GLOSSARY.md`, `docs/adr/`
 - `repo` — the repo as a whole
 - `opencode` — `~/.config/opencode`
 - `codex` — `~/.codex` config and global instructions
@@ -93,7 +93,7 @@ Default five-label vocabulary (needs-triage, needs-info, ready-for-agent, ready-
 
 ### Domain docs
 
-Single-context: root CONTEXT.md + docs/adr/. See `docs/agents/domain.md`.
+Single-context: root GLOSSARY.md + docs/adr/. See `docs/agents/domain.md`.
 
 ### Adopting configs into the repo
 
