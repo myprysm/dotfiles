@@ -73,6 +73,14 @@ decides it, as in #113.
 
    Both links go to the payload. Do not chain one link to the other (ADR 0002).
 3. For each removed name, remove its two files. For a moved or renamed name, change them.
+   For each removed or renamed name, add the two old link paths to `home/.chezmoiremove`:
+
+   ```
+   .agents/skills/<name>
+   .claude/skills/<name>
+   ```
+
+   Without these entries, chezmoi keeps the old links, and they point at nothing.
 4. Do not deliver a skill under `skills/in-progress/`.
 
 ## Step 5 — apply and verify
@@ -197,10 +205,12 @@ Run these on each machine after the apply.
    catalog that codex wrote into the session file. The catalog does not come from the model:
 
    ```sh
-   (cd /tmp && codex exec --skip-git-repo-check -s read-only "Reply with the single word ok." >/dev/null 2>&1)
+   (cd /tmp && codex exec --skip-git-repo-check -s read-only "Reply with the single word ok." </dev/null >/dev/null 2>&1)
    f=$(ls -t $(find ~/.codex/sessions -name '*.jsonl' -mmin -5) | head -1)
    jq -r '.. | strings' "$f" | grep -oE '^- [a-z0-9:-]+: ' | sort -u
    ```
+
+   Without `</dev/null`, `codex exec` waits for input and does not stop (codex 0.160.0).
 
    Expect bare names, and no `mattpocock-skills:` name. codex lists only the skills that the
    model can invoke: the skills without `disable-model-invocation: true`.
