@@ -188,7 +188,7 @@ Run these on each machine after the apply.
    events come before the init event, so select it by its subtype:
 
    ```sh
-   claude -p hi --model claude-haiku-4-5-20251001 --output-format stream-json --verbose --max-turns 1 </dev/null \
+   HINDSIGHT_DISABLE_HOOKS=1 claude -p hi --model claude-haiku-4-5-20251001 --output-format stream-json --verbose --max-turns 1 </dev/null \
      | jq -r 'select(.type == "system" and .subtype == "init") | .skills[]'
    ```
 
@@ -205,7 +205,7 @@ Run these on each machine after the apply.
    catalog that codex wrote into the session file. The catalog does not come from the model:
 
    ```sh
-   (cd /tmp && codex exec --skip-git-repo-check -s read-only "Reply with the single word ok." </dev/null >/dev/null 2>&1)
+   (cd /tmp && HINDSIGHT_DISABLE_HOOKS=1 codex exec --skip-git-repo-check -s read-only "Reply with the single word ok." </dev/null >/dev/null 2>&1)
    f=$(ls -t $(find ~/.codex/sessions -name '*.jsonl' -mmin -5) | head -1)
    jq -r '.. | strings' "$f" | grep -oE '^- [a-z0-9:-]+: ' | sort -u
    ```

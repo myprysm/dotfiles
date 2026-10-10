@@ -149,12 +149,12 @@ Run these on each machine after the apply. The runbook reuses them.
    `for d in ~/.agents/skills ~/.claude/skills; do for l in "$d"/*; do [ -L "$l" ] && readlink "$l"; done; done | grep in-progress`
    prints nothing.
 4. **Claude Code.** Read the `skills` array of the init event:
-   `claude -p hi --model claude-haiku-4-5-20251001 --output-format stream-json --verbose --max-turns 1 | head -1 | jq -r '.skills[]'`.
+   `HINDSIGHT_DISABLE_HOOKS=1 claude -p hi --model claude-haiku-4-5-20251001 --output-format stream-json --verbose --max-turns 1 | head -1 | jq -r '.skills[]'`.
    Expect the 25 bare names. Expect no `mattpocock-skills:` name after the uninstall. The
    init event shape comes from the research probes (#105, #112).
 5. **opencode.** `opencode debug skill </dev/null` lists the 25 names (#107, claim 22).
 6. **codex.** The research found no command that lists skills without a model turn. Ask in
-   `codex exec` for the list of available skill names. The answer comes from the model, so
+   `HINDSIGHT_DISABLE_HOOKS=1 codex exec` for the list of available skill names. The answer comes from the model, so
    it is weak evidence. Record it as such.
 7. **Agent versions.** If Claude Code, codex or opencode is not at the version in "Facts the
    build uses", run the collision check of the runbook before you open the PR.
