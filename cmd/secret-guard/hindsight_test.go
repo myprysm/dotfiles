@@ -12,6 +12,9 @@ func TestHindsightDirectory(t *testing.T) {
 	check(t, "deny", `jq .version $HOME/.hindsight/coding-agents/package.json`, "a filter over a runtime file")
 	check(t, "deny", `cat ~/.hind*/coding-agent.json`, "a glob on the directory name")
 	check(t, "deny", `cat ~/.hindsight/coding-agents/*`, "a glob inside the runtime")
+	check(t, "deny", `tar czf x.tgz ~/.hindsight`, "an archive of the bare directory")
+	check(t, "deny", `cat ~/.hindsight`, "the bare directory name")
+	check(t, "allow", `cat ~/.hindsight-notes`, "a different name that starts the same")
 
 	check(t, "allow", `cat ~/.claude/settings.json.hindsight-backup`, "a name that only contains the word")
 	check(t, "allow", `cat home/private_dot_hindsight/modify_private_coding-agent.json`, "the chezmoi source of the config")

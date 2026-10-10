@@ -128,7 +128,7 @@ var contextFreeRes = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)\.talos/config([^a-z0-9_.\-]|$)`),
 	regexp.MustCompile(`(?i)\.tfstate([^a-z0-9]|$)`),
 	regexp.MustCompile(`(?i)(^|[^a-z0-9_])vault\.ya?ml([^a-z0-9]|$)`),
-	regexp.MustCompile(`(?i)\.hindsight/`),
+	regexp.MustCompile(`(?i)\.hindsight(/|$)`),
 }
 
 // contextualRes DO depend on the neighbouring character: a quote in front of
