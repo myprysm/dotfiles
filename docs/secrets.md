@@ -102,6 +102,10 @@ domain silently absent from its freshness section.
   checklist, never wired into `chezmoi apply`. It restores no GPG key and imports into no
   keyring (rule 5); a fresh machine generates its own, and `bootstrap.sh` prints the three
   steps when it finds none.
+  A personal `dotfiles/restore` item carries a `path` field ($HOME-relative) and an
+  optional `mode` field (default 600). An optional `bundle` field gates the item: when
+  the named bundle is off on this machine, restore skips the item and the audit prints a
+  note, not a finding. An item without the field is not gated (#126).
 - **Audit**: `scripts/secrets-audit.sh` — compares local state against vault item names;
   reports unbacked local items and unrestored vault items; nags when the last local
   backup is older than 30 days. It also asks whether this machine can **actually sign**:

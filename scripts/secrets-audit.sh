@@ -152,14 +152,16 @@ fi
 note "  $(wc -l < "$tmp/vault-names" | tr -d ' ') vaulted ($(wc -l < "$tmp/op-names" | tr -d ' ') work), $(wc -l < "$tmp/local-names" | tr -d ' ') on this machine, $compared fingerprints matched"
 
 note "== Self-describing restore items =="
-while read -r path; do
+while IFS=$'\x1f' read -r path bundle; do
   [ -n "$path" ] || continue
-  if [ -e "$HOME/$path" ]; then
+  if [ -n "$bundle" ] && ! bundle_enabled "$bundle"; then
+    note "  not restored here (bundle $bundle off)"
+  elif [ -e "$HOME/$path" ]; then
     note "  present"
   else
     note "  vault-only (not restored here)"
   fi
-done < <(bw_items "$BW_RESTORE" | jq -r '.[] | [(.fields // [])[] | select(.name == "path") | .value][0] // ""')
+done < <(bw_items "$BW_RESTORE" | jq -r '.[] | [([(.fields // [])[] | select(.name == "path") | .value][0] // ""), ([(.fields // [])[] | select(.name == "bundle") | .value][0] // "")] | join("\u001f")')
 
 if [ "$work_ready" -eq 1 ]; then
   while read -r id; do

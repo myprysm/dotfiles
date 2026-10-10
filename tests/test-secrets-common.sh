@@ -47,6 +47,17 @@ rm -f "$SB/bin/chezmoi"
 check "chezmoi absent is off, not a crash" "off" "$(helper 'work_bundle_enabled && echo on || echo off')"
 
 echo
+echo "== bundle_enabled reads any bundle the same way (#126)"
+stub chezmoi 'echo "{\"bundles\":{\"hindsight\":true}}"'
+check "named bundle on"  "on"  "$(helper 'bundle_enabled hindsight && echo on || echo off')"
+stub chezmoi 'echo "{\"bundles\":{\"hindsight\":false}}"'
+check "named bundle off" "off" "$(helper 'bundle_enabled hindsight && echo on || echo off')"
+stub chezmoi 'echo "{\"bundles\":{\"work\":true}}"'
+check "named key absent is off" "off" "$(helper 'bundle_enabled hindsight && echo on || echo off')"
+rm -f "$SB/bin/chezmoi"
+check "chezmoi absent is off" "off" "$(helper 'bundle_enabled hindsight && echo on || echo off')"
+
+echo
 echo "== op_ready distinguishes a timeout from a refusal, and never trusts op whoami"
 stub chezmoi 'echo "{\"bundles\":{\"work\":true}}"'
 stub timeout 'shift; exec "$@"'

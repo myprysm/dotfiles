@@ -120,6 +120,11 @@ work_bundle_enabled() {
   [ "$(chezmoi data --format json 2>/dev/null | jq -r '.bundles.work // false')" = "true" ]
 }
 
+bundle_enabled() {
+  command -v chezmoi >/dev/null 2>&1 || return 1
+  [ "$(chezmoi data --format json 2>/dev/null | jq -r --arg b "$1" '.bundles[$b] // false')" = "true" ]
+}
+
 # --- work domain (1Password) -------------------------------------------------
 #
 # op has no folders, so the containers mirror bw's folder paths as tags. The two

@@ -76,8 +76,13 @@ while read -r item; do
   id="$(jq -r .id <<<"$item")"
   path="$(jq -r '[(.fields // [])[] | select(.name == "path") | .value][0] // ""' <<<"$item")"
   mode="$(jq -r '[(.fields // [])[] | select(.name == "mode") | .value][0] // "600"' <<<"$item")"
+  bundle="$(jq -r '[(.fields // [])[] | select(.name == "bundle") | .value][0] // ""' <<<"$item")"
   if [ -z "$path" ]; then
     warn "a restore item carries no path field — skipped"
+    continue
+  fi
+  if [ -n "$bundle" ] && ! bundle_enabled "$bundle"; then
+    note "  skip (bundle $bundle off)  ~/$path"
     continue
   fi
   wanted "$HOME/$path" || continue
