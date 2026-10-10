@@ -3,12 +3,30 @@
 The Bitwarden restore writes this whole file with only the credentials and
 "optInOnly", so it removes every key set here. Run chezmoi apply after each
 restore (#128).
+
+An empty or absent hindsightPaths still sets optInOnly: the switch fails
+closed (#141). A "~" stays as typed: the runtime expands it in optInPaths.
 */ -}}
 {{- $live := dict -}}
 {{- if trim .chezmoi.stdin -}}
 {{-   $live = fromJson .chezmoi.stdin -}}
 {{- end -}}
-{{- $_ := unset $live "optInOnly" -}}
+{{- $answer := trim (toString (get . "hindsightPaths")) -}}
+{{- $paths := list -}}
+{{- range splitList "," $answer -}}
+{{-   if trim . -}}
+{{-     $paths = append $paths (trim .) -}}
+{{-   end -}}
+{{- end -}}
+{{- $_ := unset $live "optInPaths" -}}
+{{- if eq $answer "*" -}}
+{{-   $_ := unset $live "optInOnly" -}}
+{{- else -}}
+{{-   $_ := set $live "optInOnly" true -}}
+{{-   if $paths -}}
+{{-     $_ := set $live "optInPaths" $paths -}}
+{{-   end -}}
+{{- end -}}
 {{- $_ := unset $live "customPages" -}}
 {{- $_ := set $live "bankId" "damien-main-memory" -}}
 {{- $_ := set $live "manageBankConfig" false -}}

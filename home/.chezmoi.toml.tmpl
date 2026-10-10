@@ -16,6 +16,10 @@
        enabled bundle is one you chose. A pre-ticked list is as easy to accept
        wholesale as one yes/no prompt per bundle was to click through. */ -}}
 {{- $chosen := promptMultichoiceOnce . "bundleList" "Bundles to enable" $bundles (list) -}}
+{{- $hindsightPaths := "" -}}
+{{- if has "hindsight" $chosen -}}
+{{-   $hindsightPaths = promptStringOnce . "hindsightPaths" "Hindsight paths for this machine: comma-separated prefixes, `*` for all, empty for none (machine-local, never committed)" -}}
+{{- end -}}
 
 [data]
     name = {{ $name | quote }}
@@ -23,6 +27,9 @@
     bwServer = {{ $bwServer | quote }}
     secretsDir = {{ $secretsDir | quote }}
     bundleList = [{{ range $i, $b := $chosen }}{{ if $i }}, {{ end }}{{ $b | quote }}{{ end }}]
+{{- if has "hindsight" $chosen }}
+    hindsightPaths = {{ $hindsightPaths | quote }}
+{{- end }}
 
 [data.bundles]
 {{ range $bundles }}    {{ . }} = {{ has . $chosen }}
