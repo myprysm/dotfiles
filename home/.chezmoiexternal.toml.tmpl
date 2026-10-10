@@ -49,6 +49,16 @@
     # the archive name before stripComponents, hence the leading */.
     exclude = ["*/.claude-plugin"]
 
+{{ if index .bundles "hindsight" -}}
+# Bump procedure: docs/runbooks/bump-hindsight-pin.md
+[".hindsight/coding-agents"]
+    type = "archive"
+    url = "https://registry.npmjs.org/@vectorize-io/hindsight-coding-agents/-/hindsight-coding-agents-{{ .hindsight.version }}.tgz"
+    exact = true
+    stripComponents = 1
+    checksum.sha256 = "{{ .hindsight.sha256 }}"
+{{- end }}
+
 {{/*
 The compiled command guard, landed beside the hook that consults it. See
 .chezmoidata/secret-guard.yaml for why it arrives as a release asset and why an

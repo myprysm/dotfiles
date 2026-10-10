@@ -1,0 +1,22 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /*
+The Bitwarden restore writes this whole file with only the credentials and
+"optInOnly", so it removes every key set here. Run chezmoi apply after each
+restore (#128).
+*/ -}}
+{{- $live := dict -}}
+{{- if trim .chezmoi.stdin -}}
+{{-   $live = fromJson .chezmoi.stdin -}}
+{{- end -}}
+{{- $_ := unset $live "optInOnly" -}}
+{{- $_ := unset $live "customPages" -}}
+{{- $_ := set $live "bankId" "damien-main-memory" -}}
+{{- $_ := set $live "manageBankConfig" false -}}
+{{- $_ := set $live "pages" (dict "Component map" false "Core concepts" false "Conventions and patterns" false "Key decisions and rationale" false "Initiatives and enhancements" false) -}}
+{{- $_ := set $live "retainTags" (list "project:{gitProject}") -}}
+{{- $_ := set $live "retainMetadata" (dict "repo" "{gitProject}") -}}
+{{- $_ := set $live "autoSeed" false -}}
+{{- $_ := set $live "gitIngest" "none" -}}
+{{- $_ := set $live "codebaseSurvey" false -}}
+{{- $_ := set $live "autoUpdate" false -}}
+{{ toPrettyJson $live }}
