@@ -110,3 +110,5 @@ Read the relevant one before starting rather than reconstructing the steps:
 - `relocate-a-secret-file.md` — moving a secret whose location was published.
 - `bump-skill-pin.md` — moving the Matt Pocock skills to a new upstream commit, and the
   collision check after an agent upgrade.
+- `bump-hindsight-pin.md` — moving the hindsight-coding-agents runtime to a new npm version,
+  with the six bump checks and the checks after an apply.
