@@ -222,8 +222,11 @@ without an agent.
    `stat -c '%a %n' ~/.hindsight ~/.hindsight/coding-agent.json`. macOS:
    `stat -f '%Lp %N' ~/.hindsight ~/.hindsight/coding-agent.json`.
 2. **Repo keys** (operator). This prints no credential:
-   `jq '{bankId, autoUpdate, optInOnly, manageBankConfig, codebaseSurvey, gitIngest}' ~/.hindsight/coding-agent.json`.
-   Expect `damien-main-memory`, `false`, `null`, `false`, `false`, `"none"` (#127, #129).
+   `jq '{bankId, autoUpdate, optInOnly, optInPaths, manageBankConfig, codebaseSurvey, gitIngest}' ~/.hindsight/coding-agent.json`.
+   Expect `damien-main-memory` and `false` (#127, #129). `optInOnly` and `optInPaths` follow
+   the machine's `hindsightPaths` answer (#141). The answer `*` gives `null` and `null`. A
+   list gives `true` and the list. An empty answer gives `true` and `null`. Then expect
+   `false`, `false`, `"none"` (#129).
 3. **Runtime** (operator). `jq -r .version ~/.hindsight/coding-agents/package.json` gives the
    pin. `~/.hindsight/coding-agents/.install-origin.json` does not exist (#134, item 3).
 4. **Guard.** An agent `Read` of `~/.hindsight/coding-agent.json` is denied. An agent
