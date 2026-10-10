@@ -43,12 +43,14 @@ is "autoSeed" '.autoSeed' 'false'
 is "gitIngest" '.gitIngest' '"none"'
 is "codebaseSurvey" '.codebaseSurvey' 'false'
 is "autoUpdate" '.autoUpdate' 'false'
+is "autoInject: recall" '.autoInject' '"recall"'
 is "no harnesses section" 'has("harnesses")' 'false'
 
 echo "== a repo-owned key the live file changed is set again"
-out=$(render '{"apiToken":"dummy-not-a-secret","autoUpdate":true,"bankId":"other","customPages":{"x":{}}}')
+out=$(render '{"apiToken":"dummy-not-a-secret","autoUpdate":true,"bankId":"other","customPages":{"x":{}},"autoInject":"reflect"}')
 is "autoUpdate reset" '.autoUpdate' 'false'
 is "bankId reset" '.bankId' '"damien-main-memory"'
+is "autoInject reset" '.autoInject' '"recall"'
 is "customPages removed" 'has("customPages")' 'false'
 
 echo "== empty stdin"

@@ -19,4 +19,8 @@ restore (#128).
 {{- $_ := set $live "gitIngest" "none" -}}
 {{- $_ := set $live "codebaseSurvey" false -}}
 {{- $_ := set $live "autoUpdate" false -}}
+{{- /* The default "reflect" timed out at 20 s on every session against this
+       server and cost about 27 s in the prompt hook before its recall fallback
+       (#127). */ -}}
+{{- $_ := set $live "autoInject" "recall" -}}
 {{ toPrettyJson $live }}
