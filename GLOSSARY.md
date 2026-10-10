@@ -103,7 +103,7 @@ The hook entries, MCP entries and opencode plugin entry that connect an agent to
 _Avoid_: install, integration
 
 **Hindsight opt-out**:
-A session on an enrolled machine started with `HINDSIGHT_DISABLE_HOOKS=1`. It neither recalls nor retains. Every other session on an enrolled machine does both, headless or not.
+A session on an enrolled machine started with `HINDSIGHT_DISABLE_HOOKS=1`. It neither recalls nor retains. Every other session on an enrolled machine does both, headless or not, if it starts under a path that the machine's `hindsightPaths` answer allows. A session outside those paths is inert (#141).
 _Avoid_: headless mode, disabled session
 
 **Collision check**:
