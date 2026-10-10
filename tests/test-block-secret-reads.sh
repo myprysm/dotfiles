@@ -433,6 +433,18 @@ probe deny 'cat ~/.talos/config'
 probe allow 'cat ~/.kube/README'
 
 echo
+echo "== the whole of ~/.hindsight is secret (#128)"
+probe deny 'cat ~/.hindsight/coding-agent.json'
+probe deny 'cat ~/.hindsight/coding-agents/package.json'
+probe deny 'cat ~/.hindsight/coding-agents-logs/hooks.log'
+probe deny 'cat ~/.hindsight/claude-code.json'
+probe_tool Read deny '/home/u/.hindsight/coding-agent.json'
+probe_tool Read deny '/home/u/.hindsight/coding-agents/package.json'
+probe_tool Read deny '/home/u/.hindsight/coding-agents-logs/hooks.log'
+probe_tool Grep deny '/home/u/.hindsight/coding-agents'
+probe_tool Read allow '/home/u/.claude/settings.json.hindsight-backup'
+
+echo
 echo "== the .env pattern takes any prefix and several suffix segments"
 probe deny 'cat prod.env'
 probe deny 'cat local.env'

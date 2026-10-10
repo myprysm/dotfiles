@@ -33,6 +33,7 @@ is "renders valid JSON" 'type' '"object"'
 is "repo hook installed" "[.hooks.PreToolUse[].hooks[].command]" "[\"$REPO_HOOK\"]"
 is "mod check installed" "[.hooks.SessionStart[].hooks[].command]" "[\"$MOD_CHECK\"]"
 is "model set from base" '.model' "$(base .model)"
+is "hindsight directory denied" ".permissions.deny | index(\"Read(/$SB/home/.hindsight/**)\") != null" 'true'
 
 echo "== foreign keys and runtime keys"
 out=$(render "$SB/src" '{"autoMode":{"x":1},"someTool":true,"model":"sonnet","tui":"old"}')
