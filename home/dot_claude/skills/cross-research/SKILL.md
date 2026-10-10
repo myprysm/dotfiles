@@ -23,8 +23,10 @@ In the same turn, both in the background:
 - **Codex**, from the repo the questions centre on:
 
   ```bash
-  codex exec -m <model> -c model_reasoning_effort=<effort> -s read-only --ephemeral --add-dir <other repo> -o <scratchpad>/codex-<topic>.md - < <question file> > <scratchpad>/codex-<topic>.log 2>&1
+  HINDSIGHT_DISABLE_HOOKS=1 codex exec -m <model> -c model_reasoning_effort=<effort> -s read-only --ephemeral --add-dir <other repo> -o <scratchpad>/codex-<topic>.md - < <question file> > <scratchpad>/codex-<topic>.log 2>&1
   ```
+
+  `HINDSIGHT_DISABLE_HOOKS=1` keeps recalled bank memories out of the Codex run, so it stays independent (#135).
 
 Report each output's headline to the Operator as soon as it lands, marked not yet cross-checked.
 
