@@ -240,7 +240,9 @@ without an agent.
    `extraKnownMarketplaces` in `~/.claude/settings.json` have no hindsight key. (operator)
    `~/.hindsight/claude-code.json` and `~/.hindsight/codex.json` do not exist.
 9. **End to end.** In each wired agent, call the `hindsight_diagnose` MCP tool. Then recall
-   one memory from `damien-main-memory` (#130, item 5).
+   one memory from `damien-main-memory` (#130, item 5). `opencode run` waits for its model
+   provider without output, so start that provider first (on WSL, the llama.cpp server).
+   `opencode run --format json` shows the tool output; the default format does not.
 10. **Prompt-hook latency** (operator). After a second prompt in a new session, this prints no
     credential and no prompt text:
     `jq -c 'select(.event | test("inject_recall|reflect")) | {ts, event, harness, ms}' ~/.hindsight/coding-agents-logs/diag.jsonl | tail`.

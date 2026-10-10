@@ -19,9 +19,9 @@ hindsight bump, hindsight wiring, hindsight opt-out. ADR 0003 records who writes
   machine (#134, ADR 0003).
 - All agents on all machines use one static bank, `damien-main-memory`. Hermes uses the same
   bank (#127).
-- The hindsight bundle wires each agent whose config the repo manages on that machine. WSL has
-  `bundleList = ["ops","playwright","go"]`, so only Claude Code gets wiring there. The Mac has
-  all eight bundles, so all three agents get wiring there (#125, #126).
+- The hindsight bundle wires each agent whose config the repo manages on that machine (#125,
+  #126). At enrollment, `ai` went into the WSL `bundleList`, so all three agents get wiring on
+  WSL. The Mac is not enrolled (#130).
 - On the branch `damienbenon/hindsight-config`, not pushed: the glossary terms in `CONTEXT.md`
   (commits `2bcd307`, `b8e8a06`, `f144864`, `c350658`) and ADR 0003 (`e13619f`).
 - The hindsight server is not changed by this build. talos-home owns it.
@@ -293,8 +293,9 @@ Decisions: #130 items 2, 5, 6; #128 "Order"; #131 item 5.
 8. If `~/.claude/plugins/data/hindsight-memory-hindsight/` still exists, remove it with
    `rm -rf`. It holds recalled memory text (#130, "Build checks").
 9. Restart the agent sessions. Run the checks below.
-10. **The Mac.** Do steps 3 to 9. Skip step 2: the item is shared (#128). Do not look for the
-    source of the old Mac settings (#130, item 6).
+10. **The Mac.** Not enrolled: the operator enrolls it later, for one path only (#130). The Mac
+    got steps 3, 7 and the guard apply, and `chezmoi init` with `bundleList` unchanged. Do not
+    look for the source of the old Mac settings (#130, item 6).
 
 Run `chezmoi apply` after each later restore. A restore writes the whole file and removes the
 repo-owned keys (#128, "Order").
