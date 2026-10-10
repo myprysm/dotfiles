@@ -223,16 +223,19 @@ Decision: #130 items 1, 4.
 
 Decisions: #126 "Unenrollment", #130 item 3.
 
-1. Add a templated `home/.chezmoiremove`.
-   - Always: `.hindsight/claude-code.json` and `.hindsight/codex.json` (#130, item 3).
-   - When the bundle is off: `.hindsight/coding-agents`, `.hindsight/coding-agent.json` and
-     `.claude/hooks/hindsight-hook.sh` (#126).
-2. The Claude MCP entry is removed by the script of commit 6. The shared files lose their
+Build result: chezmoi 2.73.0 renders `.chezmoiremove` as a template and removes without a
+prompt. But it does not remove a target that `.chezmoiignore` also lists. Thus, with the
+operator's approval, `.chezmoiremove` lists only the legacy files, and the script
+`run_onchange_after_61-hindsight-unenroll.sh.tmpl` removes the off-state files (#126).
+
+1. `home/.chezmoiremove` lists `.hindsight/claude-code.json` and `.hindsight/codex.json` on
+   every machine (#130, item 3).
+2. When the bundle is off, the unenroll script removes `.hindsight/coding-agents`,
+   `.hindsight/coding-agent.json` and `.claude/hooks/hindsight-hook.sh` (#126). The script
+   hash holds the bundle state.
+3. The Claude MCP entry is removed by the script of commit 6. The shared files lose their
    wiring through their templates.
-3. Test: `chezmoi execute-template < home/.chezmoiremove` with the bundle on and off. If
-   chezmoi does not render `.chezmoiremove` as a template, or `chezmoi apply` asks before it
-   removes, stop. #126 then calls for one off-script that removes all four items. Tell the
-   operator before you write it.
+4. Test: an apply in a scratch `HOME` with the bundle on, then off.
 
 ### Commit 11 — `docs(hindsight): add the hindsight bump runbook`
 
@@ -301,9 +304,9 @@ Decision: #126 "Unenrollment".
 
 1. Remove `hindsight` from `bundleList`. Run `chezmoi init`.
 2. Run `chezmoi apply`. The unenroll script removes the runtime, `coding-agent.json` and the
-   wrapper. `.chezmoiremove` cannot remove them, because `.chezmoiignore` lists them when the
-   bundle is off (build commit 10). The MCP script removes the Claude MCP entry. The templates remove the hooks, the
-   codex keys and the opencode entry.
+   wrapper (#126). `.chezmoiremove` cannot remove them, because `.chezmoiignore` lists them
+   when the bundle is off. The MCP script removes the Claude MCP entry. The templates remove
+   the hooks, the codex keys and the opencode entry.
 3. Restart the agent sessions.
 4. The vault keeps the item. A new enrollment restores it.
 
