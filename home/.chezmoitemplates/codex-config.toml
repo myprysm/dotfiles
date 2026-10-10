@@ -11,3 +11,31 @@ matcher = "Bash"
 [[hooks.PreToolUse.hooks]]
 type = "command"
 command = "bash {{ .chezmoi.homeDir }}/.claude/hooks/block-secret-reads.sh --codex"
+{{- if index .bundles "hindsight" }}
+
+[[hooks.SessionStart]]
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "bash {{ .chezmoi.homeDir }}/.claude/hooks/hindsight-hook.sh codex-sessionstart-hook.js"
+timeout = 30
+
+[[hooks.UserPromptSubmit]]
+
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "bash {{ .chezmoi.homeDir }}/.claude/hooks/hindsight-hook.sh codex-hook.js"
+timeout = 30
+
+[[hooks.Stop]]
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = "bash {{ .chezmoi.homeDir }}/.claude/hooks/hindsight-hook.sh codex-stop-hook.js"
+timeout = 60
+
+[mcp_servers.hindsight]
+command = "node"
+args = ["{{ .chezmoi.homeDir }}/.hindsight/coding-agents/dist/mcp-server.js"]
+env = { HINDSIGHT_MCP_HARNESS = "codex" }
+{{- end }}
