@@ -20,7 +20,8 @@
       "Read(/{{ .chezmoi.homeDir }}/.claude/**)",
       "Bash(playwright-cli check:*)",
       "Bash(playwright-cli run-code \"async page => {:*)",
-      "mcp__plugin_hindsight-memory_hindsight__agent_knowledge_ingest"
+      "mcp__plugin_hindsight-memory_hindsight__agent_knowledge_ingest"{{ if index .bundles "hindsight" }},
+      "mcp__hindsight__agent_knowledge_ingest"{{ end }}
     ],
     "deny": [
       "Read(/{{ .chezmoi.homeDir }}/**/.env)",
@@ -74,8 +75,39 @@
             "command": "bash {{ .chezmoi.homeDir }}/.claude/hooks/mod-check.sh"
           }
         ]
+      }{{ if index .bundles "hindsight" }},
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash {{ .chezmoi.homeDir }}/.claude/hooks/hindsight-hook.sh claude-sessionstart-hook.js",
+            "timeout": 30
+          }
+        ]
+      }{{ end }}
+    ]{{ if index .bundles "hindsight" }},
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash {{ .chezmoi.homeDir }}/.claude/hooks/hindsight-hook.sh claude-hook.js",
+            "timeout": 30
+          }
+        ]
       }
-    ]
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash {{ .chezmoi.homeDir }}/.claude/hooks/hindsight-hook.sh claude-stop-hook.js",
+            "timeout": 60
+          }
+        ]
+      }
+    ]{{ end }}
   },
   "statusLine": {
     "type": "command",

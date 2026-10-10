@@ -10,16 +10,18 @@ REPO_HOOK="bash $SB/home/.claude/hooks/block-secret-reads.sh"
 MOD_CHECK="bash $SB/home/.claude/hooks/mod-check.sh"
 
 BASE="$REPO_ROOT/home/.chezmoitemplates/claude-settings.json"
-base() { jq -c "$1" "$BASE"; }
+HOME="$SB/home" chezmoi execute-template --source "$REPO_ROOT/home" \
+  --override-data '{"secretsDir":"/nonexistent","bundles":{}}' < "$BASE" > "$SB/base.json" || exit 1
+base() { jq -c "$1" "$SB/base.json"; }
 cp "$BASE" "$SB/src/.chezmoitemplates/"
 mkdir -p "$SB/retired/.chezmoitemplates"
-jq 'del(.tui)' "$BASE" > "$SB/retired/.chezmoitemplates/claude-settings.json"
+jq 'del(.tui)' "$SB/base.json" > "$SB/retired/.chezmoitemplates/claude-settings.json"
 
 pass=0; fail=0
 out=""
 render() {
   printf '%s' "$2" | HOME="$SB/home" chezmoi execute-template --source "$1" \
-    --override-data '{"secretsDir":"/nonexistent"}' --with-stdin "$TPL"
+    --override-data '{"secretsDir":"/nonexistent","bundles":{}}' --with-stdin "$TPL"
 }
 is() {
   got=$(printf '%s' "$out" | jq -c "$2" 2>&1)
@@ -70,6 +72,25 @@ is "repo hook takes the base matcher" "[.hooks.PreToolUse[] | select(.hooks[0].c
 is "~/ and \$HOME/ forms removed" '[.. | strings | select(test("tilde.sh|home.sh"))] | length' '0'
 is "shared entry keeps its foreign command" '[.hooks.PreToolUse[] | select(.matcher == "Write") | .hooks[].command]' '["orca-shared"]'
 is "event left empty is dropped" '.hooks | has("Stop")' 'false'
+
+echo "== hindsight wiring follows the bundle (#134, #130)"
+HH="bash $SB/home/.claude/hooks/hindsight-hook.sh"
+render_bundle() {
+  printf '' | HOME="$SB/home" chezmoi execute-template --source "$SB/src" \
+    --override-data "{\"secretsDir\":\"/nonexistent\",\"bundles\":{\"hindsight\":$1}}" --with-stdin "$TPL"
+}
+out=$(render_bundle true)
+is "on: SessionStart hook" "[.hooks.SessionStart[].hooks[] | select(.command == \"$HH claude-sessionstart-hook.js\") | .timeout]" '[30]'
+is "on: UserPromptSubmit hook" "[.hooks.UserPromptSubmit[].hooks[] | select(.command == \"$HH claude-hook.js\") | .timeout]" '[30]'
+is "on: Stop hook" "[.hooks.Stop[].hooks[] | select(.command == \"$HH claude-stop-hook.js\") | .timeout]" '[60]'
+is "on: mod check kept" "[.hooks.SessionStart[].hooks[].command | select(. == \"$MOD_CHECK\")] | length" '1'
+is "on: MCP allow entry" '.permissions.allow | index("mcp__hindsight__agent_knowledge_ingest") != null' 'true'
+out=$(render_bundle false)
+is "off: no hindsight hook" '[.. | strings | select(test("hindsight-hook"))] | length' '0'
+is "off: no MCP allow entry" '.permissions.allow | index("mcp__hindsight__agent_knowledge_ingest")' 'null'
+out=$(printf '' | HOME="$SB/home" chezmoi execute-template --source "$SB/src" \
+  --override-data '{"secretsDir":"/nonexistent","bundles":{}}' --with-stdin "$TPL")
+is "key absent: no hindsight hook" '[.. | strings | select(test("hindsight-hook"))] | length' '0'
 
 echo "== settings.local.json overlay"
 cat > "$SB/home/.claude/settings.local.json" <<'EOF'

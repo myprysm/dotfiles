@@ -1,0 +1,19 @@
+#!/bin/bash
+# The Claude Code MCP entry lives in ~/.claude.json, which Claude Code writes at
+# runtime, so the CLI sets it rather than a template (#134).
+# hindsight bundle: {{ if index .bundles "hindsight" }}on{{ else }}off{{ end }}
+set -eu
+
+if ! command -v claude >/dev/null 2>&1; then
+  echo "claude not found — skipping the hindsight MCP entry" >&2
+  exit 0
+fi
+
+{{ if index .bundles "hindsight" -}}
+claude mcp remove --scope user hindsight >/dev/null 2>&1 || true
+claude mcp add --scope user hindsight --env HINDSIGHT_MCP_HARNESS=claude-code -- node {{ .chezmoi.homeDir }}/.hindsight/coding-agents/dist/mcp-server.js
+{{- else -}}
+if [ -f "$HOME/.claude.json" ] && jq -e '.mcpServers.hindsight' "$HOME/.claude.json" >/dev/null 2>&1; then
+  claude mcp remove --scope user hindsight
+fi
+{{- end }}

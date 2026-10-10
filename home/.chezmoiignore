@@ -101,4 +101,5 @@ Library/**
 
 {{ if not (index .bundles "hindsight") -}}
 .hindsight/coding-agent.json
+.claude/hooks/hindsight-hook.sh
 {{- end }}
