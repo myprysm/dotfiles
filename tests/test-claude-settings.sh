@@ -92,6 +92,12 @@ out=$(printf '' | HOME="$SB/home" chezmoi execute-template --source "$SB/src" \
   --override-data '{"secretsDir":"/nonexistent","bundles":{}}' --with-stdin "$TPL")
 is "key absent: no hindsight hook" '[.. | strings | select(test("hindsight-hook"))] | length' '0'
 
+echo "== the legacy hindsight plugin is removed on every machine (#130)"
+out=$(render "$SB/src" '{"enabledPlugins":{"hindsight-memory@hindsight":true},"extraKnownMarketplaces":{"hindsight":{}},"permissions":{"allow":["mcp__plugin_hindsight-memory_hindsight__agent_knowledge_ingest"]}}')
+is "plugin not enabled" '.enabledPlugins | has("hindsight-memory@hindsight")' 'false'
+is "marketplace removed" '.extraKnownMarketplaces | has("hindsight")' 'false'
+is "legacy MCP allow entry removed" '[.permissions.allow[] | select(test("plugin_hindsight"))] | length' '0'
+
 echo "== settings.local.json overlay"
 cat > "$SB/home/.claude/settings.local.json" <<'EOF'
 {"env":{"LOCAL_VAR":"1","CLAUDE_CODE_ENABLE_TELEMETRY":"1"},

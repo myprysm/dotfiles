@@ -19,8 +19,7 @@
       "Bash(playwright-cli eval:*)",
       "Read(/{{ .chezmoi.homeDir }}/.claude/**)",
       "Bash(playwright-cli check:*)",
-      "Bash(playwright-cli run-code \"async page => {:*)",
-      "mcp__plugin_hindsight-memory_hindsight__agent_knowledge_ingest"{{ if index .bundles "hindsight" }},
+      "Bash(playwright-cli run-code \"async page => {:*)"{{ if index .bundles "hindsight" }},
       "mcp__hindsight__agent_knowledge_ingest"{{ end }}
     ],
     "deny": [
@@ -135,16 +134,9 @@
     "stripe@claude-plugins-official": false,
     "php-lsp@claude-plugins-official": false,
     "mattpocock-skills@claude-plugins-official": false,
-    "hindsight-memory@hindsight": true,
     "caveman@caveman": true
   },
   "extraKnownMarketplaces": {
-    "hindsight": {
-      "source": {
-        "source": "github",
-        "repo": "vectorize-io/hindsight"
-      }
-    },
     "caveman": {
       "source": {
         "source": "github",
