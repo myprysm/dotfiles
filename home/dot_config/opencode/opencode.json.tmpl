@@ -5,5 +5,8 @@
   ],
   "disabled_providers": [
     "opencode"
-  ]
+  ]{{ if index .bundles "hindsight" }},
+  "plugin": [
+    "{{ .chezmoi.homeDir }}/.hindsight/coding-agents"
+  ]{{ end }}
 }
