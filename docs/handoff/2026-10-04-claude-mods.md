@@ -79,8 +79,7 @@ Nothing below happens now. A future decision that needs a mod starts here.
    `/plugin` step and no trust prompt. If it fails, use `env.CLAUDE_CODE_PLUGIN_DIRS` in the
    settings template instead. Then the plugin id is `<mod>@inline`. Run the other #88
    experiments too: `.claude-plugin/types/` in a `directory` marketplace, and `~` in `path`.
-   The findings are on the local branch `research/local-plugin-marketplace`
-   (`docs/research/local-plugin-marketplace.md`).
+   The findings are in `docs/research/local-plugin-marketplace.md`.
 6. **Admitted-mods list** (#98, item 4). The first admission adds a repo list of admitted
    mods (`id` and version) in the same commit. The mod check stops reporting a listed mod.
 7. **Tests for the mod** (out of scope on #85). The build session decides them.
