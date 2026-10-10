@@ -104,6 +104,13 @@ var (
 	// `cat config/.env.php` are reads again: a source module always has a name
 	// of its own, and a dotfile never does.
 	srcEnvNeutral = regexp.MustCompile(`(?i)([a-z0-9_-]+)\.env\.(js|cjs|mjs|jsx|ts|tsx|go|py|rb|php|html|css|scss|vue|snap|map)([^a-z0-9_-]|$)`)
+
+	// Case-sensitive on purpose: `.Env` after an expression is a Go exported
+	// field (`cmd.Env = …`), and Go source in a heredoc or a payload was most
+	// of the secret refusals the agents met. A LEADING `.Env` is not exempt:
+	// on a case-insensitive volume `cat ~/.Env` opens ~/.env. Must stay
+	// identical in reach to the hook's Bash-only `.Env` sed.
+	goEnvField = regexp.MustCompile(`([A-Za-z0-9_)\]])\.Env([^A-Za-z0-9_.-]|$)`)
 )
 
 // contextFreeRes do not care what character stands in front of the name, so
@@ -189,6 +196,7 @@ func neutralise(s string) string {
 	s = codeEnvQuoted.ReplaceAllString(s, "${1}__CODEENV__$3")
 	s = laravelConfigNeutral.ReplaceAllString(s, "${1}__CFGKEY__")
 	s = neutraliseSrcEnv(s)
+	s = goEnvField.ReplaceAllString(s, "${1}__GOENV__$2")
 	return vaultNeutral.ReplaceAllString(s, "__VAULTTPL__$2")
 }
 

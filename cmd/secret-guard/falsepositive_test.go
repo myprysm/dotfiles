@@ -186,3 +186,28 @@ func TestStillDenies(t *testing.T) {
 		}
 	}
 }
+
+// `.Env` spelled exactly so, after an expression, is a Go exported field such
+// as `cmd.Env`, never a dotenv name. Most secret refusals in a retro over the
+// agent sessions were Go source in a heredoc or a sed script. A leading `.Env`
+// stays refused: on a case-insensitive volume `cat ~/.Env` opens ~/.env.
+func TestGoEnvFieldIsNotADotenv(t *testing.T) {
+	check(t, "allow", `sed -i 's/cmd.Env = nil/cmd.Env = env/' main.go`, "a Go field in a sed script")
+	check(t, "allow", "python3 - <<'EOF'\nsrc = src.replace(\"cmd.Env = nil\", \"cmd.Env = append(os.Environ(), x)\")\nEOF", "a Go field in a python heredoc")
+	check(t, "allow", "cat > main_test.go <<'EOF'\nc := exec.Command(\"x\")\nc.Env = []string{\"A=1\"}\nEOF", "a Go field in a written file")
+	check(t, "allow", `go doc os/exec.Cmd.Env`, "a doc lookup of the field")
+	check(t, "allow", `perl -pi -e 's/cmd.Env = nil/cmd.Env = e/' main.go`, "a Go field in a perl payload")
+	check(t, "allow", `python3 -c 'print("c.Env")'`, "a Go field in a python payload")
+
+	check(t, "deny", `cat .Env`, "a leading .Env names a file")
+	check(t, "deny", `cat ~/.Env`, "case-insensitive volume opens ~/.env")
+	check(t, "deny", `cat ./.Env`, "a relative path")
+	check(t, "deny", `cat cmd.Env.local`, "a suffix makes it a dotenv name")
+	check(t, "deny", `cat .ENV`, "upper case")
+	check(t, "deny", `cat .env`, "the plain name")
+	check(t, "deny", `cat prod.env`, "an environment stem")
+	check(t, "deny", `cat f.env`, "lower case after a stem stays refused")
+	check(t, "deny", `cat .env.local`, "a suffix")
+	check(t, "deny", `cat ~/.env`, "home")
+	check(t, "deny", `cat ~/.en"v"`, "quote split")
+}
