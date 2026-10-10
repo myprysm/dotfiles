@@ -61,9 +61,10 @@ hindsight bump, hindsight wiring, hindsight opt-out. ADR 0003 records who writes
   | `autoSeed` / `gitIngest` | `false` / `"none"` | #127 |
   | `codebaseSurvey` | `false` | #127 |
   | `autoUpdate` | `false` | #129 |
+  | `autoInject` | `"recall"` | #127, amended at enrollment |
 
-  No `harnesses` section. `observationScopes`, `autoInject`, `retainSessions` and
-  `retainExtractionMode` stay at their defaults (#127). Read the five `pages` key names from
+  No `harnesses` section. `observationScopes`, `retainSessions` and `retainExtractionMode`
+  stay at their defaults (#127). Read the five `pages` key names from
   the 0.8.0 README, section "Reference".
 - **Bitwarden restore item** (#128, #126): personal domain, folder `dotfiles/restore`. Fields:
   `path` = `.hindsight/coding-agent.json`, `mode` = `600`, `bundle` = `hindsight`. Body: JSON

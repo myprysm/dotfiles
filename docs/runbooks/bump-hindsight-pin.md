@@ -241,5 +241,8 @@ without an agent.
    `~/.hindsight/claude-code.json` and `~/.hindsight/codex.json` do not exist.
 9. **End to end.** In each wired agent, call the `hindsight_diagnose` MCP tool. Then recall
    one memory from `damien-main-memory` (#130, item 5).
-10. **Reflect latency.** Measure `autoInject` `reflect` with `low` effort on this server, and
-    record the result (#127).
+10. **Prompt-hook latency** (operator). After a second prompt in a new session, this prints no
+    credential and no prompt text:
+    `jq -c 'select(.event | test("inject_recall|reflect")) | {ts, event, harness, ms}' ~/.hindsight/coding-agents-logs/diag.jsonl | tail`.
+    Expect `inject_recall` entries under 7000 ms (`injectTimeoutMs`) and no `reflect_failed`.
+    The automatic reflect timed out at 20 s on every session against this server (#127).
