@@ -442,6 +442,7 @@ probe_tool Read deny '/home/u/.hindsight/coding-agent.json'
 probe_tool Read deny '/home/u/.hindsight/coding-agents/package.json'
 probe_tool Read deny '/home/u/.hindsight/coding-agents-logs/hooks.log'
 probe_tool Grep deny '/home/u/.hindsight/coding-agents'
+probe_tool Grep deny '/home/u/.hindsight'
 probe_tool Read allow '/home/u/.claude/settings.json.hindsight-backup'
 
 echo
