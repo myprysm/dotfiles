@@ -45,10 +45,13 @@ var globCandidates = map[int][]globCandidate{
 		{name: ".vault-token"}, {name: "secrets.vault"}, {name: ".secrets"},
 	},
 	2: {
-		{name: ".kube/config"}, {name: ".talos/config"},
-		{name: ".hindsight/claude-code.json"}, {name: ".secrets/token"},
+		{name: ".kube/config"}, {name: ".talos/config"}, {name: ".secrets/token"},
 	},
 }
+
+// globSecretDirs are directories secret as a whole, so a pattern that names the
+// directory itself in any segment names every file under it.
+var globSecretDirs = []string{".hindsight"}
 
 // minGlobLiterals rejects a pattern too vague to name anything in particular.
 // `cat *` and `grep x *` would otherwise match `kubeconfig` and be refused,
@@ -164,6 +167,21 @@ func globHitsSecret(glob string) bool {
 			// is why the literal bar cannot simply be lowered.
 			if i > 0 && strings.HasPrefix(strings.ToLower(SecretsDir),
 				strings.ToLower(strings.Join(segs[:i], "/"))+"/") {
+				return true
+			}
+		}
+	}
+
+	for _, seg := range segs {
+		if !strings.HasPrefix(seg, ".") || !pattern.HasMeta(seg, 0) {
+			continue
+		}
+		re := globRegexp(seg)
+		if re == nil {
+			continue
+		}
+		for _, d := range globSecretDirs {
+			if re.MatchString(d) {
 				return true
 			}
 		}
