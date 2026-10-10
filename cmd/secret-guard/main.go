@@ -75,7 +75,7 @@ func parseAs(lang syntax.LangVariant, src string) (*syntax.File, error) {
 
 func main() {
 	dir := flag.String("secretsdir", "", "absolute path of the machine-local secrets directory")
-	agent := flag.String("agent", "", "the agent whose command is judged; \"codex\" relaxes the rg rule")
+	agent := flag.String("agent", "", "the agent whose command is judged; no rule depends on it")
 	flag.Parse()
 	SecretsDir = strings.TrimRight(*dir, "/")
 	Agent = *agent

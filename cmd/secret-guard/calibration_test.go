@@ -32,7 +32,7 @@ func TestGitGrepIsAllowed(t *testing.T) {
 	// The operands are still judged, so naming a secret is still a read.
 	check(t, "deny", `git grep x -- ~/.env`, "a pathspec naming a secret")
 	// Everything else in the class is unchanged.
-	check(t, "deny", `rg TODO`, "ripgrep still searches the whole tree")
+	check(t, "deny", `ag TODO`, "ag still searches the whole tree")
 	check(t, "deny", `grep -r TODO .`, "and so does grep -r")
 }
 

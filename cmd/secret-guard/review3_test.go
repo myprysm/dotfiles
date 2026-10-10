@@ -122,6 +122,6 @@ func TestReviewInfoFlags(t *testing.T) {
 	check(t, "allow", `rg --version`, "a version query is not a search")
 	check(t, "allow", `ag --help`, "a help query")
 	check(t, "allow", `rg -V`, "the short spelling")
-	check(t, "deny", `rg pattern`, "an actual search")
-	check(t, "deny", `rg --version pattern .`, "a search wearing a version flag")
+	check(t, "deny", `ag pattern`, "an actual search")
+	check(t, "deny", `ag --version pattern .`, "a search wearing a version flag")
 }

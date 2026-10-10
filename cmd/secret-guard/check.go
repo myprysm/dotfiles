@@ -879,8 +879,8 @@ func (c *checker) simple(argWords []*syntax.Word, words []flatWord) {
 			}
 		}
 	case alwaysRecursive[cmdBase]:
-		if Agent == "codex" && cmdBase == "rg" {
-			c.rgCodex(args)
+		if cmdBase == "rg" {
+			c.rgFiltered(args)
 			break
 		}
 		// `rg --version` and `ag --help` search nothing.
@@ -1279,14 +1279,14 @@ func (c *checker) grep(name string, args []flatWord) {
 	}
 }
 
-// rgCodex judges rg for codex, which has no filtered search tool of its own
-// (#96). A tree walk is allowed while rg keeps its default filters, which skip
-// hidden files and gitignored files. Secrets that are neither hidden nor
+// rgFiltered judges rg for every agent: neither Claude Code nor codex has a
+// filtered search tool of its own (#96). A tree walk is allowed while rg
+// keeps its default filters, which skip hidden files and gitignored files. Secrets that are neither hidden nor
 // ignored - `*.pem`, `*.tfstate`, `kubeconfig`, `vault.yml` in a plain
 // directory - are still printed by a walk that never names them. So is a
 // hidden file whitelisted by a `!` rule in a `.ignore` or `.rgignore` the
 // tree carries, measured against ripgrep 15.2.0: the guard cannot see what a
-// file says. Both holes were accepted to give codex a search at all.
+// file says. Both holes were accepted to give the agents a search at all.
 //
 // Every INCLUDE filter is refused, not only the flags named for it: a glob
 // or a type whitelists matching files past the hidden filter, and a glob past
@@ -1295,7 +1295,7 @@ func (c *checker) grep(name string, args []flatWord) {
 // An option missing from rgOptArg costs a false positive, never a false
 // negative: its value is taken as the pattern, and the real pattern is then
 // judged as a path.
-func (c *checker) rgCodex(args []flatWord) {
+func (c *checker) rgFiltered(args []flatWord) {
 	// A config file can carry --hidden or --no-ignore without the command
 	// naming either.
 	if c.envNames["RIPGREP_CONFIG_PATH"] {

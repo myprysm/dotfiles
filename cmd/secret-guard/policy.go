@@ -13,8 +13,9 @@ import (
 // the chezmoi template. Empty when the template did not define one.
 var SecretsDir string
 
-// Agent names the agent whose command is judged. "codex" relaxes the rg rule
-// (#96); anything else gets the full rule set.
+// Agent names the agent whose command is judged. No rule reads it: rg is
+// judged the same for every agent (#96). The flag stays so the hook's
+// -agent argument still parses.
 var Agent string
 
 var (
