@@ -97,6 +97,7 @@ enrolled=$out
 out=$(render "$enrolled" false)
 is "hindsight hook events removed" '[e for e in ("SessionStart","UserPromptSubmit","Stop") if e in c["hooks"]]' '[]'
 is "MCP server removed" '"hindsight" in c.get("mcp_servers", {})' 'false'
+is "empty mcp_servers table dropped" '"mcp_servers" in c' 'false'
 is "PreToolUse kept" 'len(c["hooks"]["PreToolUse"])' '1'
 is "pre_tool_use trust kept" "c['hooks']['state']['$KEY']['trusted_hash']" "$want_hash"
 out=$(render "$(printf '%s\n\n[mcp_servers.other]\ncommand = "x"\n' "$enrolled")" false)

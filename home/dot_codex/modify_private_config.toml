@@ -118,6 +118,9 @@ reports this file modified after any runtime write, as for Claude (#73).
 {{-   $_ := set $live "mcp_servers" $liveMcp -}}
 {{- else if hasKey $liveMcp "hindsight" -}}
 {{-   $_ := unset $liveMcp "hindsight" -}}
+{{-   if not $liveMcp -}}
+{{-     $_ := unset $live "mcp_servers" -}}
+{{-   end -}}
 {{- end -}}
 
 {{- toToml $live -}}
