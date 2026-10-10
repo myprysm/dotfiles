@@ -568,5 +568,25 @@ for flag in "" --codex; do
 done
 
 echo
+echo "== a Go .Env field is not a dotenv name; a leading .Env still is"
+probe allow "sed -i 's/cmd.Env = nil/cmd.Env = env/' main.go"
+probe allow "python3 - <<'EOF'
+src = src.replace(\"cmd.Env = nil\", \"cmd.Env = append(os.Environ(), x)\")
+EOF"
+probe allow "perl -pi -e 's/cmd.Env = nil/cmd.Env = e/' main.go"
+probe allow "python3 -c 'print(\"c.Env\")'"
+probe deny 'cat .Env'
+probe deny 'cat ~/.Env'
+probe deny 'cat ./.Env'
+probe deny 'cat cmd.Env.local'
+probe deny 'cat .ENV'
+probe deny 'cat prod.env'
+probe deny 'cat f.env'
+probe deny 'cat .env.local'
+probe deny 'cat ~/.en"v"'
+probe_tool Read deny '/home/u/.Env'
+probe_tool Read deny '/home/u/src/cmd.Env'
+
+echo
 echo "===== $pass passed, $fail failed ====="
 [ "$fail" -eq 0 ]
