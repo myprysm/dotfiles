@@ -1,0 +1,10 @@
+#!/bin/bash
+# chezmoi 2.73.0 does not remove a .chezmoiremove target that .chezmoiignore
+# also lists, and these files are ignored when the bundle is off. Thus this
+# script removes them (#126).
+# hindsight bundle: {{ if index .bundles "hindsight" }}on{{ else }}off{{ end }}
+set -eu
+{{ if not (index .bundles "hindsight") }}
+rm -rf "$HOME/.hindsight/coding-agents"
+rm -f "$HOME/.hindsight/coding-agent.json" "$HOME/.claude/hooks/hindsight-hook.sh"
+{{- end }}

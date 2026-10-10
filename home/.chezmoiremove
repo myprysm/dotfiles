@@ -1,2 +1,4 @@
 .agents/skills/resolving-merge-conflicts
 .claude/skills/resolving-merge-conflicts
+.hindsight/claude-code.json
+.hindsight/codex.json

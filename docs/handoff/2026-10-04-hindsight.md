@@ -300,8 +300,9 @@ repo-owned keys (#128, "Order").
 Decision: #126 "Unenrollment".
 
 1. Remove `hindsight` from `bundleList`. Run `chezmoi init`.
-2. Run `chezmoi apply`. `.chezmoiremove` removes the runtime, `coding-agent.json` and the
-   wrapper. The MCP script removes the Claude MCP entry. The templates remove the hooks, the
+2. Run `chezmoi apply`. The unenroll script removes the runtime, `coding-agent.json` and the
+   wrapper. `.chezmoiremove` cannot remove them, because `.chezmoiignore` lists them when the
+   bundle is off (build commit 10). The MCP script removes the Claude MCP entry. The templates remove the hooks, the
    codex keys and the opencode entry.
 3. Restart the agent sessions.
 4. The vault keeps the item. A new enrollment restores it.
