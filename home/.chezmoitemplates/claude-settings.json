@@ -20,7 +20,7 @@
       "Read(/{{ .chezmoi.homeDir }}/.claude/**)",
       "Bash(playwright-cli check:*)",
       "Bash(playwright-cli run-code \"async page => {:*)"{{ if index .bundles "hindsight" }},
-      "mcp__hindsight__agent_knowledge_ingest"{{ end }}
+      "mcp__hindsight"{{ end }}
     ],
     "deny": [
       "Read(/{{ .chezmoi.homeDir }}/**/.env)",
