@@ -171,7 +171,7 @@ Decisions: #134 items 5, 6; #126 "Unenrollment"; #130 item 4.
    the timeouts of the table. The hook ownership of #73 applies without change.
 3. **MCP allow entry.** Inside the bundle gate, add
    `mcp__hindsight__agent_knowledge_ingest` to `permissions.allow` (#130, item 4). Commit 9
-   removes the old entry.
+   removes the old entry. #140 replaces this entry with `mcp__hindsight`.
 4. **MCP script.** Add `home/.chezmoiscripts/run_onchange_after_60-hindsight-mcp.sh.tmpl`. Put
    the gate value in a comment, so that the script hash changes with the gate.
    - Enrolled: `claude mcp remove --scope user hindsight`, then
@@ -383,8 +383,9 @@ already retains full sessions on WSL, so this risk is not new (#131, item 1).
   them as a credential until this is verified (#128).
 - `claude plugin uninstall` removes `~/.claude/plugins/data/hindsight-memory-hindsight/`
   (#130). Step 8 covers the case where it does not.
-- The new MCP server exposes `agent_knowledge_ingest` with the same name (#130). Check it in
-  `claude mcp get hindsight` or in the tool list after the restart.
+- The new MCP server exposes `agent_knowledge_ingest` with the same name (#130). Answered:
+  it does not. The 0.8.0 server has no tool with that name. #140 replaces the entry with
+  `mcp__hindsight`, which allows every tool of the server.
 - What Claude Code does with an installed plugin that is not in `enabledPlugins` (#130).
   Record the answer.
 - `claude -p` and `opencode run` run the hooks and the plugin (#135). `codex exec` runs trusted
