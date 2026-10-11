@@ -45,6 +45,12 @@ is "model passes through" '.model' '"sonnet"'
 is "effortLevel set when missing" '.effortLevel' "$(base .effortLevel)"
 is "owned key replaced" '.tui' "$(base .tui)"
 
+echo "== artifacts off on every machine (#146)"
+out=$(render "$SB/src" "")
+is "artifacts off on a fresh machine" '.enableArtifact' 'false'
+out=$(render "$SB/src" '{"enableArtifact":true}')
+is "/config re-enable reset by apply" '.enableArtifact' 'false'
+
 echo "== retired owned key"
 out=$(render "$SB/retired" '{"tui":"fullscreen","other":1}')
 is "retired key deleted" 'has("tui")' 'false'

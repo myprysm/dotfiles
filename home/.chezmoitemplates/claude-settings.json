@@ -147,5 +147,6 @@
   "effortLevel": "high",
   "tui": "fullscreen",
   "cleanupPeriodDays": 365,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "enableArtifact": false
 }

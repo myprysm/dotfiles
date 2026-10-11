@@ -42,7 +42,7 @@ with its own key order. Reordering here cannot match it (#82).
 {{- /* Replaced whole, or deleted when the base lacks it, so a retired key
        stays listed. settings.local.json reaches only the keys listed here: a
        key it should control must be added. */ -}}
-{{- $owned := list "$schema" "env" "permissions" "statusLine" "enabledPlugins" "extraKnownMarketplaces" "tui" "cleanupPeriodDays" "agentPushNotifEnabled" "skillOverrides" "skipWorkflowUsageWarning" -}}
+{{- $owned := list "$schema" "env" "permissions" "statusLine" "enabledPlugins" "extraKnownMarketplaces" "tui" "cleanupPeriodDays" "agentPushNotifEnabled" "skillOverrides" "skipWorkflowUsageWarning" "enableArtifact" -}}
 {{- range $owned -}}
 {{-   if hasKey $base . -}}
 {{-     $_ := set $live . (get $base .) -}}
