@@ -104,6 +104,17 @@ printf 'n\ne@x\nhttps://b\n/s\ngo\n\n' | init "$CFG"
 check "no hindsight bundle: not asked" grep -qx '    bundleList = \["go"\]' "$CFG"
 check "no hindsight bundle: no key" test -z "$(grep hindsightPaths "$CFG")"
 
+echo "== managed targets follow the bundle (#142)"
+managed() { # managed <hindsight bundle>
+  touch "$SB/empty.toml"
+  HOME="$SB/home" chezmoi managed --source "$REPO_ROOT/home" --config "$SB/empty.toml" --override-data \
+    "{\"secretsDir\":\"/nonexistent\",\"bundles\":{\"hindsight\":$1,\"ops\":false,\"work\":false,\"ai\":false,\"rust\":false}}"
+}
+off=$(managed false)
+check "off: chezmoi managed lists targets" test -n "$off"
+check "off: nothing under ~/.hindsight" test -z "$(grep -E '^\.hindsight(/|$)' <<<"$off")"
+check "on: coding-agent.json managed" grep -qx '.hindsight/coding-agent.json' <(managed true)
+
 echo
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
