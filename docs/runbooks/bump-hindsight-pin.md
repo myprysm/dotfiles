@@ -3,7 +3,9 @@
 Use this to move the hindsight-coding-agents runtime to a new npm version. The hindsight pin is
 `home/.chezmoidata/hindsight.yaml`: the version and the sha256 of the registry tarball. All
 enrolled machines use this one pin (#129). Only the operator changes it. Bump only for a
-reason, for example a bug fix or a feature. Nothing watches npm.
+reason, for example a bug fix or a feature. Renovate shows a new npm version on the Dependency
+Dashboard (#147). It opens no PR until the operator approves one. Its PR changes only
+`version`: Step 1 gives the sha256.
 
 Do the six checks of #129 before the pin commit. Do the bump in its own PR.
 
