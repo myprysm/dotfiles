@@ -1,0 +1,57 @@
+name: Renovate
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: Dry run mode ("none" performs a real run)
+        type: choice
+        options:
+          - none
+          - extract
+          - lookup
+          - full
+        default: none
+      logLevel:
+        description: Log level
+        type: choice
+        options:
+          - info
+          - debug
+        default: info
+  schedule:
+    - cron: "0 5 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: renovatebot/github-action@a63d9a7bc606f7336fd20b47f2f32259a35e6213 # v46.3.9
+        with:
+          token: ${{ secrets.RENOVATE_TOKEN }}
+        env:
+          LOG_LEVEL: ${{ inputs.logLevel || 'info' }}
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun != 'none' && inputs.dryRun || '' }}
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_GIT_AUTHOR: ${{ vars.RENOVATE_GIT_AUTHOR }}
+      - name: Notify ntfy on failure
+        if: failure()
+        env:
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -sS \
+            -H "Authorization: Bearer ${NTFY_TOKEN}" \
+            -H "Title: Renovate failed: ${{ github.repository }}" \
+            -H "Priority: 4" \
+            -H "Click: ${RUN_URL}" \
+            -d "Renovate workflow run ${{ github.run_id }} failed. Open the run for logs." \
+            https://ntfy.nbp.myprysm.fr/gha-dotfiles

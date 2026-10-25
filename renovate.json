@@ -1,0 +1,93 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":configMigration",
+    ":separateMultipleMajorReleases",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "timezone": "Europe/Paris",
+  "labels": ["dependencies"],
+  "dependencyDashboardOSVVulnerabilitySummary": "unresolved",
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "addLabels": ["security"]
+  },
+  "rebaseWhen": "behind-base-branch",
+  "postUpdateOptions": ["gomodTidy"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "chezmoi archive externals pinned by commit; the branch comes from the `# renovate: branch=` line above each url",
+      "managerFilePatterns": ["/^home/\\.chezmoiexternal\\.toml\\.tmpl$/"],
+      "matchStrings": [
+        "# renovate: branch=(?<currentValue>\\S+)\\n\\s+url = \"https://github\\.com/(?<depName>[^/]+/[^/]+)/archive/(?<currentDigest>[0-9a-f]{40})\\.tar\\.gz\""
+      ],
+      "datasourceTemplate": "git-refs",
+      "packageNameTemplate": "https://github.com/{{{depName}}}"
+    },
+    {
+      "customType": "regex",
+      "description": "kubeone pinned-release download",
+      "managerFilePatterns": ["/^home/\\.chezmoiscripts/run_once_after_23-kubeone\\.sh\\.tmpl$/"],
+      "matchStrings": ["KUBEONE_VERSION=\"(?<currentValue>[\\d.]+)\""],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "kubermatic/kubeone",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "uv tool pins (the `package:` field only; the `with:` pins mirror the work playbook)",
+      "managerFilePatterns": ["/^home/\\.chezmoidata/packages\\.yaml$/"],
+      "matchStrings": ["package: \"(?<depName>[\\w.-]+)==(?<currentValue>[\\d.]+)\""],
+      "datasourceTemplate": "pypi"
+    },
+    {
+      "customType": "regex",
+      "description": "hindsight-coding-agents npm pin",
+      "managerFilePatterns": ["/^home/\\.chezmoidata/hindsight\\.yaml$/"],
+      "matchStrings": ["version: \"(?<currentValue>[\\d.]+)\""],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "@vectorize-io/hindsight-coding-agents"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Flag major updates and hold them for approval on the Dependency Dashboard",
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["breaking"],
+      "dependencyDashboardApproval": true,
+      "prBodyNotes": [
+        ":warning: **Major update** — read the upstream changelog for breaking changes before merging."
+      ]
+    },
+    {
+      "description": "One pull request for all GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "addLabels": ["ci"]
+    },
+    {
+      "description": "kubeone drives the kubeone cluster in the infrastructure repo: the CLI moves with that cluster, not on its own",
+      "matchPackageNames": ["kubermatic/kubeone"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "hindsight pin: the bump runbook's six checks run before the pin commit, and Renovate cannot recompute the tarball sha256",
+      "matchPackageNames": ["@vectorize-io/hindsight-coding-agents"],
+      "dependencyDashboardApproval": true,
+      "prBodyNotes": [
+        "**Manual steps required before merge:** follow `docs/runbooks/bump-hindsight-pin.md`. This PR changes only `version`; set `sha256` from Step 1 and run the six checks."
+      ]
+    },
+    {
+      "description": "Skills pin: only the operator moves it, through its runbook (symlinks, .chezmoiremove, collision check)",
+      "matchDepNames": ["mattpocock/skills"],
+      "dependencyDashboardApproval": true,
+      "prBodyNotes": [
+        "**Manual steps required before merge:** follow `docs/runbooks/bump-skill-pin.md`. This PR changes only the sha; update the subject comment, the skill symlinks and `.chezmoiremove`, and run the collision check."
+      ]
+    }
+  ]
+}
