@@ -15,6 +15,7 @@
     "addLabels": ["security"]
   },
   "rebaseWhen": "behind-base-branch",
+  "semanticCommits": "enabled",
   "postUpdateOptions": ["gomodTidy"],
   "customManagers": [
     {
@@ -63,9 +64,37 @@
       ]
     },
     {
-      "description": "One pull request for all GitHub Actions updates",
+      "description": "Commit scopes follow the AGENTS.md list, which allows one scope per commit",
+      "matchFileNames": ["go.mod", ".github/workflows/release-secret-guard.yml"],
+      "semanticCommitScope": "secret-guard"
+    },
+    {
+      "matchFileNames": ["home/.chezmoidata/packages.yaml", "home/.chezmoiscripts/run_once_after_23-kubeone.sh.tmpl"],
+      "semanticCommitScope": "packages"
+    },
+    {
+      "matchFileNames": ["home/.chezmoiexternal.toml.tmpl"],
+      "semanticCommitScope": "externals"
+    },
+    {
+      "matchFileNames": ["home/.chezmoidata/hindsight.yaml"],
+      "semanticCommitScope": "hindsight"
+    },
+    {
+      "matchFileNames": [".github/workflows/renovate.yml"],
+      "semanticCommitScope": "renovate"
+    },
+    {
+      "description": "GitHub Actions: one pull request per workflow file, so a commit never spans two scopes",
       "matchManagers": ["github-actions"],
-      "groupName": "github-actions",
+      "matchFileNames": [".github/workflows/release-secret-guard.yml"],
+      "groupName": "github-actions secret-guard",
+      "addLabels": ["ci"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchFileNames": [".github/workflows/renovate.yml"],
+      "groupName": "github-actions renovate",
       "addLabels": ["ci"]
     },
     {
@@ -84,6 +113,7 @@
     {
       "description": "Skills pin: only the operator moves it, through its runbook (symlinks, .chezmoiremove, collision check)",
       "matchDepNames": ["mattpocock/skills"],
+      "semanticCommitScope": "skills",
       "dependencyDashboardApproval": true,
       "prBodyNotes": [
         "**Manual steps required before merge:** follow `docs/runbooks/bump-skill-pin.md`. This PR changes only the sha; update the subject comment, the skill symlinks and `.chezmoiremove`, and run the collision check."
