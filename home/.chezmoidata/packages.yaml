@@ -66,7 +66,7 @@ packages:
       # ansible lands on the Mac too, which has never had it but does hold two
       # Ansible Vault password files (mac.md §3.3) — secrets with no binary.
       uvTools:
-        - package: "ansible==13.5.0"     # #17's pin: a cleanup must not double as a major upgrade
+        - package: "ansible==13.8.0"     # #17's pin: a cleanup must not double as a major upgrade
           python: "3.13"
           # Libraries the modules and inventory plugins import, not deps of ansible
           # itself. `pip` is here because this env is what /etc/ansible/hosts names as
