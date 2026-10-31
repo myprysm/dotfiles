@@ -145,7 +145,7 @@ func decide(src string) (category, []string) {
 			return c.verdict()
 		}
 		if matchAny(parseFailDangerRes, src) {
-			c.deny(catBypass, "the command parses as neither zsh nor bash and its text matches a bypass, recursive or transfer pattern: "+err.Error())
+			c.deny(catUnparsable, "the command parses as neither zsh nor bash and its text matches a bypass, recursive or transfer pattern: "+err.Error())
 			return c.verdict()
 		}
 		return catUndecided, []string{"the command parses as neither zsh nor bash: " + err.Error()}

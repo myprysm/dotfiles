@@ -17,6 +17,7 @@ const (
 	catBypass
 	catTransfer
 	catSecret
+	catUnparsable
 	catNone
 	// catUndecided is not a verdict. It means this binary could not read the
 	// command at all, so the caller must decide - see decide() for the one
@@ -34,6 +35,8 @@ func (c category) String() string {
 		return "transfer"
 	case catSecret:
 		return "secret"
+	case catUnparsable:
+		return "unparsable"
 	}
 	return "none"
 }
