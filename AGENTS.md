@@ -10,7 +10,8 @@ A comment records a trap the code cannot show: external behaviour that is wrong 
 undocumented, a failure that cost a session to find, or a shape that looks wrong on purpose.
 Its length follows the trap. A line that restates the code, a banner, or history ("was X, now
 Y") is not a trap. A session that edits a file trims the comments in that file that fail this
-test; nobody sweeps the tree for them.
+test; nobody sweeps the tree for them. That trim is part of the edit, not an extra cleanup
+under the global scope rule.
 
 A comment must not assert the current state of code it is not adjacent to. Name the trap,
 not the inventory. Comments saying what another file now did, or that a list below them was
@@ -20,9 +21,9 @@ code under it moved.
 A comment resting on a decision cites that decision's ticket (`#<n>`).
 
 That citation is only worth carrying if something reads it, so: **a session that amends or
-reverses an earlier decision runs `git grep '#<n>'` and reviews every hit before closing.**
-This is the control. #21 measured a change, reverted it, and never looked for who was citing
-it, so the comment asserting the reverted behaviour stayed shipped.
+reverses an earlier decision runs `git grep '#<n>'` and updates every hit that the change made
+stale before closing.** This is the control. #21 measured a change, reverted it, and never
+looked for who was citing it, so the comment asserting the reverted behaviour stayed shipped.
 
 ## Commits
 
