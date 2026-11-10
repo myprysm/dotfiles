@@ -88,7 +88,7 @@ is "Stop hook" 'c["hooks"]["Stop"]' "[{\"hooks\": [{\"command\": \"$HH codex-sto
 is "session_start trust hash" "c['hooks']['state']['$CFG:session_start:0:0']['trusted_hash']" "$(hash_of session_start "" "$HH codex-sessionstart-hook.js" 30)"
 is "user_prompt_submit trust hash" "c['hooks']['state']['$CFG:user_prompt_submit:0:0']['trusted_hash']" "$(hash_of user_prompt_submit "" "$HH codex-hook.js" 30)"
 is "stop trust hash" "c['hooks']['state']['$CFG:stop:0:0']['trusted_hash']" "$(hash_of stop "" "$HH codex-stop-hook.js" 60)"
-is "MCP server" 'c["mcp_servers"]["hindsight"]' "{\"args\": [\"$SB/home/.hindsight/coding-agents/dist/mcp-server.js\"], \"command\": \"node\", \"env\": {\"HINDSIGHT_MCP_HARNESS\": \"codex\"}}"
+is "MCP server" 'c["mcp_servers"]["hindsight"]' "{\"args\": [\"$SB/home/.hindsight/coding-agents/dist/mcp-server.js\"], \"command\": \"node\", \"disabled_tools\": [\"hindsight_capture_initiative\"], \"env\": {\"HINDSIGHT_MCP_HARNESS\": \"codex\"}}"
 is "pre_tool_use unchanged" "c['hooks']['state']['$KEY']['trusted_hash']" "$want_hash"
 is "no features key" '"features" in c' 'false'
 

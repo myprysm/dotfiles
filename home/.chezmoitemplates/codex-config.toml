@@ -38,4 +38,5 @@ timeout = 60
 command = "node"
 args = ["{{ .chezmoi.homeDir }}/.hindsight/coding-agents/dist/mcp-server.js"]
 env = { HINDSIGHT_MCP_HARNESS = "codex" }
+disabled_tools = ["hindsight_capture_initiative"]
 {{- end }}
