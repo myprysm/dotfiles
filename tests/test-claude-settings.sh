@@ -91,11 +91,13 @@ is "on: UserPromptSubmit hook" "[.hooks.UserPromptSubmit[].hooks[] | select(.com
 is "on: Stop hook" "[.hooks.Stop[].hooks[] | select(.command == \"$HH claude-stop-hook.js\") | .timeout]" '[60]'
 is "on: mod check kept" "[.hooks.SessionStart[].hooks[].command | select(. == \"$MOD_CHECK\")] | length" '1'
 is "on: MCP allow entry for the whole server" '[.permissions.allow[] | select(startswith("mcp__hindsight"))]' '["mcp__hindsight"]'
+is "on: capture_initiative denied" '[.permissions.deny[] | select(startswith("mcp__hindsight"))]' '["mcp__hindsight__hindsight_capture_initiative"]'
 out=$(render_bundle true '{"permissions":{"allow":["mcp__hindsight__agent_knowledge_ingest"]}}')
 is "on: commit 6 entry replaced" '[.permissions.allow[] | select(startswith("mcp__hindsight"))]' '["mcp__hindsight"]'
 out=$(render_bundle false)
 is "off: no hindsight hook" '[.. | strings | select(test("hindsight-hook"))] | length' '0'
 is "off: no MCP allow entry" '[.permissions.allow[] | select(startswith("mcp__hindsight"))] | length' '0'
+is "off: no MCP deny entry" '[.permissions.deny[] | select(startswith("mcp__hindsight"))] | length' '0'
 out=$(printf '' | HOME="$SB/home" chezmoi execute-template --source "$SB/src" \
   --override-data '{"secretsDir":"/nonexistent","bundles":{}}' --with-stdin "$TPL")
 is "key absent: no hindsight hook" '[.. | strings | select(test("hindsight-hook"))] | length' '0'

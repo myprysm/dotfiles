@@ -50,7 +50,8 @@
       "Read(/{{ .chezmoi.homeDir }}/.lesshst)",
       "Read(/{{ .chezmoi.homeDir }}/.viminfo)",
       "Read(/{{ .chezmoi.homeDir }}/.local/share/mcfly/**)",
-      "Read(/{{ .chezmoi.homeDir }}/Library/Application Support/McFly/**)"
+      "Read(/{{ .chezmoi.homeDir }}/Library/Application Support/McFly/**)"{{ if index .bundles "hindsight" }},
+      "mcp__hindsight__hindsight_capture_initiative"{{ end }}
     ],
     "defaultMode": "auto"
   },
