@@ -48,6 +48,8 @@ is "gitIngest" '.gitIngest' '"none"'
 is "codebaseSurvey" '.codebaseSurvey' 'false'
 is "autoUpdate" '.autoUpdate' 'false'
 is "autoInject: recall" '.autoInject' '"recall"'
+is "pageTriggerType: manual" '.pageTriggerType' '"manual"'
+is "toolGuideExtra forbids capture" '.toolGuideExtra | test("Never call hindsight_capture_initiative")' 'true'
 is "no harnesses section" 'has("harnesses")' 'false'
 
 echo "== hindsightPaths"

@@ -37,6 +37,8 @@ closed (#141). A "~" stays as typed: the runtime expands it in optInPaths.
 {{- $_ := set $live "gitIngest" "none" -}}
 {{- $_ := set $live "codebaseSurvey" false -}}
 {{- $_ := set $live "autoUpdate" false -}}
+{{- $_ := set $live "pageTriggerType" "manual" -}}
+{{- $_ := set $live "toolGuideExtra" "Never call hindsight_capture_initiative, and never create a knowledge page or a mental model, even after the user approves a plan. The operator curates the page set by hand; its backlog is the hindsight-mental-models map in ~/projects/myprysm/infrastructure/.wayfinder/. If a topic looks durable enough for its own page, say so in the conversation: give a title, the question the page would answer, and why the topic will last. The operator decides." -}}
 {{- /* The default "reflect" timed out at 20 s on every session against this
        server and cost about 27 s in the prompt hook before its recall fallback
        (#127). */ -}}
