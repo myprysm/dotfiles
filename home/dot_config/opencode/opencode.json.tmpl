@@ -8,5 +8,8 @@
   ]{{ if index .bundles "hindsight" }},
   "plugin": [
     "{{ .chezmoi.homeDir }}/.hindsight/coding-agents"
-  ]{{ end }}
+  ],
+  "permission": {
+    "hindsight_capture_initiative": "deny"
+  }{{ end }}
 }
