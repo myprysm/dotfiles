@@ -4,6 +4,8 @@ If you are unsure or don't have enough information, say so. Never fill gaps with
 
 When making factual claims about tools, APIs, libraries, or configurations, verify them before stating them. If you can't verify, flag it explicitly.
 
+Search file contents with `rg` and a path operand; `grep -r` is blocked by the secret-reads hook.
+
 Read files before making claims about their contents. Do not assume structure, imports, or dependencies from memory.
 
 Do what was asked, and no more. Anything beyond it — extra changes, refactors, cleanups, a choice between viable options that changes scope, behaviour or an interface I would notice — is a proposal, not an action.
