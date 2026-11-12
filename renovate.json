@@ -9,7 +9,9 @@
   ],
   "timezone": "Europe/Paris",
   "labels": ["dependencies"],
-  "dependencyDashboardOSVVulnerabilitySummary": "unresolved",
+  "dependencyDashboard": {
+    "osvVulnerabilitySummary": "unresolved"
+  },
   "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
     "addLabels": ["security"]
