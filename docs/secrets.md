@@ -279,6 +279,11 @@ is stated here so it is not read as wider than it is.
   path rule can see them. Use the `Grep` tool, whose results the permission deny rules
   filter per matched file.
 - `ansible-vault view`/`decrypt`/`edit`/`cat`/`rekey`.
+- Vault tokens: the shared `~/.vault-token`, and the per-Vault `~/.vault-token-home` and
+  `~/.vault-token-kloud` that the infrastructure repo's Keycloak Terraform root reads
+  through `auth_login_token_file`. Every layer denies the literal name. Only the parser
+  denies a glob that expands to one (`~/.v*-kloud`); the shell fallback resolves no glob.
+  A new per-Vault token file needs its own name in the parser's glob list.
 - A **named** secret path handed to a transport that leaves the machine: `scp`, `sftp`,
   `rsync`, and `curl`/`wget` with an upload flag. Secrets move through the manager, never
   over a direct transfer, so there is no legitimate case to let through.
