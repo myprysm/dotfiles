@@ -101,6 +101,11 @@
 {"expect": "deny", "why": "suite", "cmd": "cat .vault-token", "source": "suite"}
 {"expect": "deny", "why": "suite", "cmd": "head /home/x/prod.vault", "source": "suite"}
 {"expect": "deny", "why": "suite", "cmd": "cat \"$HOME/.vault-token\"", "source": "suite"}
+{"expect": "deny", "why": "suite", "cmd": "cat ~/.vault-token-home", "source": "suite"}
+{"expect": "deny", "why": "suite", "cmd": "cat ~/.vault-token-kloud", "source": "suite"}
+{"expect": "deny", "why": "suite", "cmd": "cat ~/.vault-token-*", "source": "suite"}
+{"expect": "deny", "why": "suite", "cmd": "cat ~/.v*-kloud", "source": "suite"}
+{"expect": "deny", "why": "suite", "cmd": "cat ~/.*token-home", "source": "suite"}
 {"expect": "allow", "why": "suite", "cmd": "op item get ref --vault Employee --format json | jq -r '.vault.name'", "source": "suite"}
 {"expect": "allow", "why": "suite", "cmd": "op item list --format json | jq '.[].vault.id'", "source": "suite"}
 {"expect": "allow", "why": "suite", "cmd": "op item get ref --format json | jq -r '.vault'", "source": "suite"}

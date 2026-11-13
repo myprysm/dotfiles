@@ -42,7 +42,8 @@ var globCandidates = map[int][]globCandidate{
 		{name: "kubeconfig"}, {name: "talosconfig"},
 		{name: "terraform.tfstate"}, {name: "prod.tfstate"}, {name: "dev.tfstate"},
 		{name: "vault.yml", stemKey: true}, {name: "vault.yaml", stemKey: true},
-		{name: ".vault-token"}, {name: "secrets.vault"}, {name: ".secrets"},
+		{name: ".vault-token"}, {name: ".vault-token-home"}, {name: ".vault-token-kloud"},
+		{name: "secrets.vault"}, {name: ".secrets"},
 	},
 	2: {
 		{name: ".kube/config"}, {name: ".talos/config"}, {name: ".secrets/token"},

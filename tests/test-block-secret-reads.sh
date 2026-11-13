@@ -164,6 +164,17 @@ probe deny 'cat ~/.vault-token'
 probe deny 'cat .vault-token'
 probe deny 'head /home/x/prod.vault'
 probe deny 'cat "$HOME/.vault-token"'
+probe deny 'cat ~/.vault-token-home'
+probe deny 'cat ~/.vault-token-kloud'
+probe deny 'cat ~/.vault-token-*'
+probe_tool Read deny '/home/x/.vault-token-home'
+probe_tool Grep deny '/home/x/.vault-token-kloud'
+# The floor resolves no glob, so a pattern that never spells `.vault` is only
+# the parser's to catch.
+if [ "$GUARD_LAYER" = parser ]; then
+  probe deny 'cat ~/.v*-kloud'
+  probe deny 'cat ~/.*token-home'
+fi
 
 echo
 echo "== a secret manager's own JSON field is not a filename (#69)"
