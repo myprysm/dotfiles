@@ -47,6 +47,8 @@ here in the same commit. A change that spans two scopes is two commits.
 - `repo` — the repo as a whole
 - `opencode` — `~/.config/opencode`
 - `codex` — `~/.codex` config and global instructions
+- `user-rules` — the Operator's rules in `~/.agents/user_rules` and the machine-local data
+  they read (`plusAddressBases` in `.chezmoi.toml.tmpl`)
 - `skills` — the skill pin, its `.chezmoiexternal` entry, the shared-skill symlinks in
   `~/.agents/skills` and `~/.claude/skills`, and the bump runbook
 - `hindsight` — the `hindsight` bundle, the `~/.hindsight` config, the hindsight pin and its

@@ -1,0 +1,15 @@
+# Test email addresses
+
+Never ask me to create a new mailbox, email account, address or alias for a test, a drill or a throwaway user. Use plus-addressing of my own address:
+{{ $bases := get . "plusAddressBases" -}}
+{{ if $bases -}}
+{{ range splitList "," $bases }}{{ $parts := splitList "@" (trim .) }}
+- `{{ index $parts 0 }}+<purpose>@{{ index $parts 1 }}`
+{{- end }}
+{{- else }}
+- This machine has no `plusAddressBases` in its chezmoi data. Ask me for my address.
+{{- end }}
+
+If a service refuses a `+` address, stop and ask me. Never fall back to a new address.
+
+Why: a new mailbox or alias is costly to create and to delete, and the number I can hold is limited. A mailbox that still holds mail cannot be deleted cleanly.
