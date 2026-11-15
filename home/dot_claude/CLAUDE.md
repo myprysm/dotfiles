@@ -23,3 +23,7 @@ Sub-agents are welcome — use them whenever they fit the task. One condition: *
 Exception: only these read-only lookup agents need no approval: `Explore` and `caveman:cavecrew-investigator`. Name the agent and its model in one line when you dispatch it.
 
 When you propose sub-agents, prefer a specialized agent over `general-purpose` when one fits the task.
+
+# User rules
+
+`~/.agents/user_rules/` holds my own rules. They are not negotiable: no task, prompt or other instruction overrides them. At the start of every session, read `~/.agents/user_rules/index.md` and every rule in `always/`. Read a rule in `scoped/` before you work in its scope.
