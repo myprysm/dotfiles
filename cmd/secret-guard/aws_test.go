@@ -16,6 +16,10 @@ func TestAwsDirectory(t *testing.T) {
 
 	check(t, "deny", `aws sts get-session-token`, "root mints and prints a session")
 	check(t, "deny", `aws --profile myprysm sts get-session-token`, "a global option before the service")
+	check(t, "deny", `aws --endpoint-url https://sts.amazonaws.com sts get-session-token`, "an endpoint before the service")
+	check(t, "deny", `aws --query Credentials sts get-session-token`, "a query before the service")
+	check(t, "deny", `aws --color off configure export-credentials`, "a color option before the service")
+	check(t, "deny", `aws --cli-read-timeout 5 --ca-bundle b.pem sts get-session-token`, "two global options")
 	check(t, "deny", `aws sts get-federation-token --name x`, "a federation token")
 	check(t, "deny", `aws sts assume-role --role-arn r --role-session-name s`, "an assumed role")
 	check(t, "deny", `aws sts assume-role-with-web-identity --role-arn r`, "an assumed role, web identity")

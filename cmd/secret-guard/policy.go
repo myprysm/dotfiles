@@ -462,7 +462,9 @@ var (
 	// `kubectl -n foo config view --raw` names no subcommand this recognises.
 	globalOptArg = set(`-n --namespace --context --cluster --user --kubeconfig
 		--as --as-group --server --token --profile --region --output -o
-		--chdir --nodes --endpoints --talosconfig --config --log-level`)
+		--chdir --nodes --endpoints --talosconfig --config --log-level
+		--endpoint-url --query --ca-bundle --cli-read-timeout --cli-connect-timeout
+		--color --cli-binary-format`)
 
 	// A secret reaching a variable is dataflow that no static split can follow,
 	// so these deny on their arguments alone.
