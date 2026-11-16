@@ -129,6 +129,7 @@ var contextFreeRes = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)\.tfstate([^a-z0-9]|$)`),
 	regexp.MustCompile(`(?i)(^|[^a-z0-9_])vault\.ya?ml([^a-z0-9]|$)`),
 	regexp.MustCompile(`(?i)\.hindsight(/|$)`),
+	regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.aws(/|$)`),
 }
 
 // contextualRes DO depend on the neighbouring character: a quote in front of
@@ -405,6 +406,7 @@ var (
 		regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.kube(/|$)`),
 		regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.talos(/|$)`),
 		regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.hindsight(/|$)`),
+		regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.aws(/|$)`),
 		regexp.MustCompile(`(?i)(^|[a-z0-9_/~\x00[:space:]-])\.secrets(/|$)`),
 	}
 

@@ -52,7 +52,7 @@ var globCandidates = map[int][]globCandidate{
 
 // globSecretDirs are directories secret as a whole, so a pattern that names the
 // directory itself in any segment names every file under it.
-var globSecretDirs = []string{".hindsight"}
+var globSecretDirs = []string{".hindsight", ".aws"}
 
 // minGlobLiterals rejects a pattern too vague to name anything in particular.
 // `cat *` and `grep x *` would otherwise match `kubeconfig` and be refused,
