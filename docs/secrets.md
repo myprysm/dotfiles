@@ -46,7 +46,8 @@
 - **Vaulted** (durable, non-reissuable): SSH private keys, `~/.ssh/config`,
   Ansible Vault password files, triaged loose env files.
 - **Re-auth instead** (ephemeral / re-issuable): gh, docker, npm/composer, vault-token,
-  argocd, cloudflared, cloud CLIs, the managers' own state.
+  argocd, cloudflared, cloud CLIs (the `aws login` session cache in `~/.aws/login/cache/`
+  among them), the managers' own state.
 - **Never vaulted**: GPG commit-signing keys — see rule 5. They are durable and not
   reissuable in the ordinary sense, so they would belong in the first class on those
   criteria alone; per-machine ownership is what takes them out of it, and the vault
@@ -284,6 +285,11 @@ is stated here so it is not read as wider than it is.
   through `auth_login_token_file`. Every layer denies the literal name. Only the parser
   denies a glob that expands to one (`~/.v*-kloud`); the shell fallback resolves no glob.
   A new per-Vault token file needs its own name in the parser's glob list.
+- The whole `~/.aws/` directory. `aws login` caches a root session in
+  `~/.aws/login/cache/`, and `~/.aws/credentials` and `~/.aws/sso/cache/` hold keys and
+  tokens. `~/.aws/config` holds no secret but is denied with the directory: an agent
+  reads it through `aws configure list-profiles` and `aws configure get`. chezmoi does
+  not manage `~/.aws/config`, because `aws login` rewrites the profile.
 - A **named** secret path handed to a transport that leaves the machine: `scp`, `sftp`,
   `rsync`, and `curl`/`wget` with an upload flag. Secrets move through the manager, never
   over a direct transfer, so there is no legitimate case to let through.
