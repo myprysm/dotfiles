@@ -510,6 +510,14 @@ var (
 		// env` prints every variable the .envrc defined. Confirmed against a
 		// canary .envrc.
 		"aws configure export-credentials",
+		// These mint new credentials and print them. As the account root,
+		// `aws sts get-session-token` prints a fresh key pair and token.
+		"aws sts get-session-token",
+		"aws sts get-federation-token",
+		"aws sts assume-role",
+		"aws sso get-role-credentials",
+		"aws ecr get-login-password",
+		"aws ecr-public get-login-password",
 		"gcloud auth print-access-token",
 		"gcloud auth print-identity-token",
 		"op document get",

@@ -14,6 +14,15 @@ func TestAwsDirectory(t *testing.T) {
 	check(t, "deny", `tar czf - ~/.aws`, "an archive of the bare directory")
 	check(t, "deny", `cat ~/.aws`, "the bare directory name")
 
+	check(t, "deny", `aws sts get-session-token`, "root mints and prints a session")
+	check(t, "deny", `aws --profile myprysm sts get-session-token`, "a global option before the service")
+	check(t, "deny", `aws sts get-federation-token --name x`, "a federation token")
+	check(t, "deny", `aws sts assume-role --role-arn r --role-session-name s`, "an assumed role")
+	check(t, "deny", `aws sts assume-role-with-web-identity --role-arn r`, "an assumed role, web identity")
+	check(t, "deny", `aws sso get-role-credentials --role-name r`, "SSO role credentials")
+	check(t, "deny", `aws ecr get-login-password`, "a registry password")
+	check(t, "deny", `aws ecr-public get-login-password`, "a public registry password")
+
 	check(t, "allow", `aws sts get-caller-identity`, "an AWS call that names no file")
 	check(t, "allow", `aws configure list-profiles`, "listing profiles names no file")
 	check(t, "allow", `cat aws/main.tf`, "a Terraform root named aws")
