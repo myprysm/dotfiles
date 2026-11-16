@@ -469,6 +469,20 @@ probe_tool Grep deny '/home/u/.hindsight'
 probe_tool Read allow '/home/u/.claude/settings.json.hindsight-backup'
 
 echo
+echo "== the whole of ~/.aws is secret: aws login caches a root session there"
+probe deny 'cat ~/.aws/credentials'
+probe deny 'cat ~/.aws/login/cache/abc.json'
+probe deny 'cat ~/.aws/sso/cache/abc.json'
+probe deny 'cat ~/.aws/config'
+probe allow 'aws sts get-caller-identity'
+probe allow 'cat aws/main.tf'
+probe_tool Read deny '/home/u/.aws/credentials'
+probe_tool Read deny '/home/u/.aws/login/cache/abc.json'
+probe_tool Read deny '/home/u/.aws/sso/cache/abc.json'
+probe_tool Grep deny '/home/u/.aws'
+probe_tool Read allow '/home/u/projects/infrastructure/aws/main.tf'
+
+echo
 echo "== the .env pattern takes any prefix and several suffix segments"
 probe deny 'cat prod.env'
 probe deny 'cat local.env'
