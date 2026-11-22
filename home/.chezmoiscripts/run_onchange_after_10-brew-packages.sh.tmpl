@@ -33,6 +33,8 @@ brew bundle --file=/dev/stdin <<EOF
 {{ end -}}
 {{ range (index .packages.core .chezmoi.os).brews }}brew {{ . | quote }}
 {{ end -}}
+{{ range .packages.core.casks }}cask {{ . | quote }}
+{{ end -}}
 {{ if eq .chezmoi.os "darwin" -}}
 {{ range .packages.core.darwin.casks }}cask {{ . | quote }}
 {{ end -}}
