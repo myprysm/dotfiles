@@ -45,7 +45,7 @@ Used by `/wayfinder`. A new map is a GitHub **milestone**. It groups one **map i
 decision tickets, the spec, the implementation tickets and the PRs that serve the map. One map
 has one milestone. New maps use no sub-issues.
 
-The open maps #1, #168 and #175 keep their sub-issues. Map #168 also has the milestone
+The open maps #1 and #168 keep their sub-issues. Map #168 also has the milestone
 `dependency-manager` (#178, amendment).
 
 - **Milestone**: title = the map slug. Create it with
