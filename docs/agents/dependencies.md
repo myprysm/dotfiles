@@ -20,7 +20,7 @@ WSL first, then on the Mac (#171). The commands of the Safe-to-land and Verify c
 |---|---|---|---|---|---|
 | Go module | `go.mod`, `go.sum` (indirect lines too). Manager `gomod`. | `secret-guard` | [Go module check](#go-module-check). A move of the `go` directive makes the PR non-routine. | Nobody. Only a secret-guard release reaches the machines. The operator decides the release. | No machine effect. If an advisory drove the bump, the report says "release needed to reach machines". |
 | GitHub Action | `.github/workflows/release-secret-guard.yml`, `.github/workflows/renovate.yml`. Manager `github-actions`. One PR for each workflow file. | `secret-guard` for `release-secret-guard.yml`, `renovate` for `renovate.yml` | [GitHub Action check](#github-action-check). | GitHub, on the next run of the workflow. | No machine effect. The next run of the workflow (`gh run list`). The report says "pending". It does not block. |
-| chezmoi external (digest) | `home/.chezmoiexternal.toml.tmpl`, any archive entry except `.local/share/mattpocock-skills`. Manager `regex` (datasource `git-refs`). | `externals` | [External check](#external-check). | The apply pass: the URL changes, so `chezmoi apply` downloads the archive. | `chezmoi diff` is empty after the apply. `zsh -i -c exit` gives no error. |
+| chezmoi external (digest) | `home/.chezmoiexternal.toml.tmpl`, any archive entry except `.local/share/mattpocock-skills`. Manager `regex` (datasource `git-refs`). | `externals` | [External check](#external-check). | The apply pass: the URL changes, so `chezmoi apply` downloads the archive. | `chezmoi diff` is empty after the apply. `zsh -i -c exit` gives no error. For `.vim_runtime`: `vim -es -c 'qa!'` exits 0. |
 | uv pin | `home/.chezmoidata/packages.yaml`, the `package: "<name>==<version>"` field of a `uvTools` record. Manager `regex` (datasource `pypi`). | `packages` | [uv check](#uv-check). The report names a conflict with the `boto3` and `pydo` `with:` pins (P2). A major stays on the Dashboard. | The apply pass: `run_onchange_after_24-uv-tools.sh` runs again. Only where the `ops` bundle is on. | `<exe> --version` gives the pinned version. "Not concerned" where `ops` is off. |
 | kubeone | `home/.chezmoiscripts/run_once_after_23-kubeone.sh.tmpl`, the `KUBEONE_VERSION` line. Manager `regex` (datasource `github-releases`). Dashboard gate. | `packages` | [kubeone check](#kubeone-check). If the version differs from the infrastructure repo (P1), the agent holds the PR. | The apply pass: the script content changes, so `run_once` runs again. Only where the `ops` bundle is on. | `kubeone version` gives `KUBEONE_VERSION`. "Not concerned" where `ops` is off. |
 | `renovate.json` | `renovate.json`. The config migration PR (branch `renovate/migrate-config`). | `renovate` | [Renovate config check](#renovate-config-check). | Renovate, on its next run. | No machine effect. The next Renovate run is green. The report says "pending". It does not block. |
@@ -277,7 +277,22 @@ rm -rf "$SCR"
 
 An error, or a clearly slower startup, fails the check. For the `.oh-my-zsh` entry, copy
 `~/.oh-my-zsh/custom` into `$D` after the unpack: the custom plugins are externals inside
-that tree. The `.vim_runtime` entry is not loaded by zsh, so this check does not test it.
+that tree.
+
+zsh does not load the `.vim_runtime` entry. For that entry, load the new archive with the
+live vim config in a scratch `HOME`:
+
+```sh
+SCR=$(mktemp -d)
+mkdir -p "$SCR/.vim_runtime" "$SCR/.config/vim"
+curl -fsSL "https://github.com/amix/vimrc/archive/<new>.tar.gz" | tar -xz -C "$SCR/.vim_runtime" --strip-components=1
+cp ~/.vimrc "$SCR/.vimrc"
+cp -R ~/.config/vim/. "$SCR/.config/vim/"
+HOME="$SCR" vim -Nu "$SCR/.vimrc" -es -c 'qa!'; echo "exit=$?"
+rm -rf "$SCR"
+```
+
+A non-zero exit fails the check. In Ex mode (`-es`), an error in the vimrc gives exit 1.
 
 ### uv check
 
