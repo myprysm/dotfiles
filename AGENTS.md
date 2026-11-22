@@ -86,10 +86,9 @@ Two related rules, so the proposal path is not a way around them:
   Keep every technical fact. The dense style became unreadable, which is what made the
   unapproved issues costly.
 
-Open work, and the order it is taken in, live in the Notes of the wayfinder map
-(issue #1) — not in this file, and not in the ticket numbers. Read them there
-before picking anything up; the order is authoritative over the
-`wayfinder:grilling` / `wayfinder:task` labels, several of which are wrong.
+Each open map lists its next sessions in its `## Next sessions`. Work outside any map lists
+its next sessions in the `## Next sessions` of map #1. Read the right section before you pick
+anything up. Rules: `docs/agents/sessions.md` and `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
