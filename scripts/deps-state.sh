@@ -53,7 +53,7 @@ out=$(jq -rn --argjson prs "$prs" --argjson issues "$issues" '
         else
           ($l | capture("^- \\[(?<id>[^\\]]+)\\]\\(https://osv\\.dev/vulnerability/(?<id2>[^)]+)\\)( \\(fixed in [^)]*\\))?$") // null) as $m
           | if $m != null and $m.id == $m.id2 and (.stack | length) == 3
-               and ($m.id | test("^(GHSA(-[23456789cfghjmpqrvwx]{4}){3}|CVE-[0-9]{4}-[0-9]{4,})$"))
+               and ($m.id | test("^[A-Za-z0-9][A-Za-z0-9._:-]*$"))
             then .found += ["\($m.id) \(.stack[2]) \(.stack[1])"]
             else .skipped += 1 end
         end)

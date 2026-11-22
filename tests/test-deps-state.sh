@@ -171,8 +171,8 @@ echo "== advisories under ## Vulnerabilities"
 # lib/workers/repository/dependency-dashboard.ts (tag 44.257.9, commit
 # 8804e0c82adf98f566adac5cb7d7f75cf30b0163): <details> per manager, then per
 # package file, then per package, each holding "- [<osv id>](https://osv.dev/vulnerability/<osv id>)"
-# with " (fixed in <v>)" only when a fix exists. The id is the OSV id, so a Go
-# advisory can render as GO-YYYY-NNNN, which is neither GHSA nor CVE (#173).
+# with " (fixed in <v>)" only when a fix exists. The id is the OSV id, not
+# always a GHSA or CVE id: GO-YYYY-NNNN for Go, PYSEC-YYYY-NNN for PyPI.
 vuln_block() { # vuln_block <manager> <file> <package> <items>
   printf '<details><summary>%s</summary>\n<blockquote>\n\n<details><summary>%s</summary>\n<blockquote>\n\n<details><summary>%s</summary>\n<blockquote>\n\n%s\n</blockquote>\n</details>\n\n</blockquote>\n</details>\n\n</blockquote>\n</details>\n\n' "$1" "$2" "$3" "$4"; }
 VULN_HEAD='## Vulnerabilities
@@ -186,7 +186,9 @@ dashboard "$VULN_HEAD
 $(vuln_block gomod go.mod golang.org/x/net '- [GHSA-4374-p667-p6c8](https://osv.dev/vulnerability/GHSA-4374-p667-p6c8)
 - [GO-2024-2687](https://osv.dev/vulnerability/GO-2024-2687)')
 $(vuln_block regex home/.chezmoidata/packages.yaml ansible '- [CVE-2024-11079](https://osv.dev/vulnerability/CVE-2024-11079) (fixed in 10.7.0)
-- [GHSA-evil](https://example.com/GHSA-evil)')
+- [PYSEC-2024-178](https://osv.dev/vulnerability/PYSEC-2024-178)
+- [GHSA-evil](https://example.com/GHSA-evil)
+- [GO-2024-2687](https://osv.dev/vulnerability/GO-2024-9999)')
 
 ## Detected Dependencies
 "
@@ -195,11 +197,13 @@ check "valid and unparsed: exits zero" "0" "$rc"
 check "valid and unparsed: one line each, then the count" "PRs: none
 pending: none
 GHSA-4374-p667-p6c8 golang.org/x/net go.mod
+GO-2024-2687 golang.org/x/net go.mod
 CVE-2024-11079 ansible home/.chezmoidata/packages.yaml
+PYSEC-2024-178 ansible home/.chezmoidata/packages.yaml
 advisories skipped: 2 (unparsed)" "$out"
 
 dashboard "$VULN_HEAD
-$(vuln_block gomod go.mod golang.org/x/net '- [GO-2024-2687](https://osv.dev/vulnerability/GO-2024-2687)')"
+$(vuln_block gomod go.mod golang.org/x/net '- [GO-2024-2687](https://osv.dev/vulnerability/GO-2024-9999)')"
 run
 check "only unparsed: exits zero" "0" "$rc"
 check "only unparsed: none, and the count" "PRs: none
