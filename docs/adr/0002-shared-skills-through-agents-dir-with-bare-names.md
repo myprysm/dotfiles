@@ -35,3 +35,17 @@ anywhere, unless the skills are edited (#110).
 - The payload must not hold the plugin manifest. codex prefixes each skill under a plugin
   manifest with the plugin name, and it finds `.claude-plugin/plugin.json` from the symlink
   target. The external excludes `.claude-plugin/`.
+
+## Amendment: local forks
+
+A skill that needs a local edit becomes a fork. The fork is a directory in
+`home/dot_agents/skills/<name>` that holds the upstream skill at the pin plus the edit.
+`~/.claude/skills/<name>` links to `~/.agents/skills/<name>`, as for `playwright-cli`. The
+fork does not link to the payload, so the edit survives a reinstall and a pin bump. Upstream
+changes to a fork do not arrive by themselves: the bump runbook compares each fork with the
+new upstream copy. The fork keeps the upstream name.
+
+The forks are listed in `docs/runbooks/bump-skill-pin.md`, section "Forked skills".
+
+Why: who-books-nuxt #879, the `retro` skill needed an extra category in step 3, and the
+`exact` external removes an edit in the payload at each apply.
