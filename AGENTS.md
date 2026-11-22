@@ -42,7 +42,10 @@ here in the same commit. A change that spans two scopes is two commits.
 - `claude` — `~/.claude` settings, statusline, hooks, skill restore
 - `secret-guard` — the guard binary and its release
 - `externals` — `.chezmoiexternal`
-- `agents` — `AGENTS.md`, `docs/agents/`, the repo's `.claude/skills/`
+- `agents` — `AGENTS.md`, `docs/agents/`, the repo's `.claude/skills/`, except the `deps` paths
+- `deps` — the `/deps` skill, the `dependency-manager` profile in `.agents/agents/` and its
+  symlink in `.claude/agents/`, `docs/agents/dependencies.md`, `scripts/deps-*` and
+  `tests/test-deps-*`
 - `context` — `GLOSSARY.md`, `docs/adr/`
 - `repo` — the repo as a whole
 - `opencode` — `~/.config/opencode`
