@@ -35,6 +35,8 @@ while IFS= read -r -d '' f; do files+=("$f"); done < <(git ls-files -z -- home)
 # inside a formula name (python@3.13) or a sdkman id (25-tem) names a different
 # package when it moves, so it stays in the name. A `#` comment is cut first:
 # comments name pins in prose (helm@3 in helm3-pin.zsh, .zprofile).
+# The files are passed as ${files[@]+...}: under set -u, bash 3.2 (macOS) fails
+# on "${files[@]}" when the array is empty.
 scan=$(jq -cnR '
   reduce (inputs | {f: input_filename, raw: ., l: sub("(^|\\s)#.*$"; "")}) as $x
     ({f: null, top: null, hits: [], json: []};
@@ -51,16 +53,17 @@ scan=$(jq -cnR '
            .hits += [{f: $x.f, p: "secretGuard.version"}] else . end)
       | (if ($x.l | test("\"skillFolderHash\"")) then .json += [$x.f] else . end))
   | {hits, json: (.json | unique)}
-' "${files[@]}" < /dev/null) || die "cannot search the pins"
+' ${files[@]+"${files[@]}"} < /dev/null) || die "cannot search the pins"
 
 hits=$(jq -c '.hits' <<< "$scan")
+locks=$(jq -r '.json[]' <<< "$scan") || die "cannot list the lock files"
 while IFS= read -r f; do
   [ -n "$f" ] || continue
   more=$(jq -c --arg f "$f" '[paths(type == "object" and has("skillFolderHash"))
     | map(tostring) | join(".") + ".skillFolderHash" | {f: $f, p: .}]' "$f") \
     || die "cannot read $f as JSON"
-  hits=$(printf '%s\n%s\n' "$hits" "$more" | jq -cs add)
-done <<< "$(jq -r '.json[]' <<< "$scan")"
+  hits=$(printf '%s\n%s\n' "$hits" "$more" | jq -cs add) || die "cannot merge the pins of $f"
+done <<< "$locks"
 
 issues=$(gh api 'repos/{owner}/{repo}/issues?state=open&per_page=100') \
   || die "gh api issues failed"

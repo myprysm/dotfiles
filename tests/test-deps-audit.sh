@@ -17,9 +17,16 @@ pass=0; fail=0
 check() { if [ "$2" = "$3" ]; then pass=$((pass+1)); printf '  ok   %-46s %s\n' "$1" "${3%%$'\n'*}"
           else fail=$((fail+1)); printf '  FAIL %-46s\n         want [%s]\n         got  [%s]\n' "$1" "$2" "$3"; fi }
 
-# PATH is the stub dir alone: gh and jq both live in brew's bin, which also holds
-# the real gh, so a wider PATH could not prove a missing binary is refused.
-ln -s "$JQ" "$SB/bin/jq"
+# PATH is the stub dir alone: gh, jq and git all sit beside other tools in a real
+# bin dir, so a wider PATH could not prove a missing binary is refused.
+cat > "$SB/bin/jq" <<EOF
+#!$BASH
+if [ -e "$SB/jq-fail-args" ] && [ "\$*" = "\$(<"$SB/jq-fail-args")" ]; then
+  [ -e "$SB/jq-fail-out" ] && printf "%s" "\$(<"$SB/jq-fail-out")"; echo "jq: error" >&2; exit 5
+fi
+exec "$JQ" "\$@"
+EOF
+chmod +x "$SB/bin/jq"
 ln -s "$GIT" "$SB/bin/git"
 cat > "$SB/bin/gh" <<EOF
 #!$BASH
@@ -328,6 +335,11 @@ for ep in issues pulls branches; do
   run; refused "a failed $ep read"
   rm "$SB/fail-$ep"
 done
+printf '%s' "-cs add" > "$SB/jq-fail-args"; printf '[]' > "$SB/jq-fail-out"
+run; refused "a failed jq merge of the lock-file pins"
+printf '%s' "-r .json[]" > "$SB/jq-fail-args"; rm "$SB/jq-fail-out"
+run; refused "a failed jq list of the lock files"
+rm "$SB/jq-fail-args"
 printf 'not json' > "$SB/branches.json"
 run; refused "a branch read that is not JSON"
 branches
