@@ -54,6 +54,25 @@ for p in $(jq -r '.skills[]' "$NEW/.claude-plugin/plugin.json"); do
 done
 ```
 
+### Forked skills
+
+The repo keeps a local fork of some upstream skills (ADR 0002). The fork is a directory in
+`$SRC/dot_agents/skills`, not a `symlink_` entry. The forks are:
+
+- `retro` at `skills/engineering/retro`: it adds the **Agent profiles and skills** category
+  after **Information access** in step 3.
+
+The manifest diff above shows each fork as a manifest-only path. This is expected: it is not
+an added name. For each fork, compare the new upstream copy with the fork:
+
+```sh
+diff -r "$NEW/skills/engineering/retro" "$SRC/dot_agents/skills/retro"
+```
+
+The only difference must be the local addition. Copy each other upstream change into the
+fork in the same commit as the bump. If upstream removes, moves or renames the skill, the
+operator decides what happens to the fork.
+
 ## Step 3 — collision check
 
 Do the [collision check](#collision-check) with the names of the new manifest. A new
@@ -146,6 +165,9 @@ for d in ~/.agents/skills ~/.claude/skills; do
   done
 done | grep -xE "$names"
 ```
+
+At a bump, this command also prints each [forked skill](#forked-skills), in both dirs. A fork
+is not a collision.
 
 Each command prints nothing when there is no new collision. The agent versions that #113
 checked are Claude Code 2.1.289, codex 0.160 and opencode 1.18.34.
