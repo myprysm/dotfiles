@@ -1,0 +1,1 @@
+../../.agents/agents/dependency-manager.md
