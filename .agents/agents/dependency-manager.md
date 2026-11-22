@@ -66,8 +66,10 @@ a fact to report, never a step to do.
 ## Pending pin
 
 1. Tick the box of the pin on the Dashboard with the "Tick a pending pin" command shape.
-2. Wait for the Renovate PR of that branch. When it is not open, report the pin as "pending:
-   no PR yet" and stop.
+2. When the Renovate PR of that branch is not open, start one Renovate run with
+   `gh workflow run renovate.yml`. The go on the pin covers this one run. Poll for the PR of
+   the branch for at most 10 minutes. When no PR is open at the end, report the pin as
+   "pending: no PR yet" and stop.
 3. Follow the runbook of the pin on the PR head. In the runbook commands, set
    `SRC="$WT/home"`, not `$(chezmoi source-path)`: the live source is not the PR head.
    - Skills pin: steps 1 to 3 of `bump-skill-pin.md`, with the fork diff.
