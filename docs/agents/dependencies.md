@@ -333,12 +333,19 @@ cd "$WT" && npx --yes --package renovate -- renovate-config-validator --no-globa
 The first line must exit 0. The second line also fails on a pending config migration (commit
 4adecb8).
 
-**Tick a pending pin.** Only after the operator's go. Find the Dashboard by its title, then
-tick the box of the branch:
+**Tick a pending pin.** Only after the operator's go. Find the Dashboard with the trust rule of
+`scripts/deps-state.sh`: an open issue titled "Dependency Dashboard" whose
+`author_association` is `OWNER`, `MEMBER` or `COLLABORATOR`. Exactly one issue must match;
+otherwise stop. Then tick the box of the branch:
 
 ```sh
-D=$(gh issue list --state open --search 'Dependency Dashboard in:title' --json number,title \
-  --jq '[.[] | select(.title == "Dependency Dashboard")][0].number')
+D=$(gh api 'repos/{owner}/{repo}/issues?state=open&per_page=100' | jq -er '
+  if length >= 100 then error("100 open issues: the list may be cut") else . end
+  | map(select(has("pull_request") | not)
+      | select(.title == "Dependency Dashboard"
+          and (.author_association | IN("OWNER", "MEMBER", "COLLABORATOR"))))
+  | if length != 1 then error("\(length) trusted Dashboards, want 1") else .[0].number end') \
+  || echo "no single trusted Dashboard: stop"
 B='<branch, for example renovate/kubermatic-kubeone-1.x>'
 gh issue view "$D" --json body --jq .body > /tmp/dashboard-$D.md
 sed -i "s#- \[ \] <!-- approve-branch=$B -->#- [x] <!-- approve-branch=$B -->#" /tmp/dashboard-$D.md
