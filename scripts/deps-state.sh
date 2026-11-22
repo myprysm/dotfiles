@@ -15,17 +15,25 @@ done
 prs=$(gh pr list --state open --limit 100 \
   --json number,createdAt,headRefOid,headRefName,isCrossRepository,labels,title) \
   || die "gh pr list failed"
-issues=$(gh issue list --state open --limit 100 --search 'in:title "Dependency Dashboard"' \
-  --json number,title,body) \
-  || die "gh issue list failed"
+issues=$(gh api 'repos/{owner}/{repo}/issues?state=open&per_page=100') \
+  || die "gh api issues failed"
 
-out=$(jq -rn --argjson prs "$prs" --argjson issues "$issues" '
+# The repo is public, so anyone can open an issue titled "Dependency Dashboard".
+# Renovate runs with the operator's token, not as a bot, and the repo owner is an
+# org, so the trust test is author_association rather than a login.
+# The reads go to jq on stdin: the issue bodies overflow ARG_MAX as --argjson.
+out=$(printf '%s\n%s\n' "$prs" "$issues" | jq -rs '
   def clean: gsub("[\\p{Cc}\\p{Cf}\\s]+"; " ") | sub("^ "; "") | sub(" $"; "");
 
-  if ($prs | length) >= 100 then error("100 open PRs: the list may be cut") else . end
-  | ($issues | map(select(.title == "Dependency Dashboard"))) as $dash
-  | if ($dash | length) != 1 then error("\($dash | length) open Dependency Dashboard issues, want 1") else . end
-  | ($dash[0].body | gsub("\r"; "") | split("\n")) as $lines
+  if length != 2 then error("cannot read the gh output") else . end
+  | .[0] as $prs | .[1] as $issues
+  | if ($prs | length) >= 100 then error("100 open PRs: the list may be cut") else . end
+  | if ($issues | length) >= 100 then error("100 open issues: the list may be cut") else . end
+  | ($issues | map(select(has("pull_request") | not)
+      | select(.title == "Dependency Dashboard"
+          and (.author_association | IN("OWNER", "MEMBER", "COLLABORATOR"))))) as $dash
+  | if ($dash | length) != 1 then error("\($dash | length) trusted open Dependency Dashboard issues, want 1") else . end
+  | ($dash[0].body // "" | gsub("\r"; "") | split("\n")) as $lines
   | def section($t):
       reduce $lines[] as $l ({in: false, found: false, out: []};
         if ($l | startswith("## ")) then .in = ($l == "## " + $t) | .found = (.found or .in)

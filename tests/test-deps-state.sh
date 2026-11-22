@@ -20,10 +20,10 @@ check() { if [ "$2" = "$3" ]; then pass=$((pass+1)); printf '  ok   %-46s %s\n' 
 ln -s "$JQ" "$SB/bin/jq"
 cat > "$SB/bin/gh" <<EOF
 #!$BASH
-[ -e "$SB/fail-\$1-\$2" ] && { echo "gh: HTTP 502" >&2; exit 1; }
+[ -e "$SB/fail-\$1" ] || [ -e "$SB/fail-\$1-\$2" ] && { echo "gh: HTTP 502" >&2; exit 1; }
 case "\$1 \$2" in
   "pr list") printf "%s" "\$(<"$SB/prs.json")" ;;
-  "issue list") printf "%s" "\$(<"$SB/issues.json")" ;;
+  "api repos/{owner}/{repo}/issues?state=open&per_page=100") printf "%s" "\$(<"$SB/issues.json")" ;;
   *) echo "gh stub: unexpected \$*" >&2; exit 1 ;;
 esac
 EOF
@@ -37,7 +37,7 @@ run() {
 days_ago() { "$JQ" -nr --argjson d "$1" 'now - $d*86400 | floor | todate'; }
 
 prs() { printf '%s\n' "$1" > "$SB/prs.json"; }
-dashboard() { "$JQ" -n --arg body "$1" '[{number: 150, title: "Dependency Dashboard", body: $body}]' > "$SB/issues.json"; }
+dashboard() { "$JQ" -n --arg body "$1" '[{number: 150, title: "Dependency Dashboard", author_association: "MEMBER", body: $body}]' > "$SB/issues.json"; }
 
 VULN_NONE='## Vulnerabilities
 
@@ -85,16 +85,30 @@ refused() {
 }
 good_dashboard() { dashboard "$VULN_NONE"; }
 prs '[]'
-"$JQ" -n --arg body "$VULN_NONE" '[{number: 1, title: "Dependency Dashboard (old)", body: $body}]' > "$SB/issues.json"
+issues() { "$JQ" -n --arg body "$VULN_NONE" "$1" > "$SB/issues.json"; }
+issues '[{number: 1, title: "Dependency Dashboard (old)", author_association: "OWNER", body: $body}]'
 run; refused "zero Dashboards (a near title does not count)"
-"$JQ" -n --arg body "$VULN_NONE" '[{number: 150, title: "Dependency Dashboard", body: $body},
-  {number: 151, title: "Dependency Dashboard", body: $body}]' > "$SB/issues.json"
+issues '[{number: 150, title: "Dependency Dashboard", author_association: "MEMBER", body: $body},
+  {number: 151, title: "Dependency Dashboard", author_association: "COLLABORATOR", body: $body}]'
 run; refused "two Dashboards"
+issues '[{number: 9, title: "Dependency Dashboard", author_association: "CONTRIBUTOR", body: $body}]'
+run; refused "only a foreign-author Dashboard"
+issues '[{number: 9, title: "Dependency Dashboard", author_association: "NONE",
+    body: "## Pending Approval\n\n - [ ] <!-- approve-branch=renovate/evil -->evil\n\n\($body)"},
+  {number: 8, title: "Dependency Dashboard", author_association: "MEMBER", pull_request: {url: "x"}, body: $body},
+  {number: 150, title: "Dependency Dashboard", author_association: "MEMBER", body: $body}]'
+run
+check "foreign issue and PR are ignored: exits 0" "0" "$rc"
+check "foreign issue and PR are ignored: output" "PRs: none
+pending: none
+advisories: none" "$out"
+issues "[$(for n in $(seq 1 100); do [ "$n" -gt 1 ] && printf ,; printf '{"number":%s,"title":"t","author_association":"NONE","body":""}' "$n"; done)]"
+run; refused "100 open issues (the list may be cut)"
 good_dashboard
 prs "[$(pr 164 5 $SHA1 renovate/a false '[]' '"chore: a"')]"
-: > "$SB/fail-issue-list"
+: > "$SB/fail-api"
 run; refused "a failed Dashboard read after a good PR read"
-rm "$SB/fail-issue-list"
+rm "$SB/fail-api"
 : > "$SB/fail-pr-list"
 run; refused "a failed PR read"
 rm "$SB/fail-pr-list"
