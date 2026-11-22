@@ -133,7 +133,9 @@ true:
 
 - three agents run;
 - a running agent's files overlap its files. The files of a PR are its `gh pr diff
-  --name-only` from step 3. The files of a pin are the file of its paths-table row. Two PR
+  --name-only` from step 3. The files of a pin are the file of its paths-table row, plus
+  the files that its runbook edits: step 4 of `docs/runbooks/bump-skill-pin.md` for the
+  skills pin, step 2 of `docs/runbooks/bump-hindsight-pin.md` for the hindsight pin. Two PR
   agents never share a file, and a pin agent never shares one with a PR agent.
 
 Start the next agent when a report frees a slot and its files.
