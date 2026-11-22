@@ -14,7 +14,7 @@ the `/deps` orchestrator does the apply pass and the verify checks after all lan
   the routine rule, the pairings, the traps, the accept-list and the command shapes. Use its
   command shapes verbatim. This profile does not repeat them.
 - `AGENTS.md` › Commits: the scope list and the `Refs` rule.
-- For a pending pin: its runbook, `docs/runbooks/bump-skill-pin.md` or
+- For a skills pin or a hindsight pin: its runbook, `docs/runbooks/bump-skill-pin.md` or
   `docs/runbooks/bump-hindsight-pin.md`.
 
 The brief gives the PR number, the head SHA and the plan's routine call, or the pin
@@ -74,15 +74,22 @@ a fact to report, never a step to do.
    `gh workflow run renovate.yml`. The go on the pin covers this one run. Poll for the PR of
    the branch for at most 10 minutes. When no PR is open at the end, report the pin as
    "pending: no PR yet" and stop.
-3. Follow the runbook of the pin on the PR head. In the runbook commands, set
+3. Take the head SHA of the open PR as the SHA of the brief. Then go on by class:
+   - A kubeone pin, or a major of any other class (for example ansible 14.x): run workflow
+     steps 1 to 10 on the PR. The pin is non-routine, so step 4 reads the changelog. Step 5
+     runs the safe-to-land check of the class from the catalogue: the kubeone check, or the
+     uv check for an ansible major. Step 6 applies P1 for kubeone, or P2 for an ansible major.
+     Steps 4 to 6 below do not apply.
+   - A skills pin or a hindsight pin: steps 4 to 6 below.
+4. Follow the runbook of the pin on the PR head. In the runbook commands, set
    `SRC="$WT/home"`, not `$(chezmoi source-path)`: the live source is not the PR head.
    - Skills pin: steps 1 to 3 of `bump-skill-pin.md`, with the fork diff.
    - Hindsight pin: step 1 and checks 1 to 5 of `bump-hindsight-pin.md`.
-4. Land with workflow step 8. Between `git merge --squash` and `git commit`, make the runbook
+5. Land with workflow step 8. Between `git merge --squash` and `git commit`, make the runbook
    edits in the landing worktree: step 4 of `bump-skill-pin.md`, or steps 2.1 and 2.2 of
    `bump-hindsight-pin.md` (the `sha256` edit, then the tests). The edits go into the same
    squash. Put the facts of the runbook checks in the squash body.
-5. The squash replaces the commit and the PR of the runbook (`bump-skill-pin.md` step 6,
+6. The squash replaces the commit and the PR of the runbook (`bump-skill-pin.md` step 6,
    `bump-hindsight-pin.md` step 2.3). The apply and the checks after it (`bump-skill-pin.md`
    step 5, `bump-hindsight-pin.md` check 6 and "Checks") belong to the apply pass. Write them
    in the report as "apply pass".
