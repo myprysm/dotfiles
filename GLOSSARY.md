@@ -109,3 +109,35 @@ _Avoid_: headless mode, disabled session
 **Collision check**:
 The comparison of the skill pin's names with the built-in skills of Claude Code, codex and opencode and with the other skills in the agents' home dirs. Done before each skill bump and after an agent upgrade.
 _Avoid_: conflict check
+
+**Safe-to-land check**:
+A local check on the head of a dependency PR, in a throwaway worktree, before the squash. It never changes a live machine; a check that needs `chezmoi apply` is not one (#169).
+_Avoid_: verify (reserved for the check after landing), CI
+
+**Dependency catalogue**:
+The reference a dependency agent reads for each Renovate PR: per class of update, how to recognise it, its safe-to-land check, who moves it live, and its verify check; plus the pairings, the traps and the routine rule (#170).
+_Avoid_: inventory (reserved for the machine sweep), dependency list
+
+**Pairing**:
+Two pins that must move together, one of them outside this repo's control, so a PR on one side is held until the other side matches.
+_Avoid_: coupling, link
+
+**Trap**:
+A known way a class of update goes wrong, recorded with its source. A hypothesis to confirm against the repo, never a rule on its own.
+_Avoid_: gotcha, known issue
+
+**Routine PR**:
+A dependency PR with one class, one dependency, a digest or patch bump, no Dashboard gate, no pairing or trap that applies, and green checks. Every other PR is non-routine: its changelog is read before any action.
+_Avoid_: safe PR, trivial PR
+
+**Verify check**:
+The check after a dependency PR lands: an apply on each machine, then proof that the new version is live there. A class with no effect on a machine has an explicit "no machine effect" entry, which counts as its verify check (#171).
+_Avoid_: post-merge test, smoke test
+
+**Coverage audit**:
+The read-only check, at the start of each dependency run, that finds a version written in the repo that Renovate does not detect, and the Dashboard sections that report a Renovate failure. Each finding is a lead for the Operator, never a PR and never a blocker (#172).
+_Avoid_: inventory, dependency scan
+
+**State script**:
+The read-only script that a dependency run calls first: it prints the open Renovate PRs, the pins that wait for approval on the Dashboard, and the advisories, one line each, or nothing at all when a read fails (#173).
+_Avoid_: status script, collector
