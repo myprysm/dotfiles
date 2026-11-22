@@ -55,7 +55,7 @@ scan=$(jq -cnR '
   | {hits, json: (.json | unique)}
 ' ${files[@]+"${files[@]}"} < /dev/null) || die "cannot search the pins"
 
-hits=$(jq -c '.hits' <<< "$scan")
+hits=$(jq -c '.hits' <<< "$scan") || die "cannot read the pin hits"
 locks=$(jq -r '.json[]' <<< "$scan") || die "cannot list the lock files"
 while IFS= read -r f; do
   [ -n "$f" ] || continue
