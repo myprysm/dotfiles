@@ -81,7 +81,7 @@
       "semanticCommitScope": "hindsight"
     },
     {
-      "matchFileNames": [".github/workflows/renovate.yml"],
+      "matchFileNames": ["renovate.json", ".github/workflows/renovate.yml"],
       "semanticCommitScope": "renovate"
     },
     {
