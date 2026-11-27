@@ -261,8 +261,8 @@ tightens the directory to 700 and the database to 600 on every interactive shell
 *directory* matters because SQLite writes sidecar files mid-transaction.
 
 **The limit, stated plainly.** `mcfly search` and `mcfly dump` read the store while naming
-no file, and Bash is governed by neither the deny rules nor the hook (#44). Layer 3 is a
-speed bump against a careless agent, exactly as the section below describes; layers 1 and 2
+no file. The deny rules do not govern Bash. The hook denies a Bash command only when it
+names one of these patterns (#101). Layer 3 is a speed bump against a careless agent, exactly as the section below describes; layers 1 and 2
 are what actually keep the transcript out of the public repo.
 
 ## Agent guardrails
@@ -290,6 +290,12 @@ is stated here so it is not read as wider than it is.
   tokens. `~/.aws/config` holds no secret but is denied with the directory: an agent
   reads it through `aws configure list-profiles` and `aws configure get`. chezmoi does
   not manage `~/.aws/config`, because `aws login` rewrites the profile.
+- The other `Read` deny paths: `.ssh/`, `*.key`, `*.pem`, `credentials/`, `secrets/`,
+  `~/.local/share/dotfiles-secrets/`, the
+  shell history files, `.lesshst`, `.viminfo` and the McFly directories (#101). Codex has
+  no deny rules, so the hook is its only read guard. The hook matches these paths anywhere,
+  as the deny rules do. It therefore also refuses a public certificate (`cat ca.pem`) and a
+  Kubernetes manifest under `secrets/`.
 - A **named** secret path handed to a transport that leaves the machine: `scp`, `sftp`,
   `rsync`, and `curl`/`wget` with an upload flag. Secrets move through the manager, never
   over a direct transfer, so there is no legitimate case to let through.
