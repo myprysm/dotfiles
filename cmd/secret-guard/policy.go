@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-// Policy layer. Every pattern here is the one shipped by the shell floor in
-// 9c0b19f; the two layers must answer the same question the same way, because
-// the floor decides whenever this binary is absent or unusable.
+// Policy layer. The shell floor in the hook carries the same patterns; the two
+// layers must answer the same question the same way, because the floor decides
+// whenever this binary is absent or unusable.
 
 // SecretsDir is the machine-local secrets directory, supplied by the hook from
 // the chezmoi template. Empty when the template did not define one.
@@ -130,6 +130,12 @@ var contextFreeRes = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)(^|[^a-z0-9_])vault\.ya?ml([^a-z0-9]|$)`),
 	regexp.MustCompile(`(?i)\.hindsight(/|$)`),
 	regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.aws(/|$)`),
+	regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.ssh(/|$)`),
+	regexp.MustCompile(`(?i)[a-z0-9_-]\.(key|pem)([^a-z0-9_.-]|$)`),
+	regexp.MustCompile(`(?i)(^|[^a-z0-9_.-])(credentials|secrets|dotfiles-secrets)/`),
+	regexp.MustCompile(`(?i)[a-z0-9]_history([^a-z0-9_.-]|$)`),
+	regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.(lesshst|viminfo)([^a-z0-9_.-]|$)`),
+	regexp.MustCompile(`(?i)(share|support)/mcfly(/|$)`),
 }
 
 // contextualRes DO depend on the neighbouring character: a quote in front of
@@ -407,6 +413,9 @@ var (
 		regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.talos(/|$)`),
 		regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.hindsight(/|$)`),
 		regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.aws(/|$)`),
+		regexp.MustCompile(`(?i)(^|[^a-z0-9_-])\.ssh(/|$)`),
+		regexp.MustCompile(`(?i)(^|[^a-z0-9_.-])(credentials|secrets|dotfiles-secrets)(/|$)`),
+		regexp.MustCompile(`(?i)(share|support)/mcfly(/|$)`),
 		regexp.MustCompile(`(?i)(^|[a-z0-9_/~\x00[:space:]-])\.secrets(/|$)`),
 	}
 

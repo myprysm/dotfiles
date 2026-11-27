@@ -44,6 +44,10 @@ var globCandidates = map[int][]globCandidate{
 		{name: "vault.yml", stemKey: true}, {name: "vault.yaml", stemKey: true},
 		{name: ".vault-token"}, {name: ".vault-token-home"}, {name: ".vault-token-kloud"},
 		{name: "secrets.vault"}, {name: ".secrets"},
+		{name: "server.key"}, {name: "server.pem"},
+		{name: ".zsh_history"}, {name: ".bash_history"}, {name: ".python_history"},
+		{name: ".node_repl_history"}, {name: ".psql_history"}, {name: ".mysql_history"},
+		{name: ".lesshst"}, {name: ".viminfo"},
 	},
 	2: {
 		{name: ".kube/config"}, {name: ".talos/config"}, {name: ".secrets/token"},
@@ -52,7 +56,11 @@ var globCandidates = map[int][]globCandidate{
 
 // globSecretDirs are directories secret as a whole, so a pattern that names the
 // directory itself in any segment names every file under it.
-var globSecretDirs = []string{".hindsight", ".aws"}
+var globSecretDirs = []string{".hindsight", ".aws", ".ssh"}
+
+// globNamedSecretDirs carry no leading dot, so `*` alone expands to them: a
+// segment must pin minGlobLiterals before it counts, or `cat */x` is refused.
+var globNamedSecretDirs = []string{"credentials", "secrets", "dotfiles-secrets", "mcfly"}
 
 // minGlobLiterals rejects a pattern too vague to name anything in particular.
 // `cat *` and `grep x *` would otherwise match `kubeconfig` and be refused,
@@ -182,6 +190,21 @@ func globHitsSecret(glob string) bool {
 			continue
 		}
 		for _, d := range globSecretDirs {
+			if re.MatchString(d) {
+				return true
+			}
+		}
+	}
+
+	for _, seg := range segs {
+		if strings.HasPrefix(seg, ".") || !pattern.HasMeta(seg, 0) || literalCount(seg) < minGlobLiterals {
+			continue
+		}
+		re := globRegexp(seg)
+		if re == nil {
+			continue
+		}
+		for _, d := range globNamedSecretDirs {
 			if re.MatchString(d) {
 				return true
 			}
