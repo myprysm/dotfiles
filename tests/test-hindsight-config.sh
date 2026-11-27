@@ -87,23 +87,31 @@ is "no credential key" '[has("serverMode"), has("apiUrl"), has("apiToken")]' '[f
 is "repo-owned key still set" '.bankId' '"damien-main-memory"'
 
 echo "== hindsightPaths prompt in chezmoi init"
-init() { # init <config file>; the answers come on stdin, one per line
+init() { # init <config file>; unseeded prompts read stdin
   HOME="$SB/home" chezmoi init --no-tty --source "$REPO_ROOT" --config "$1" --config-path "$1" >/dev/null 2>&1
 }
 check() { # check <label> <command...>
   if "${@:2}"; then pass=$((pass+1)); printf '  ok   %s\n' "$1"
   else fail=$((fail+1)); printf '  FAIL %s\n' "$1"; fi
 }
+seed() { # seed <config file> <bundle>; positional stdin answers broke when a prompt was added (#194),
+  # so every other promptStringOnce key is scraped from the template and pre-answered. A prompt of
+  # another type or call shape is not seeded: init then hits EOF and the checks below fail.
+  { echo '[data]'
+    grep -oE 'promptStringOnce \. "[^"]+"' "$REPO_ROOT/home/.chezmoi.toml.tmpl" | cut -d'"' -f2 |
+      grep -vx hindsightPaths | sed 's/.*/    & = "x"/'
+    echo "    bundleList = [\"$2\"]"; } >"$1"
+}
 CFG="$SB/hindsight.toml"
-# The blank line after "hindsight" ends the bundle multichoice; the next one is the empty answer.
-printf 'n\ne@x\nhttps://b\n/s\nhindsight\n\n\n' | init "$CFG"
+seed "$CFG" hindsight
+printf '\n' | init "$CFG"
 check "empty answer stored" grep -qx '    hindsightPaths = ""' "$CFG"
 # No answers on stdin: any prompt hits EOF and init fails.
 check "second init does not ask again" init "$CFG" </dev/null
 check "empty answer still stored" grep -qx '    hindsightPaths = ""' "$CFG"
 CFG="$SB/no-hindsight.toml"
-printf 'n\ne@x\nhttps://b\n/s\ngo\n\n' | init "$CFG"
-check "no hindsight bundle: not asked" grep -qx '    bundleList = \["go"\]' "$CFG"
+seed "$CFG" go
+check "no hindsight bundle: not asked" init "$CFG" </dev/null
 check "no hindsight bundle: no key" test -z "$(grep hindsightPaths "$CFG")"
 
 echo "== managed targets follow the bundle (#142)"
