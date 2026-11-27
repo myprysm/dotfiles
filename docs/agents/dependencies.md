@@ -75,8 +75,9 @@ source.
   `release-secret-guard.yml` refuses every ref that is not a `secret-guard-v*` tag. A PR with
   no failed check proves nothing. Source: the two workflow files.
 - Renovate can set a scope that is not in the `AGENTS.md` list. The config migration PR #161
-  had the title `chore(config): …`. Its squash used `renovate` (#181, 9ceb42d). Commit 4adecb8 gives
-  `renovate.json` the `renovate` scope, but a PR opened before it keeps its old title.
+  had the title `chore(config): …`. Its squash used `renovate` (#181, 9ceb42d). Commit
+  4adecb8 gives `renovate.json` the `renovate` scope, but a PR opened before it keeps its old
+  title.
 
 **Go module**
 
@@ -272,6 +273,7 @@ for R in <old> <new>; do
   D="$SCR/<target of the entry, for example .oh-my-zsh/custom/plugins/zsh-autosuggestions>"
   rm -rf "$D" && mkdir -p "$D"
   curl -fsSL "https://github.com/<owner>/<repo>/archive/$R.tar.gz" | tar -xz -C "$D" --strip-components=1
+  # .oh-my-zsh entry only: cp -R ~/.oh-my-zsh/custom/. "$D/custom/"
   time (HOME="$SCR" zsh -i -c exit 2>"$E/$R.err")
 done
 diff "$E/<old>.err" "$E/<new>.err"
@@ -282,11 +284,11 @@ A stderr line that only the new archive prints, or a clearly slower startup, fai
 Do not judge the exit code: in the scratch `HOME`, `zsh -i -c exit` exited 1 with the old
 archive and with the new one (PR #154, PR #160, #195). The baseline run also prints the
 errors that come from the scratch `HOME` itself, such as a `zf_mv` error on a missing cache
-dir (PR #160). Both runs use the same `$SCR` path, so a path in an error message does not
-make a diff.
+dir (PR #160). Both runs use the same `$SCR` path. A path in an error message is then the
+same in the two runs.
 
-For the `.oh-my-zsh` entry, add `cp -R ~/.oh-my-zsh/custom/. "$D/custom/"` after the unpack:
-the custom plugins are externals inside that tree. `cp -R ~/.oh-my-zsh/custom "$D"` makes
+For the `.oh-my-zsh` entry, run the `cp` line of the loop in each run, after the unpack. The
+custom plugins are externals inside that tree. `cp -R ~/.oh-my-zsh/custom "$D"` makes
 `custom/custom`, because the archive ships a `custom` dir.
 
 zsh does not load the `.vim_runtime` entry. For that entry, load the new archive with the
@@ -340,8 +342,8 @@ cd "$WT" && npx --yes --package renovate -- renovate-config-validator --no-globa
 cd "$WT" && npx --yes --package renovate -- renovate-config-validator --no-global --strict renovate.json
 ```
 
-The first line must exit 0. The second line also fails on a pending config migration (commit
-4adecb8).
+The first line must exit 0. The second line also fails on a pending config migration (Renovate
+docs, "Config validation").
 
 **Tick a pending pin.** Only after the operator's go. Find the Dashboard with the trust rule of
 `scripts/deps-state.sh`: an open issue titled "Dependency Dashboard" whose

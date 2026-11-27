@@ -195,17 +195,23 @@ Stop and give the machine to the operator when:
 - the source has a change that no PR of the run made: step 1 prints a line, step 3 lists a
   commit that is not a squash of the run, or step 4 changes a target that no file of those
   squashes makes (a `run_onchange_` or `run_once_` script whose content a squash changed
-  counts as made). One exception: a diff of `~/.claude/settings.json` that changes only the
-  order is not a foreign change. Orca writes its hooks in its own order (#73, #82). Check
-  it with the shape below. `same` means the diff is order only. Any other output is a
-  foreign change: stop;
+  counts as made);
 - the apply asks for input: sudo, a vault, a passphrase, or any prompt that waits.
 
+One exception to the step 4 rule: a diff of `~/.claude/settings.json` that changes only the
+key order or the hook order is not a foreign change. Orca writes its hooks in its own order
+(#73, #82). Run this shape on the machine:
+
 ```sh
-N='walk(if type == "array" then sort_by(tojson) else . end)'
-cmp -s <(chezmoi cat ~/.claude/settings.json | jq -S "$N") <(jq -S "$N" ~/.claude/settings.json) \
-  && echo same || echo foreign
+NORM='walk(if type == "object" then to_entries | sort_by(.key) | from_entries else . end)
+  | .hooks |= walk(if type == "array" then sort_by(tojson) else . end)'
+A=$(chezmoi cat ~/.claude/settings.json | jq -S "$NORM") \
+  && B=$(jq -S "$NORM" ~/.claude/settings.json) \
+  && [ -n "$A" ] && [ "$A" = "$B" ] && echo same || echo foreign
 ```
+
+`same`: the diff is order only, and the pass goes on. Any other output is a foreign change:
+stop. A reorder outside `hooks`, for example in `permissions.deny`, prints `foreign`.
 
 The orchestrator never answers a vault or sudo prompt. To give the machine: report the
 machine, the step and the raw output, and stop the pass on that machine.
