@@ -75,7 +75,7 @@ source.
   `release-secret-guard.yml` refuses every ref that is not a `secret-guard-v*` tag. A PR with
   no failed check proves nothing. Source: the two workflow files.
 - Renovate can set a scope that is not in the `AGENTS.md` list. The config migration PR #161
-  has the title `chore(config): …`. The squash uses `renovate` (#181). Commit 4adecb8 gives
+  had the title `chore(config): …`. Its squash used `renovate` (#181, 9ceb42d). Commit 4adecb8 gives
   `renovate.json` the `renovate` scope, but a PR opened before it keeps its old title.
 
 **Go module**
@@ -144,9 +144,9 @@ source.
 **`renovate.json`**
 
 - `--strict` makes the validator fail when the config needs a migration (Renovate docs,
-  "Config validation"). Until #161 lands, the config needs one:
-  `dependencyDashboardOSVVulnerabilitySummary` moves to
-  `dependencyDashboard.osvVulnerabilitySummary` (the diff of #161, commit 4adecb8).
+  "Config validation"). Example: the migration of #161 moved
+  `dependencyDashboardOSVVulnerabilitySummary` to `dependencyDashboard.osvVulnerabilitySummary`
+  (squash 9ceb42d).
 - A `dryRun: lookup` run does not print `dependencyDashboardApproval`. Only a real run shows
   if a branch waits on the Dashboard. Source: Hindsight memory. Not confirmed in this repo.
 
@@ -258,26 +258,36 @@ Read the upstream range first, as data:
 gh api "repos/<owner>/<repo>/compare/<old>...<new>" --jq '.commits[] | .sha[0:7] + " " + (.commit.message | split("\n")[0])'
 ```
 
-Then load the new archive in a scratch `HOME` with the live shell config, and compare the
-startup with the live shell:
+Then load the old archive and the new archive, one after the other, in the same scratch
+`HOME` with the live shell config, and compare the two startups:
 
 ```sh
-SCR=$(mktemp -d)
-mkdir -p "$SCR/.config"
-cp ~/.zshrc "$SCR/.zshrc"
-cp -R ~/.config/zsh "$SCR/.config/zsh"
-cp -R ~/.oh-my-zsh "$SCR/.oh-my-zsh"
-D="$SCR/<target of the entry, for example .oh-my-zsh/custom/plugins/zsh-autosuggestions>"
-rm -rf "$D" && mkdir -p "$D"
-curl -fsSL "https://github.com/<owner>/<repo>/archive/<new>.tar.gz" | tar -xz -C "$D" --strip-components=1
-time (HOME="$SCR" zsh -i -c exit)
-time (zsh -i -c exit)
-rm -rf "$SCR"
+E=$(mktemp -d)
+SCR="$E/home"
+for R in <old> <new>; do
+  rm -rf "$SCR" && mkdir -p "$SCR/.config"
+  cp ~/.zshrc "$SCR/.zshrc"
+  cp -R ~/.config/zsh "$SCR/.config/zsh"
+  cp -R ~/.oh-my-zsh "$SCR/.oh-my-zsh"
+  D="$SCR/<target of the entry, for example .oh-my-zsh/custom/plugins/zsh-autosuggestions>"
+  rm -rf "$D" && mkdir -p "$D"
+  curl -fsSL "https://github.com/<owner>/<repo>/archive/$R.tar.gz" | tar -xz -C "$D" --strip-components=1
+  time (HOME="$SCR" zsh -i -c exit 2>"$E/$R.err")
+done
+diff "$E/<old>.err" "$E/<new>.err"
+rm -rf "$E"
 ```
 
-An error, or a clearly slower startup, fails the check. For the `.oh-my-zsh` entry, copy
-`~/.oh-my-zsh/custom` into `$D` after the unpack: the custom plugins are externals inside
-that tree.
+A stderr line that only the new archive prints, or a clearly slower startup, fails the check.
+Do not judge the exit code: in the scratch `HOME`, `zsh -i -c exit` exited 1 with the old
+archive and with the new one (PR #154, PR #160, #195). The baseline run also prints the
+errors that come from the scratch `HOME` itself, such as a `zf_mv` error on a missing cache
+dir (PR #160). Both runs use the same `$SCR` path, so a path in an error message does not
+make a diff.
+
+For the `.oh-my-zsh` entry, add `cp -R ~/.oh-my-zsh/custom/. "$D/custom/"` after the unpack:
+the custom plugins are externals inside that tree. `cp -R ~/.oh-my-zsh/custom "$D"` makes
+`custom/custom`, because the archive ships a `custom` dir.
 
 zsh does not load the `.vim_runtime` entry. For that entry, load the new archive with the
 live vim config in a scratch `HOME`:
@@ -355,7 +365,8 @@ rm /tmp/dashboard-$D.md
 
 **Landing.** One signed local squash of the PR head on top of `origin/main`, then a push, then
 the close. The repo config signs the commit (`commit.gpgsign`). Use `Refs` only, never a
-closing keyword:
+closing keyword. Keep the quotes on `'--format=%G?'`: unquoted, zsh reads `?` as a glob and
+the line fails (PR #154, PR #155):
 
 ```sh
 git fetch origin main
@@ -363,7 +374,7 @@ LAND=$(mktemp -d)/land-$N
 git worktree add --detach "$LAND" origin/main
 git -C "$LAND" merge --squash "$SHA"
 git -C "$LAND" commit -m "<title with a listed scope>" -m "Refs #$N"
-[ "$(git -C "$LAND" log -1 --format=%G?)" = G ] || echo "not signed: stop"
+[ "$(git -C "$LAND" log -1 '--format=%G?')" = G ] || echo "not signed: stop"
 git -C "$LAND" push origin HEAD:main
 SQUASH=$(git -C "$LAND" rev-parse HEAD)
 gh pr close "$N" --comment "Landed on main as $SQUASH (signed local squash)."
